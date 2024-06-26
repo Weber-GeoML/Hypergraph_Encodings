@@ -2,15 +2,15 @@
 
 # Organisation of repo
 
-```data``` 
+```data\``` 
 
 contains the coauthorship and cocitation data.
 
-```src``` 
+```src\`` 
 
 contains functions for the package.
 
-```scripts``` 
+```scripts\``` 
 
 contains the interface.
 
@@ -22,7 +22,7 @@ Presented as dictionaries. For coauthorship, Keys are authors, values are int (p
 # How to run
 
 ```
-conda create -n our_repo python=3.11
-conda activate our_repo
+conda create -n encodings_venv python=3.11
+conda activate encodings_venv
 pip install -e .
 ```
