@@ -6,7 +6,6 @@ Ollivier-Ricci curvatures of an undirected hypergraph.
 """
 
 from encodings_hnns.data_handling import parser
-from data import parser
 import sys
 
 print(sys.path)
@@ -42,13 +41,19 @@ class FormanRicci:
         if self.node_degrees == {}:
             self.compute_node_degrees()
 
-        for hyperedge in self.hypergraph["hypergraph"].values():
+        # for hyperedge in self.hypergraph["hypergraph"].values():
+        #     hyperedge_degree = len(hyperedge)
+        #     hyperedge_sum_degrees = sum([self.node_degrees[node] for node in hyperedge])
+        #     tuple_hyperedge = tuple(hyperedge)
+        #     self.forman_ricci[tuple_hyperedge] = (
+        #         2 * hyperedge_degree - hyperedge_sum_degrees
+        #     )
+        # Lukas: why not take advantage of the name of the hyper-edges?
+        for name, hyperedge in self.hypergraph["hypergraph"].items():
             hyperedge_degree = len(hyperedge)
             hyperedge_sum_degrees = sum([self.node_degrees[node] for node in hyperedge])
             tuple_hyperedge = tuple(hyperedge)
-            self.forman_ricci[tuple_hyperedge] = (
-                2 * hyperedge_degree - hyperedge_sum_degrees
-            )
+            self.forman_ricci[name] = 2 * hyperedge_degree - hyperedge_sum_degrees
 
     def compute_node_degrees(self) -> None:
         """
@@ -60,7 +65,8 @@ class FormanRicci:
             for node in hyperedge:
                 if node not in self.node_degrees:
                     self.node_degrees[node] = 1
-                self.node_degrees[node] += 1
+                else:
+                    self.node_degrees[node] += 1
 
 
 # Example utilization

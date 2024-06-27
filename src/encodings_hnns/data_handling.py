@@ -129,7 +129,6 @@ class parser(object):
 
 # Example utilization
 if __name__ == "__main__":
-
     data_type = "cocitation"
     dataset_name = "cora"
 
@@ -137,6 +136,7 @@ if __name__ == "__main__":
     parser_instance = parser(data_type, dataset_name)
     # parse calls load_data
     parsed_data = parser_instance.parse()
+    print(parsed_data)
     # same as
     # data = parser_instance._load_data()
     # So hypergraph is a dict:

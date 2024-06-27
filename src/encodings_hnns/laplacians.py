@@ -3,22 +3,22 @@ laplacians.py
 
 This module contains functions for computing the Laplacians
 (Hodge, random walks, etc).
-
-#TODO
 """
 
 import numpy as np
 
 
 class Laplacians:
-    def __init__(self, hypergraph):
-        """
-        Initialize the Forman-Ricci curvature object.
-        A hypergraph is a dictionary with the following keys:
-        - hypergraph : a dictionary with the hyperedges as values
-        - features : a dictionary with the features of the nodes as values
-        - labels : a dictionary with the labels of the nodes as values
-        - n : the number of nodes in the hypergraph
+    def __init__(self, hypergraph) -> None:
+        """Initialize the Laplacian object.
+
+        Args:
+            A hypergraph
+            A hypergraph is a dictionary with the following keys:
+                - hypergraph : a dictionary with the hyperedges as values
+                - features : a dictionary with the features of the nodes as values
+                - labels : a dictionary with the labels of the nodes as values
+                - n : the number of nodes in the hypergraph
         """
         assert "hypergraph" in hypergraph.keys(), "Hypergraph not found."
         assert "features" in hypergraph.keys(), "Features not found."
@@ -28,8 +28,16 @@ class Laplacians:
         self.hypergraph = hypergraph
         self.node_degrees = {}
         self.boundary_matrix = None
+        self.hodge_laplacian_up = None
+        self.hodge_laplacian_down = None
 
     def compute_boundary(self, verbose: bool = True) -> None:
+        """Computes the (Transpose) of the boundary matrix
+
+        Args:
+            verbose:
+                to print more finely
+        """
         # Extracts hypergraph and nodes
         hypergraph: dict = self.hypergraph["hypergraph"]
         all_nodes: list = sorted(
@@ -52,17 +60,28 @@ class Laplacians:
                 j = node_to_col[node]
                 matrix[i, j] = 1
 
+        # this is actually the transpose technically
         self.boundary_matrix = matrix
 
-    def compute_hode_laplacian(self) -> None:
-        if self.boundary == None:
+    def compute_hodge_laplacian(self) -> None:
+        """Computes the hodge-Laplacian of hypergraphs"""
+        if self.boundary_matrix == None:
             self.compute_boundary()
-        self.hodge_laplacian = np.matmul(self.boundary_matrix, self.boundary_matrix.T)
+        self.hodge_laplacian_up = np.matmul(
+            self.boundary_matrix, self.boundary_matrix.T
+        )
+        self.hodge_laplacian_down = np.matmul(
+            self.boundary_matrix.T, self.boundary_matrix
+        )
+
+    def compute_normalized_laplacian() -> None:
+        pass
+
+    def compute_random_walk_laplacian() -> None:
+        pass
 
     def compute_node_degrees(self):
-        """
-        Compute the degree of each node in the hypergraph.
-        """
+        """Compute the degree of each node in the hypergraph."""
         assert self.node_degrees == {}, "Node degrees already computed."
 
         for hyperedge in self.hypergraph["hypergraph"].values():
