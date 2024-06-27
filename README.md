@@ -2,15 +2,15 @@
 
 # Organisation of repo
 
-```data\``` 
+```data/``` 
 
 contains the coauthorship and cocitation data.
 
-```src\`` 
+```src/```
 
 contains functions for the package.
 
-```scripts\``` 
+```scripts/``` 
 
 contains the interface.
 
@@ -26,3 +26,17 @@ conda create -n encodings_venv python=3.11
 conda activate encodings_venv
 pip install -e .
 ```
+
+# Tests
+
+```
+pytest
+``` 
+from root.
+
+For a file in particular:
+
+
+```
+pytest tests/test_curvature.py
+``` 
