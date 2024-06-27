@@ -2,10 +2,11 @@
 
 Can use the toy hypergraph from our draft"""
 
-import pytest
-from encodings_hnns.laplacians import Laplacians
 import numpy as np
+import pytest
 from numpy.testing import assert_array_equal
+
+from encodings_hnns.laplacians import Laplacians
 
 
 @pytest.fixture

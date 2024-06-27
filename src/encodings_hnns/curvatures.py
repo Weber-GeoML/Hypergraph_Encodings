@@ -5,8 +5,9 @@ This module contains functions for computing the Forman-Ricci and
 Ollivier-Ricci curvatures of an undirected hypergraph.
 """
 
-from encodings_hnns.data_handling import parser
 import sys
+
+from encodings_hnns.data_handling import parser
 
 print(sys.path)
 
