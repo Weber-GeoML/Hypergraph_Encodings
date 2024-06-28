@@ -185,20 +185,20 @@ class Laplacians:
 
         self.Dv: np.ndarray = np.diag(list(self.node_degrees.values()))
 
-    def compute_node_neighbors(self) -> None:
-        """Compute the neighbors of each node in the hypergraph."""
-        assert self.node_neighbors == {}, "Node neighbors already computed."
+    # def compute_node_neighbors(self) -> None:
+    #     """Compute the neighbors of each node in the hypergraph."""
+    #     assert self.node_neighbors == {}, "Node neighbors already computed."
 
-        for hyperedge in self.hypergraph["hypergraph"].values():
-            for node in hyperedge:
-                if node not in self.node_neighbors:
-                    self.node_neighbors[node] = hyperedge
-                else:
-                    self.node_neighbors[node].append(hyperedge)
-        # Sort the node degrees by keys
-        self.node_neighbors = OrderedDict(sorted(self.node_neighbors.items()))
-        print(self.node_neighbors)
-        assert False
+    #     for hyperedge in self.hypergraph["hypergraph"].values():
+    #         for node in hyperedge:
+    #             if node not in self.node_neighbors:
+    #                 self.node_neighbors[node] = hyperedge
+    #             else:
+    #                 self.node_neighbors[node].append(hyperedge)
+    #     # Sort the node degrees by keys
+    #     self.node_neighbors = OrderedDict(sorted(self.node_neighbors.items()))
+    #     print(self.node_neighbors)
+    #     assert False
 
     def compute_edge_degrees(self) -> None:
         """Compute the degree of each hyperedge in the hypergraph."""
