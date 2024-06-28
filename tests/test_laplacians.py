@@ -158,6 +158,8 @@ def test_compute_boundary(toy_hypergraph, boundary) -> None:
     Args:
         toy_hypergraph:
             hypergraph from draft
+        boundary:
+            the boundary matrix
     """
     laplacian: Laplacians = Laplacians(toy_hypergraph)
     # Computes the Forman-Ricci curvature
@@ -191,8 +193,8 @@ def test_compute_node_degree(toy_hypergraph, degree_v) -> None:
     Args:
         toy_hypergraph:
             hypergraph from draft
-        laplacian_hodge:
-            hodge laplacian (up)
+        degree_v:
+            vertices degree matrix
 
     """
     laplacian: Laplacians = Laplacians(toy_hypergraph)
@@ -207,8 +209,8 @@ def test_compute_edge_degree(toy_hypergraph, degree_e) -> None:
     Args:
         toy_hypergraph:
             hypergraph from draft
-        laplacian_hodge:
-            hodge laplacian (up)
+        degree_e:
+            edge degree matrix
 
     """
     laplacian: Laplacians = Laplacians(toy_hypergraph)
@@ -223,8 +225,8 @@ def test_compute_normalized_laplacian(toy_hypergraph, normalized_laplacian) -> N
     Args:
         toy_hypergraph:
             hypergraph from draft
-        laplacian_hodge:
-            hodge laplacian (up)
+        normalized_laplacian:
+            normalized_laplacian
 
     """
     laplacian: Laplacians = Laplacians(toy_hypergraph)
@@ -239,8 +241,8 @@ def test_compute_random_walk_laplacian(toy_hypergraph, rw_laplacian) -> None:
     Args:
         toy_hypergraph:
             hypergraph from draft
-        laplacian_hodge:
-            hodge laplacian (up)
+        rw_laplacian:
+            rw laplacian
 
     """
     laplacian: Laplacians = Laplacians(toy_hypergraph)
