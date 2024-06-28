@@ -53,7 +53,6 @@ class FormanRicci:
         for name, hyperedge in self.hypergraph["hypergraph"].items():
             hyperedge_degree = len(hyperedge)
             hyperedge_sum_degrees = sum([self.node_degrees[node] for node in hyperedge])
-            tuple_hyperedge = tuple(hyperedge)
             self.forman_ricci[name] = 2 * hyperedge_degree - hyperedge_sum_degrees
 
     def compute_node_degrees(self) -> None:
