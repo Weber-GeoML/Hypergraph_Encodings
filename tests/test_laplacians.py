@@ -136,6 +136,22 @@ def rw_laplacian() -> np.ndarray:
     return rw_laplacian
 
 
+@pytest.fixture
+def rw_laplacian_EN() -> np.ndarray:
+    """Returns the rw Laplacian"""
+    L_EN_alpha_0: np.ndarray = np.array(
+        [
+            [1, -1 / 2, -1 / 2, 0, 0, 0],
+            [-1 / 2, 1, -1 / 2, 0, 0, 0],
+            [-1 / 4, -1 / 4, 1, 0, -1 / 4, -1 / 4],
+            [0, 0, 0, 1, -1, 0],
+            [0, 0, -1 / 3, -1 / 3, 1, -1 / 3],
+            [0, 0, -1 / 2, 0, -1 / 2, 1],
+        ]
+    )
+    return L_EN_alpha_0
+
+
 def test_compute_boundary(toy_hypergraph, boundary) -> None:
     """Test for compute_laplacian
 
@@ -215,3 +231,35 @@ def test_compute_normalized_laplacian(toy_hypergraph, normalized_laplacian) -> N
     # Computes the Forman-Ricci curvature
     laplacian.compute_normalized_laplacian()
     assert_allclose(laplacian.normalized_laplacian, normalized_laplacian, atol=1e-8)
+
+
+def test_compute_random_walk_laplacian(toy_hypergraph, rw_laplacian) -> None:
+    """Test for compute_normlaized_laplacian
+
+    Args:
+        toy_hypergraph:
+            hypergraph from draft
+        laplacian_hodge:
+            hodge laplacian (up)
+
+    """
+    laplacian: Laplacians = Laplacians(toy_hypergraph)
+    # Computes the Forman-Ricci curvature
+    laplacian.compute_random_walk_laplacian()
+    assert_allclose(laplacian.rw_laplacian, rw_laplacian, atol=1e-8)
+
+
+# def test_compute_random_walk_laplacian_EN(toy_hypergraph, rw_laplacian_EN) -> None:
+#     """Test for compute_normlaized_laplacian
+
+#     Args:
+#         toy_hypergraph:
+#             hypergraph from draft
+#         laplacian_hodge:
+#             hodge laplacian (up)
+
+#     """
+#     laplacian: Laplacians = Laplacians(toy_hypergraph)
+#     # Computes the Forman-Ricci curvature
+#     laplacian.compute_random_walk_laplacian(type="EN")
+#     assert_allclose(laplacian.rw_laplacian, rw_laplacian_EN, atol=1e-8)
