@@ -90,13 +90,18 @@ class Laplacians:
     def compute_normalized_laplacian(self) -> None:
         """Computes the normalized laplacian"""
         if self.boundary_matrix == None:
+            # computes the boundary matrix
             self.compute_boundary()
         if self.node_degrees == {}:
+            # computes the node degrees
             self.compute_node_degrees()
         if self.edge_degrees == {}:
+            # compute the edge degrees
+            # that is number of nodes in each hyperedge
             self.compute_edge_degrees()
         # Assumes that the nodes are sorted in increasing number
 
+        # intermediate is Dv - B_1*D_e^{-1}*B_1^T
         intermediate = self.Dv - np.matmul(
             self.boundary_matrix,
             np.matmul(np.linalg.inv(self.De), self.boundary_matrix.T),
@@ -108,7 +113,7 @@ class Laplacians:
         )
 
     def compute_random_walk_laplacian(
-        self, verbose: bool = True, type: str = "EE"
+        self, verbose: bool = True, type: str = "EN"
     ) -> None:
         """Computes the random walk Laplacian.
 
@@ -128,14 +133,15 @@ class Laplacians:
         if verbose:
             print(f"The nodes are {all_nodes}")
 
-        # Initialize matrix
+        # Initialize matrix (all zeros)
         num_nodes: int = len(all_nodes)
         matrix_ = np.zeros((num_nodes, num_nodes), dtype=float)
 
-        if type == "EE":
+        if type == "EE":  # equal edge. Banarjee
+            # Here I am using the Approach i-D^{-1}A
             # Construct A_{ij} matrix
             # Iterate over node pairs (i, j) only for i < j to fill the upper triangular part
-            # Takes advantage of symmetry
+            # Takes advantage of symmetry (A is symmetric)
             for i, node_i in enumerate(all_nodes):
                 for j in range(i + 1, num_nodes):
                     node_j = all_nodes[j]
@@ -143,33 +149,63 @@ class Laplacians:
                         if set([node_i, node_j]).issubset(set(hyperedge)):
                             value = 1 / (len(hyperedge) - 1)
                             matrix_[i, j] += value
-                            matrix_[j, i] += value  # Reflect the value for symmetry
+                            matrix_[
+                                j, i
+                            ] += value  # Reflect the value for symmetry (in A only!)
 
+            # the rw Laplacian is I - Dv^{-1}*A
             rw_l = np.eye(num_nodes) + np.matmul(np.linalg.inv(self.Dv), -matrix_)
+            # Note: this is not symmetric!
             self.rw_laplacian = rw_l
 
-        if type == "EN":
-            # fucntion to get neighbors. Get len of neighbors of i
-            pass
-        if type == "WE":
-            pass
+        if type == "EN":  # equal node.
+            # Note. Here I am not using D and A as above (ie I-D^{-1}A)
+            # and as Raffaella's paper present the walks.
+            if self.node_neighbors == {}:
+                self.compute_node_neighbors()
 
-    # def select nghbor_at_random( node):
-    # edge_belong_to = []
-    # for hyperedge in self.hypergraph["hypergraph"].values():
-    #    if node in hyperedge:
-    #       edge_belong_to.append(hyperedge)
-    # then if EE
-    # edge =random.choice(edge_belong_to)
-    # edge.drop(node)
-    # random.choice(edge)
-    # if EN:
-    # flattened_list = list(itertools.chain(*edge_belong_to))
-    # edge.drop(node)
-    # random.choice(edge)
-    # if WE: to_do
+            for i, node_i in enumerate(all_nodes):
+                for j, node_j in enumerate(all_nodes):
+                    if node_i == node_j:
+                        matrix_[i, j] = 1
+                    # go to any neighbor of with equal proba
+                    elif node_j in self.node_neighbors[node_i]:
+                        matrix_[i, j] = -1 / (len(self.node_neighbors[node_i]) - 1)
 
-    # THis is also in curvatures so move this to parent class?
+            self.rw_laplacian = matrix_
+
+        if type == "WE":  # weighted edge
+            # Here is the idea: Sum the weights
+            # of all hyperedges node i belongs to (|e|-1 if i is in e)
+            # then for all j, if {i,j} belong to an edge, add 1 to count
+            # then the value for matri_[i,j] is count/sum weights
+            if self.node_neighbors == {}:
+                self.compute_node_neighbors()
+
+            for i, node_i in enumerate(all_nodes):
+                i_neighbors_counts: dict = {}
+                count_weights: int = 0
+                for hyperedge_name, hedge in self.hypergraph["hypergraph"].items():
+                    if node_i in hedge:
+                        count_weights += len(hedge) - 1
+                        for node_j in hedge:
+                            if node_j not in i_neighbors_counts:
+                                i_neighbors_counts[node_j] = 1
+                            else:
+                                i_neighbors_counts[node_j] += 1
+                for j, node_j in enumerate(all_nodes):
+                    if node_i == node_j:
+                        matrix_[i, j] = 1  # diag
+                    elif node_j not in self.node_neighbors[node_i]:
+                        matrix_[i, j] = 0
+                        matrix_[j, i] = (
+                            0  # not neigbors so cannot travel between i and j
+                        )
+                    elif node_j in self.node_neighbors[node_i]:
+                        matrix_[i, j] = -i_neighbors_counts[node_j] / count_weights
+            self.rw_laplacian = matrix_
+
+    # This is also in curvatures so move this to parent class?
     def compute_node_degrees(self) -> None:
         """Compute the degree of each node in the hypergraph."""
         assert self.node_degrees == {}, "Node degrees already computed."
@@ -185,20 +221,18 @@ class Laplacians:
 
         self.Dv: np.ndarray = np.diag(list(self.node_degrees.values()))
 
-    # def compute_node_neighbors(self) -> None:
-    #     """Compute the neighbors of each node in the hypergraph."""
-    #     assert self.node_neighbors == {}, "Node neighbors already computed."
+    def compute_node_neighbors(self) -> None:
+        """Compute the neighbors of each node in the hypergraph."""
+        assert self.node_neighbors == {}, "Node neighbors already computed."
 
-    #     for hyperedge in self.hypergraph["hypergraph"].values():
-    #         for node in hyperedge:
-    #             if node not in self.node_neighbors:
-    #                 self.node_neighbors[node] = hyperedge
-    #             else:
-    #                 self.node_neighbors[node].append(hyperedge)
-    #     # Sort the node degrees by keys
-    #     self.node_neighbors = OrderedDict(sorted(self.node_neighbors.items()))
-    #     print(self.node_neighbors)
-    #     assert False
+        for hyperedge in self.hypergraph["hypergraph"].values():
+            for node in hyperedge:
+                if node not in self.node_neighbors:
+                    self.node_neighbors[node] = set(hyperedge)
+                else:
+                    self.node_neighbors[node].update(hyperedge)
+        # Sort the node degrees by keys
+        self.node_neighbors = OrderedDict(sorted(self.node_neighbors.items()))
 
     def compute_edge_degrees(self) -> None:
         """Compute the degree of each hyperedge in the hypergraph."""
@@ -209,6 +243,21 @@ class Laplacians:
                 self.edge_degrees[hyperedge_name] = len(hedge)
 
         self.De: np.ndarray = np.diag(list(self.edge_degrees.values()))
+
+    # def select nghbor_at_random( node):
+    # edge_belong_to = []
+    # for hyperedge in self.hypergraph["hypergraph"].values():
+    #    if node in hyperedge:
+    #       edge_belong_to.append(hyperedge)
+    # then if EE
+    # edge =random.choice(edge_belong_to)
+    # edge.drop(node)
+    # random.choice(edge)
+    # if EN:
+    # flattened_list = list(itertools.chain(*edge_belong_to))
+    # edge.drop(node)
+    # random.choice(edge)
+    # if WE: to_do
 
 
 # Example utilization
@@ -234,7 +283,7 @@ if __name__ == "__main__":
 
     # Instantiates the Laplacians class
     laplacian = Laplacians(data)
-    laplacian.compute_node_neighbors()
+    laplacian.compute_random_walk_laplacian(type="WE")
 
     # Computes the Forman-Ricci curvature
     laplacian.compute_normalized_laplacian()
