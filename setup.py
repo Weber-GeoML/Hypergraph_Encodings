@@ -10,6 +10,7 @@ setup(
     extra_requires={
         "dev": [
             "mypy",
+            "PyJulia",  # for ORC julia code
             "pandas-stubs",
             "type-python-dateutil",
             "pydocstyle",
