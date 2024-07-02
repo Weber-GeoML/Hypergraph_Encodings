@@ -23,7 +23,16 @@ function disperse(::Type{DisperseUnweightedClique}, node, alpha, neighbors, _...
     end
 end
 
-function disperse(::Type{DisperseWeightedClique}, node, alpha, neighbors, rc, cr, rw::Vector, _...)
+function disperse(
+    ::Type{DisperseWeightedClique},
+    node,
+    alpha,
+    neighbors,
+    rc,
+    cr,
+    rw::Vector,
+    _...,
+)
     total = length(rc)
     N = neighbors[node]
     W = rw[node]
@@ -62,12 +71,12 @@ function prepare_cost_matrix(::Type{CostMatrix}, neighbors)
 
     K = length(neighbors)
     C = fill(Int8(3), (K, K))
-    Threads.@threads for m in 1:K
+    Threads.@threads for m = 1:K
         N = neighbors[m]
         for n in N
             C[n, m] = C[m, n] = 1
         end
-        for i = eachindex(N), j = i:length(N)
+        for i in eachindex(N), j = i:length(N)
             s, t = N[i], N[j]
             if s != t && s != m && C[s, t] == 3
                 C[t, s] = C[s, t] = 2
@@ -109,12 +118,13 @@ intersects(u::BitSet, v::BitSet) = any_bits((a, b) -> (a & b) != 0, u, v)
 end
 
 get_cost_submatrix(C::AbstractMatrix, U, V) = view(C, U, V)
-get_cost_submatrix(neighbors::Union{Vector{BitSet},Vector{Vector{Int}}}, U, V) = Int8[truncated_cost(u, v, neighbors) for u in U, v in V]
+get_cost_submatrix(neighbors::Union{Vector{BitSet},Vector{Vector{Int}}}, U, V) =
+    Int8[truncated_cost(u, v, neighbors) for u in U, v in V]
 function wasserstein(u, v, C, dispersions)
     U, X = findnz(dispersions[u])
     V, Y = findnz(dispersions[v])
     C = get_cost_submatrix(C, U, V)
-    OptimalTransport.sinkhorn2(X, Y, C, 1e-1; maxiter=500, atol=1e-2)
+    OptimalTransport.sinkhorn2(X, Y, C, 1e-1; maxiter = 500, atol = 1e-2)
 end
 
 @inline mm(i, j) = i < j ? CartesianIndex(i, j) : CartesianIndex(j, i)
@@ -182,14 +192,17 @@ function hypergraph_curvatures(dispersion::Type, aggregations, rc, cr, alpha, co
     rw = dispersion == DisperseWeightedClique ? prepare_weights(rc, cr, neighbors) : nothing
 
     @info "Computing Dispersions"
-    D = ThreadsX.map(n -> disperse(dispersion, n, alpha, neighbors, rc, cr, rw), eachindex(rc))
+    D = ThreadsX.map(
+        n -> disperse(dispersion, n, alpha, neighbors, rc, cr, rw),
+        eachindex(rc),
+    )
 
     @info "Computing Directional Curvature"
     w = zeros(Float32, length(rc), length(rc))
-    ThreadsX.foreach(eachindex(rc)) do i 
-        for j in (i+1):length(rc)
-            w[mm(j, i)] = wasserstein(i, j, C, D) 
-        end 
+    ThreadsX.foreach(eachindex(rc)) do i
+        for j = (i+1):length(rc)
+            w[mm(j, i)] = wasserstein(i, j, C, D)
+        end
     end
 
     @info "Computing Node Curvature Neighborhood"
@@ -202,14 +215,19 @@ function hypergraph_curvatures(dispersion::Type, aggregations, rc, cr, alpha, co
         @info "Computing Node Curvature Edges"
         nce = ThreadsX.map(n -> node_curvature_edges(n, ec, rc), eachindex(rc))
 
-        (aggregation=Symbol(aggregation), edge_curvature=ec, node_curvature_edges=nce)
+        (aggregation = Symbol(aggregation), edge_curvature = ec, node_curvature_edges = nce)
     end
 
-    (dispersions=D, directional_curvature=1 .- w, node_curvature_neighborhood=nc, aggregations=ac)
+    (
+        dispersions = D,
+        directional_curvature = 1 .- w,
+        node_curvature_neighborhood = nc,
+        aggregations = ac,
+    )
 end
 
 function edgelist_format(I::Vector{Int}, J::Vector{Int}, n::Int)
-    x = ThreadsX.collect(Int[] for _ in 1:n)
+    x = ThreadsX.collect(Int[] for _ = 1:n)
     Threads.@threads for i in ThreadsX.unique(I)
         x[i] = J[I.==i]
     end
@@ -217,7 +235,7 @@ function edgelist_format(I::Vector{Int}, J::Vector{Int}, n::Int)
 end
 
 function transpose_edgelist(cr::Vector{T}) where {T}
-    rc = [T() for _ in 1:maximum(e -> maximum(e; init=0), cr)]
+    rc = [T() for _ = 1:maximum(e -> maximum(e; init = 0), cr)]
     for (j, e) in enumerate(cr), i in e
         push!(rc[i], j)
     end
@@ -234,7 +252,13 @@ end
 - `alpha`: Self-dispersion weight
 - `cost`: Cost computation method (options: CostOndemand, CostMatrix)
 """
-function hypergraph_curvatures(dispersion::Type, aggregation::A, incidence::AbstractSparseMatrix, alpha::Float64, cost::Type) where {A}
+function hypergraph_curvatures(
+    dispersion::Type,
+    aggregation::A,
+    incidence::AbstractSparseMatrix,
+    alpha::Float64,
+    cost::Type,
+) where {A}
     @info "Preparing Input"
     n, m = size(incidence)
     I, J, _ = findnz(incidence)
@@ -243,7 +267,13 @@ function hypergraph_curvatures(dispersion::Type, aggregation::A, incidence::Abst
     hypergraph_curvatures(dispersion, aggregation, rc, cr, alpha, cost)
 end
 
-function hypergraph_curvatures(dispersion::Type, aggregation::A, incidence::Vector{B}, alpha::Float64, cost::Type) where {A,B}
+function hypergraph_curvatures(
+    dispersion::Type,
+    aggregation::A,
+    incidence::Vector{B},
+    alpha::Float64,
+    cost::Type,
+) where {A,B}
     @info "Preparing Input"
     rc, cr = transpose_edgelist(incidence), incidence
     aggregation = hasmethod(length, Tuple{A}) ? aggregation : [aggregation]
