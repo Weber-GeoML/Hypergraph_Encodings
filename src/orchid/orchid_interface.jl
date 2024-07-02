@@ -68,18 +68,18 @@ function run(input, dispersion, aggregation, alpha)
         lowercase("UnweightedStar") => Orchid.DisperseUnweightedStar,
     )[lowercase(dispersion)]
     # The aggregation function. This is literally picking the agregation function
-    A = Dict{String,Any}(
+    Aggregation = Dict{String,Any}(
         "mean" => Orchid.AggregateMean,
         "max" => Orchid.AggregateMax,
         "all" => (Orchid.AggregateMean, Orchid.AggregateMax),
     )[lowercase(aggregation)]
 
-    # @info "A is $A"
+    # @info "Aggregation is $Aggregation"
 
     # @info "D is $D"
 
-    guess_cost_calc(E) =
-        length(E) > 10_000 || maximum(e -> maximum(e; init = 0), E) > 10_000 ?
+    guess_cost_calc(Edges) =
+        length(Edges) > 10_000 || maximum(e -> maximum(e; init = 0), Edges) > 10_000 ?
         Orchid.CostOndemand : Orchid.CostMatrix
     open_() = endswith(input, ".gz") ? GzipDecompressorStream(open(input)) : open(input)
 
@@ -101,8 +101,14 @@ function run(input, dispersion, aggregation, alpha)
             @info "Importing Hypergraph $Y/$Tot"
             @info "Y is $Y" # this is the hypergraph number
             # so here they filter for the hyperedges in hypergraph number Y
-            E = rc[y.==Y] # set of hyper-edges 
-            r = Orchid.hypergraph_curvatures(D, A, E, alpha, guess_cost_calc(E))
+            Edges = rc[y.==Y] # set of hyper-edges 
+            r = Orchid.hypergraph_curvatures(
+                D,
+                Aggregation,
+                Edges,
+                alpha,
+                guess_cost_calc(Edges),
+            )
             for a in r.aggregations
                 push!(results, get_entry(r, a, input, dispersion, alpha))
             end
@@ -110,13 +116,19 @@ function run(input, dispersion, aggregation, alpha)
         results
     else # individual hypergraph
         @info "Importing Hypergraph"
-        E = parse_edgelist(open_())
-        # @info "A is $A"
-        # A is the agrregation function (Eg aggregate mean, aggregate max)
+        Edges = parse_edgelist(open_())
+        @info "Aggregation, the aggregation function, is $Aggregation"
+        # Aggregation is the agrregation function (Eg aggregate mean, aggregate max)
         # @info "D is $D"
         # I think D is the measure
-        @info "E is $E" #
-        r = Orchid.hypergraph_curvatures(D, A, E, alpha, guess_cost_calc(E))
+        @info "Edges is $Edges" #
+        r = Orchid.hypergraph_curvatures(
+            D,
+            Aggregation,
+            Edges,
+            alpha,
+            guess_cost_calc(Edges),
+        )
         map(r.aggregations) do a
             get_entry(r, a, input, dispersion, alpha)
         end
@@ -130,6 +142,7 @@ function orchid_main(
     aggregation::String = "All",
     alpha = 0.1,
 )
+    # First block: Executed when the input does not contain "*"
     if !occursin("*", input)
         results = run(input, dispersion, aggregation, alpha)
         @info "Converting Curvatures to JSON"
@@ -153,6 +166,9 @@ function orchid_main(
     end
 end
 
+"""
+This is the interface function. It's called by Python.
+"""
 function main()
     s = ArgParseSettings(
         description = """
@@ -185,7 +201,8 @@ function main()
         default = 0.0
     end
     opts = parse_args(s)
-    @info "Hello. We are computing ORC. You care calling with options $opts['input'], $opts['output']"
+    @info "Welcome to Julia"
+    # @info "Hello. We are computing ORC. You are calling with options $opts['input'], $opts['output']"
 
     orchid_main(
         opts["input"],
