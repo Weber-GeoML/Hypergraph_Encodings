@@ -1,8 +1,8 @@
 """
 curvatures.py
 
-This module contains functions for computing the Forman-Ricci and
-Ollivier-Ricci curvatures of an undirected hypergraph.
+This module contains functions for computing the Forman-Ricci 
+curvatures of an undirected hypergraph.
 """
 
 import sys

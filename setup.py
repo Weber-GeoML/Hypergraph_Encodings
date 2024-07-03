@@ -6,7 +6,14 @@ setup(
     python_requires=">3.10",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
-    install_requires=["numpy", "pandas", "matplotlib", "scipy==1.10.0"],
+    install_requires=[
+        "numpy",
+        "pandas",
+        "matplotlib",
+        "scipy==1.10.0",
+        "PyJulia",  # for ORC julia code
+        "julia",
+    ],
     extra_requires={
         "dev": [
             "mypy",

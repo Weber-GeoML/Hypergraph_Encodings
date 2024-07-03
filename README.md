@@ -40,3 +40,19 @@ For a file in particular:
 ```
 pytest tests/test_curvature.py
 ``` 
+
+
+# Julia
+
+A bit hacky for now.
+
+Give permission:
+
+chmod +x /Users/pellegrinraphael/Desktop/Repos_GNN/Hypergraph_Encodings/src/orchid/orchid_interface.jl
+
+TODO:
+using Pkg
+Pkg.add("Documenter")
+julia -e 'using Documenter; Documenter.generate("docs")'
+
+To generate html docs.
