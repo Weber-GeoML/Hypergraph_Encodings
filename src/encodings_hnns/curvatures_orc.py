@@ -11,45 +11,54 @@ import sys
 
 from encodings_hnns.data_handling import parser
 
-print(sys.path)
-
 # from julia import Julia
 # julia = Julia()
 
-import subprocess
 
-
-def map_nodes_to_integers(hypergraph):
+def _map_nodes_to_integers(hypergraph: dict) -> tuple[dict, dict, dict]:
     """
     Reason I am doing this is because Julia code
     assumes that the nodes are [1,2,3,...,n]
     where n is the number of nodes.
 
-    Example:
-    in:
-    hypergraph = {"y": [5, 6], "g": [8, 10]}
-    out:
-    {'y': [1, 2], 'g': [3, 4]}
-    {5: 1, 6: 2, 8: 3, 10: 4}
-    {1: 5, 2: 6, 3: 8, 4: 10}
-    """
-    node_to_int = {}
-    int_to_node = {}
-    next_int = 1  # Start assigning integers from 1
+    Args:
+        hypergraph:
+            the hypergraph (a dictionary with the hyperedges as values)
 
-    # Extract all unique nodes from the hypergraph
+    Returns:
+        mapped_hypergraph:
+            the same hypergraph, but the nodes have been mapped to the
+            [1,2,3,..,n] where n is as small as possible
+        node_to_int:
+            mapping from node to integers
+        int_to_node:
+            mapping from interger to node
+
+    Example:
+        in:
+            hypergraph = {"y": [5, 6], "g": [8, 10]}
+        out:
+            {'y': [1, 2], 'g': [3, 4]}
+            {5: 1, 6: 2, 8: 3, 10: 4}
+            {1: 5, 2: 6, 3: 8, 4: 10}
+    """
+    node_to_int: dict = {}
+    int_to_node: dict = {}
+    next_int: int = 1  # Starts assigning integers from 1
+
+    # Extracts all unique nodes from the hypergraph
     all_nodes = set()
     for nodes_list in hypergraph.values():
         all_nodes.update(nodes_list)
 
-    # Assign integer IDs to nodes
+    # Assigns integer IDs to nodes
     for node in sorted(all_nodes):
         node_to_int[node] = next_int
         int_to_node[next_int] = node
         next_int += 1
 
     # Map nodes in the hypergraph to their integer IDs
-    mapped_hypergraph = {}
+    mapped_hypergraph: dict = {}
     for hedge, nodes in hypergraph.items():
         mapped_nodes = [node_to_int[node] for node in nodes]
         mapped_hypergraph[hedge] = mapped_nodes
@@ -67,9 +76,10 @@ def _save_to_tsv(hypergraph: dict, output_file: str) -> None:
         output_file (str): The path to the output TSV file.
     """
     # Open the file in write mode
+    line: str
     with open(output_file, "w") as f:
         # Iterate over each hyperedge (key) and its associated nodes (values)
-        for hedge, nodes in hypergraph.items():
+        for hyperedge, nodes in hypergraph.items():
             # Write the nodes to the file as a single line with three spaces between nodes
             line = "   ".join(map(str, nodes)) + "\n"
             f.write(line)
@@ -77,8 +87,8 @@ def _save_to_tsv(hypergraph: dict, output_file: str) -> None:
 
 class ORC:
     def __init__(self, hypergraph: dict) -> None:
-        """
-        Initialize the Forman-Ricci curvature object.
+        """Initialize the ORC curvature object.
+
         A hypergraph is a dictionary with the following keys:
         - hypergraph : a dictionary with the hyperedges as values
         - features : a dictionary with the features of the nodes as values
@@ -91,15 +101,15 @@ class ORC:
         assert "n" in hypergraph.keys(), "Number of nodes not found."
 
         self.hypergraph: dict = hypergraph
-        self.node_curvature_edges = None
-        self.node_curvature_neighborhood = None
-        self.edge_curvature = None
+        self.node_curvature_edges: None | dict = None
+        self.node_curvature_neighborhood: None | dict = None
+        self.edge_curvature: None | dict = None
 
     def compute_orc(
         self,
         dispersion: str = "UnweightedClique",
         alpha: float = 0,
-        Aggregation_type: str = "Mean",
+        aggregation_type: str = "Mean",
     ) -> None:
         """Computes the ORC for hypergraphs.
 
@@ -107,10 +117,11 @@ class ORC:
         We also get edges ORC.
 
         Args:
-            Dispersions:
+            dispersions:
                 One of "UnweightedClique", "UnweightedStar", "WeightedClique
             alpha:
-            Aggregation_type:
+                TODO
+            aggregation_type:
                 Mean or Max. See eq 8, 10 (not implement) and 11 in Choupette (Orchid)
                 Mean:
                 This is equivalent to computing the curvature of e based on the average over all W1 distances of
@@ -123,29 +134,29 @@ class ORC:
 
         hypergraph: dict = self.hypergraph["hypergraph"]
 
-        hypergraph = {"y": [5, 6], "g": [8, 10]}
+        hypergraph, _, _ = _map_nodes_to_integers(hypergraph=hypergraph)
 
-        hypergraph, b, c = map_nodes_to_integers(hypergraph=hypergraph)
+        # Gets the directory of the current script
+        script_dir: str = os.path.dirname(__file__)
 
-        # Get the directory of the current script
-        script_dir = os.path.dirname(__file__)
-
-        # Define paths relative to the current script
-        orchid_jl_path = os.path.abspath(
+        # Defines paths relative to the current script
+        orchid_jl_path: str = os.path.abspath(
             os.path.join(script_dir, "../../src/orchid/orchid_interface.jl")
         )
-        input_file = os.path.abspath(os.path.join(script_dir, "hypergraph_edges.tsv"))
-        result_file = os.path.abspath(
+        input_file: str = os.path.abspath(
+            os.path.join(script_dir, "hypergraph_edges.tsv")
+        )
+        result_file: str = os.path.abspath(
             os.path.join(
                 script_dir, f"results.alpha-{alpha}.dispersion-{dispersion}.orc.json"
             )
         )
 
-        # Specify the output file path
+        # Specifies the output file path
         _save_to_tsv(hypergraph=hypergraph, output_file=input_file)
 
-        # Get the current working directory
-        current_path = os.getcwd()
+        # Gets the current working directory
+        current_path: str = os.getcwd()
 
         # Print the current working directory
         print("Current working directory:", current_path)
@@ -159,7 +170,7 @@ class ORC:
         # Subroutine to call Julia code
 
         # Define the command to execute
-        command = [
+        command: list = [
             "julia",
             orchid_jl_path,
             "--aggregation",
@@ -189,12 +200,10 @@ class ORC:
         # first one uses mean aggregation
         # second ones uses max aggregation
         stats: dict
-        if Aggregation_type == "Mean":
+        if aggregation_type == "Mean":
             stats = data[0]
-        elif Aggregation_type == "Max":
+        elif aggregation_type == "Max":
             stats = data[1]
-
-        print(stats)
 
         self.node_curvature_edges = stats["node_curvature_edges"]
         self.node_curvature_neighborhood = stats["node_curvature_neighborhood"]
