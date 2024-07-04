@@ -10,9 +10,10 @@ setup(
         "numpy",
         "pandas",
         "matplotlib",
+        "torch",
         "scipy==1.10.0",
-        "PyJulia",  # for ORC julia code
-        "julia",
+        "torch-geometric",
+        "torch-scatter",
     ],
     extra_requires={
         "dev": [
