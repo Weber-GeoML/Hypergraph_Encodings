@@ -83,7 +83,7 @@ def degree_e() -> np.ndarray:
 
 @pytest.fixture
 def hodge_laplacian_up() -> np.ndarray:
-    """Returns the Hodge Laplacian down"""
+    """Returns the Hodge Laplacian (down)"""
     l_up: np.ndarray = np.array(
         [[3, 2, 1, 0], [2, 2, 1, 0], [1, 1, 3, 1], [0, 0, 1, 2]]
     )
@@ -92,7 +92,7 @@ def hodge_laplacian_up() -> np.ndarray:
 
 @pytest.fixture
 def hodge_laplacian_down() -> np.ndarray:
-    """Returns the Hodge Laplacian up"""
+    """Returns the Hodge Laplacian (up)"""
     l_down: np.ndarray = np.array(
         [
             [1, 1, 1, 0, 0, 0],
@@ -248,7 +248,7 @@ def test_compute_edge_degree(toy_hypergraph, degree_e) -> None:
 
 
 def test_compute_normalized_laplacian(toy_hypergraph, normalized_laplacian) -> None:
-    """Test for compute_normlaized_laplacian
+    """Test for compute_normalized_laplacian
 
     Args:
         toy_hypergraph:
@@ -263,13 +263,13 @@ def test_compute_normalized_laplacian(toy_hypergraph, normalized_laplacian) -> N
 
 
 def test_compute_random_walk_laplacian_EE(toy_hypergraph, rw_laplacian) -> None:
-    """Test for compute_normlaized_laplacian
+    """Test for compute_random_walk_laplacian (EE)
 
     Args:
         toy_hypergraph:
             hypergraph from draft
         rw_laplacian:
-            rw laplacian
+            rw laplacian for EE scheme
 
     """
     laplacian: Laplacians = Laplacians(toy_hypergraph)
@@ -283,6 +283,9 @@ def test_compute_node_neighbors(toy_hypergraph, ngbors):
     Args:
         toy_hypergraph:
             hypergraph from draft
+        nhbors:
+            neighbors of each node in toy_hypergraph
+
     """
     laplacian: Laplacians = Laplacians(toy_hypergraph)
     laplacian.compute_node_neighbors()
@@ -290,13 +293,14 @@ def test_compute_node_neighbors(toy_hypergraph, ngbors):
 
 
 def test_compute_random_walk_laplacian_EN(toy_hypergraph, rw_laplacian_EN) -> None:
-    """Test for compute_normlaized_laplacian
+    """Test for compute_random_walk_laplacian (EN)
 
     Args:
         toy_hypergraph:
             hypergraph from draft
-        laplacian_hodge:
-            hodge laplacian (up)
+        rw_laplacian_EN:
+            rw laplacian for EN scheme
+
 
     """
     laplacian: Laplacians = Laplacians(toy_hypergraph)
@@ -305,13 +309,14 @@ def test_compute_random_walk_laplacian_EN(toy_hypergraph, rw_laplacian_EN) -> No
 
 
 def test_compute_random_walk_laplacian_WE(toy_hypergraph, rw_laplacian_WE) -> None:
-    """Test for compute_normlaized_laplacian
+    """Test for compute_random_walk_laplacian (WE)
 
     Args:
         toy_hypergraph:
             hypergraph from draft
-        laplacian_hodge:
-            hodge laplacian (up)
+        rw_laplacian_WE:
+            rw laplacian for WE scheme
+
 
     """
     laplacian: Laplacians = Laplacians(toy_hypergraph)
