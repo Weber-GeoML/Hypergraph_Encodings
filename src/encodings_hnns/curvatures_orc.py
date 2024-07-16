@@ -89,11 +89,14 @@ class ORC:
     def __init__(self, hypergraph: dict) -> None:
         """Initialize the ORC curvature object.
 
-        A hypergraph is a dictionary with the following keys:
-        - hypergraph : a dictionary with the hyperedges as values
-        - features : a dictionary with the features of the nodes as values
-        - labels : a dictionary with the labels of the nodes as values
-        - n : the number of nodes in the hypergraph
+        Args:
+            hypergraph:
+                a hypergraph
+                A hypergraph is a dictionary with the following keys:
+                - hypergraph : a dictionary with the hyperedges as values
+                - features : a dictionary with the features of the nodes as values
+                - labels : a dictionary with the labels of the nodes as values
+                - n : the number of nodes in the hypergraph
         """
         assert "hypergraph" in hypergraph.keys(), "Hypergraph not found."
         assert "features" in hypergraph.keys(), "Features not found."
@@ -206,8 +209,13 @@ class ORC:
             stats = data[1]
 
         self.node_curvature_edges = stats["node_curvature_edges"]
+        print(f"The node curvatures are \n {stats['node_curvature_neighborhood']}")
         self.node_curvature_neighborhood = stats["node_curvature_neighborhood"]
-        self.edge_curvature = stats["edge_curvature"]
+        print(f"The edge curvatures are \n {stats['edge_curvature']}")
+        self.edge_curvature = {
+            key: stats["edge_curvature"][i]
+            for i, key in enumerate(self.hypergraph["hypergraph"])
+        }
 
 
 # Example utilization
