@@ -66,7 +66,7 @@ class HypergraphCurvatureProfile:
                 Currently can be ORC or FRC
 
         Returns:
-            the hypergraph with the frc encodings adding to the featuress
+            the hypergraph with the frc or orc encodings added to the featuress
 
         """
         rc: FormanRicci | ORC
@@ -104,7 +104,7 @@ class HypergraphCurvatureProfile:
                 np.std(rc_values),
             ]
 
-        # turn the FRC profile into a np.matrix and stack it with the features
+        # turn the RC profile into a np.matrix and stack it with the features
         for node in self.hyperedges.keys():
             rc_vals = np.matrix(rc_profile[node])
             if verbose:
@@ -122,9 +122,8 @@ class HypergraphCurvatureProfile:
         self,
         hypergraph: dict,
         verbose: bool = True,
-        type: str = "Normalized",
-        rw_type: str | None = None,
-        alpha: float | None = None,
+        type: str = "RW",
+        rw_type: str = "EN",
     ) -> dict:
         """Adds encodings based on Laplacians
 
@@ -138,14 +137,16 @@ class HypergraphCurvatureProfile:
                 Hodge, RW, Normalized
             rw_type:
                 EN, WE, EE
-            alpha:
-                for the random walk
 
+        Returns:
+            the hypergraph with the Laplacian encodings added to the featuress
         """
         if self.hyperedges == None:
             self.compute_hyperedges(hypergraph)
 
         laplacian: Laplacians = Laplacians(hypergraph=hypergraph)
+        eigenvalues: np.ndarray
+        eigenvectors: np.ndarray
         if type == "Hodge":
             laplacian.compute_hodge_laplacian()
             # We would use up for edge feature
@@ -153,17 +154,17 @@ class HypergraphCurvatureProfile:
             print(laplacian.hodge_laplacian_up)
             # We use down for node feature
             # as the down matrix is number of nodes by number of nodes
-            print(laplacian.hodge_laplacian_down)
+            print(f"The Hodge Laplacian (down) is \n {laplacian.hodge_laplacian_down}")
             # Compute the eigenvalues and eigenvectors
             eigenvalues, eigenvectors = np.linalg.eig(laplacian.hodge_laplacian_down)
         elif type == "Normalized":
-            # TODO
             laplacian.compute_normalized_laplacian()
+            print(f"The normalized Laplacian is {laplacian.normalized_laplacian}")
             eigenvalues, eigenvectors = np.linalg.eig(laplacian.normalized_laplacian)
         elif type == "RW":
-            # Not symmetric. Need to think what we do
-            pass
-            # TODO
+            laplacian.compute_random_walk_laplacian(type=rw_type)
+            print(laplacian.rw_laplacian)
+            eigenvalues, eigenvectors = np.linalg.eig(laplacian.rw_laplacian)
 
         # Print the results
         print("Eigenvalues:")
@@ -171,21 +172,23 @@ class HypergraphCurvatureProfile:
         print("Eigenvectors:")
         print(eigenvectors)
 
-        # Creates a diagonal matrix from the eigenvalues
-        diagonal_matrix = np.diag(eigenvalues)
+        # That was true for Hodge
+        # if type == "Normalized" or type == "Hodge":
+        #     # Creates a diagonal matrix from the eigenvalues
+        #     diagonal_matrix = np.diag(eigenvalues)
 
-        # Reconstructs the original matrix
-        reconstructed_matrix = eigenvectors @ diagonal_matrix @ eigenvectors.T
+        #     # Reconstructs the original matrix
+        #     reconstructed_matrix = eigenvectors @ diagonal_matrix @ eigenvectors.T
 
-        # Compare reconstructed matrix to the original matrix
-        if np.allclose(reconstructed_matrix, laplacian.hodge_laplacian_down):
-            print("Reconstructed matrix is close to the original matrix.")
-            print("Symmetric matrix. Expected for Hodge, normalized")
-        else:
-            print("Reconstructed matrix differs from the original matrix.")
+        #     # Compare reconstructed matrix to the original matrix
+        #     if np.allclose(reconstructed_matrix, laplacian.hodge_laplacian_down):
+        #         print("Reconstructed matrix is close to the original matrix.")
+        #         print("Symmetric matrix. Expected for Hodge, normalized")
+        #     else:
+        #         print("Reconstructed matrix differs from the original matrix.")
 
         # turn the FRC profile into a np.matrix and stack it with the features
-        i = 0
+        i: int = 0  # to count the nodes. Same number of evectors as nodes.
         for node in self.hyperedges.keys():
             laplacian_vals = eigenvectors[:, i].reshape(1, -1)
             if verbose:
@@ -197,6 +200,7 @@ class HypergraphCurvatureProfile:
                 (hypergraph["features"][node], laplacian_vals)
             )
             i += 1
+
         return hypergraph
 
     def add_randowm_walks_encodings(
@@ -204,7 +208,7 @@ class HypergraphCurvatureProfile:
         hypergraph: dict,
         verbose: bool = True,
         rw_type: str = "WE",
-        alpha: float = 0,
+        k: int = 20,
     ) -> dict:
         """Adds encodings based on RW
 
@@ -216,12 +220,54 @@ class HypergraphCurvatureProfile:
             rw_type:
                 WE
                 EE
-            alpha:
-                for the lazy RW or not.
+            k:
+                number of steps of random walk
+
+        Returns:
+            the hypergraph with the RW encodings added to the featuress
 
         """
-        pass
-        # TODO
+        if self.hyperedges == None:
+            self.compute_hyperedges(hypergraph)
+
+        laplacian: Laplacians = Laplacians(hypergraph=hypergraph)
+        # get the laplacian. Take the opposite and add I:
+        # gives probability of going from i to j
+        if verbose:
+            print(f"We are doing a {rw_type} rw")
+        laplacian.compute_random_walk_laplacian(type=rw_type)
+        num_nodes: int = len(self.hyperedges.keys())
+        rw_matrix: np.ndarray = -laplacian.rw_laplacian + np.eye(num_nodes)
+
+        print(f"The random walk matrix is \n {rw_matrix}")
+        print(rw_matrix)
+
+        matrix_powers = []
+
+        for hop in range(k):
+            rw_matrix_k = np.linalg.matrix_power(rw_matrix, hop)
+            matrix_powers.append(np.diag(rw_matrix_k))
+
+        # Convert the list of matrix powers to a numpy array
+        matrix_powers = np.array(matrix_powers)
+
+        assert matrix_powers.shape[0] == k
+
+        i: int = 0  # to count the nodes. Same number of evectors as nodes.
+        for node in self.hyperedges.keys():
+            assert matrix_powers[:, i].shape == (20,)
+            laplacian_vals = matrix_powers[:, i].reshape(1, -1)
+            if verbose:
+                print(
+                    f"The hypergraph features for node {node} are \n {hypergraph['features'][node]}"
+                )
+                print(f"We add the RW based encoding:\n {laplacian_vals}")
+            hypergraph["features"][node] = np.hstack(
+                (hypergraph["features"][node], laplacian_vals)
+            )
+            i += 1
+
+        return hypergraph
 
 
 # Example utilization
@@ -241,7 +287,7 @@ if __name__ == "__main__":
 
     # Instantiates the Hypergraph Curvature Profile class
     hgcurvaturprofile = HypergraphCurvatureProfile()
-    # hg = hgcurvaturprofile.compute_orc(hg)
 
-    hg = hgcurvaturprofile.add_laplacian_encodings(hg)
+    # hg = hgcurvaturprofile.add_laplacian_encodings(hg)
+    hg = hgcurvaturprofile.add_randowm_walks_encodings(hg)
     print(hg)
