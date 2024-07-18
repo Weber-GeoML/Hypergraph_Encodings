@@ -172,7 +172,6 @@ class Laplacians:
                     elif node_j in self.node_neighbors[node_i]:
                         matrix_[i, j] = -1 / (len(self.node_neighbors[node_i]) - 1)
 
-            print(f"Matrix is \n {matrix_}")
             self.rw_laplacian = matrix_
 
         if type == "WE":  # weighted edge

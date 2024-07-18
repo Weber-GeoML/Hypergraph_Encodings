@@ -22,7 +22,7 @@ class HypergraphCurvatureProfile:
         self.hyperedges: None | dict = None
 
     def compute_hyperedges(self, hypergraph: dict) -> None:
-        """Computes a dictionary called hyperedges
+        """Computes a dictionary called hyperedges.
 
         The dictionary contains as keys the nodes,
         as values the hyperedges the node belongs to.
@@ -35,7 +35,7 @@ class HypergraphCurvatureProfile:
             the dict that contains nodes and their hyperedges
 
         We do not want to compute this twice so if we compute
-        it for FRC, we can reuse it for ORC.
+        it for eg FRC, we can reuse it for ORC.
         """
         # for each node, get the hyperedges it belongs to
         # keys are node, values are hyperedges name the node belongs to
@@ -85,7 +85,7 @@ class HypergraphCurvatureProfile:
             print(f"the hyperedges are {self.hyperedges}")
 
         # for each node, get the min, max, mean, median,
-        # and std of the FRC values of the hyperedges it belongs to
+        # and std of the FRC or ORC values of the hyperedges it belongs to
         rc_profile: dict[list[float]] = {}
         for node in self.hyperedges.keys():
             if type == "FRC":
@@ -136,11 +136,14 @@ class HypergraphCurvatureProfile:
                 the type of Laplacian we use for the encodings
                 Hodge, RW, Normalized
             rw_type:
-                EN, WE, EE
+                the type of random walk on the hypergraph
+                EN (Equal Node), WE (Weighted Edge) , EE (Equal Edge)
 
         Returns:
             the hypergraph with the Laplacian encodings added to the featuress
         """
+        # Computes the dictionary with keys as node
+        # and values as hyperedges
         if self.hyperedges == None:
             self.compute_hyperedges(hypergraph)
 
@@ -151,7 +154,6 @@ class HypergraphCurvatureProfile:
             laplacian.compute_hodge_laplacian()
             # We would use up for edge feature
             # as the up matrix is number of edge by number of egde
-            print(laplacian.hodge_laplacian_up)
             # We use down for node feature
             # as the down matrix is number of nodes by number of nodes
             print(f"The Hodge Laplacian (down) is \n {laplacian.hodge_laplacian_down}")
@@ -163,7 +165,7 @@ class HypergraphCurvatureProfile:
             eigenvalues, eigenvectors = np.linalg.eig(laplacian.normalized_laplacian)
         elif type == "RW":
             laplacian.compute_random_walk_laplacian(type=rw_type)
-            print(laplacian.rw_laplacian)
+            print(f"The RW laplacian is \n {laplacian.rw_laplacian})
             eigenvalues, eigenvectors = np.linalg.eig(laplacian.rw_laplacian)
 
         # Print the results
@@ -255,7 +257,7 @@ class HypergraphCurvatureProfile:
 
         i: int = 0  # to count the nodes. Same number of evectors as nodes.
         for node in self.hyperedges.keys():
-            assert matrix_powers[:, i].shape == (20,)
+            assert matrix_powers[:, i].shape == (k,)
             laplacian_vals = matrix_powers[:, i].reshape(1, -1)
             if verbose:
                 print(
