@@ -6,34 +6,38 @@ to a dataset (curvature, laplacians, random walks).
 """
 
 import numpy as np
+
 from encodings_hnns.curvatures import FormanRicci
+from encodings_hnns.curvatures_orc import ORC
+from encodings_hnns.laplacians import Laplacians
 
 
 class HypergraphCurvatureProfile:
-    """
-    This class computes the local curvature profile
-    structural encoding for each node in a hypergraph.
+    """Computes the local curvature profile
+
+    Computes the structural encoding for each node in a hypergraph.
     """
 
     def __init__(self):
-        pass
+        self.hyperedges: None | dict = None
 
-    def compute_frc(self, hypergraph: dict, verbose: bool = True) -> dict:
-        """
-        Compute the HCP based on the FRC.
+    def compute_hyperedges(self, hypergraph: dict) -> None:
+        """Computes a dictionary called hyperedges.
+
+        The dictionary contains as keys the nodes,
+        as values the hyperedges the node belongs to.
 
         Args:
             hypergraph:
-                hypergraph dict containing hypergraph, features, label, n
-            verbose:
-                to print more
+                the hypergraph object
 
+        Sets:
+            the dict that contains nodes and their hyperedges
+
+        We do not want to compute this twice so if we compute
+        it for eg FRC, we can reuse it for ORC.
         """
-        frc = FormanRicci(hypergraph)
-        frc.compute_forman_ricci()
-
         # for each node, get the hyperedges it belongs to
-        num_nodes: int = hypergraph["n"]
         # keys are node, values are hyperedges name the node belongs to
         hyperedges: dict = {}
 
@@ -45,38 +49,227 @@ class HypergraphCurvatureProfile:
                     hyperedges[node] = []
                 hyperedges[node].append(hyperedge_name)
 
+        self.hyperedges = hyperedges
+
+    def add_curvature_encodings(
+        self, hypergraph: dict, verbose: bool = True, type: str = "FRC"
+    ) -> dict:
+        """Computes the HCP based on the FRC.
+
+        Args:
+            hypergraph:
+                hypergraph dict containing hypergraph, features, label, n
+            verbose:
+                to print more
+            type:
+                the type of encoding we add.
+                Currently can be ORC or FRC
+
+        Returns:
+            the hypergraph with the frc or orc encodings added to the featuress
+
+        """
+        rc: FormanRicci | ORC
+        if type == "FRC":
+            rc = FormanRicci(hypergraph)
+            rc.compute_forman_ricci()
+        elif type == "ORC":
+            rc = ORC(hypergraph)
+            # following calls the julia code and runs the subroutines
+            rc.compute_orc()
+
+        if self.hyperedges == None:
+            self.compute_hyperedges(hypergraph)
+
         if verbose:
-            print(f"the hyperedges are {hyperedges}")
+            print(f"the hyperedges are {self.hyperedges}")
 
         # for each node, get the min, max, mean, median,
-        # and std of the FRC values of the hyperedges it belongs to
-        frc_profile: dict[list[float]] = {}
-        for node in hyperedges.keys():
-            frc_values = [frc.forman_ricci[hyperedge] for hyperedge in hyperedges[node]]
-            frc_profile[node] = [
-                min(frc_values),
-                max(frc_values),
-                np.mean(frc_values),
-                np.median(frc_values),
-                np.std(frc_values),
+        # and std of the FRC or ORC values of the hyperedges it belongs to
+        rc_profile: dict[list[float]] = {}
+        for node in self.hyperedges.keys():
+            if type == "FRC":
+                rc_values = [
+                    rc.forman_ricci[hyperedge] for hyperedge in self.hyperedges[node]
+                ]
+            elif type == "ORC":
+                rc_values = [
+                    rc.edge_curvature[hyperedge] for hyperedge in self.hyperedges[node]
+                ]
+            rc_profile[node] = [
+                min(rc_values),
+                max(rc_values),
+                np.mean(rc_values),
+                np.median(rc_values),
+                np.std(rc_values),
             ]
 
-        # turn the FRC profile into a np.matrix and stack it with the features
-        for node in hyperedges.keys():
-            frc_vals = np.matrix(frc_profile[node])
-            print(hypergraph["features"][node])
-            print(frc_vals)
+        # turn the RC profile into a np.matrix and stack it with the features
+        for node in self.hyperedges.keys():
+            rc_vals = np.matrix(rc_profile[node])
+            if verbose:
+                print(
+                    f"The hypergraph features for node {node} are \n {hypergraph['features'][node]}"
+                )
+                print(f"We add the encoding:\n {rc_vals}")
             hypergraph["features"][node] = np.hstack(
-                (hypergraph["features"][node], frc_vals)
+                (hypergraph["features"][node], rc_vals)
             )
 
         return hypergraph
 
-    def compute_orc(self, hypergraph: dict) -> dict:
+    def add_laplacian_encodings(
+        self,
+        hypergraph: dict,
+        verbose: bool = True,
+        type: str = "RW",
+        rw_type: str = "EN",
+    ) -> dict:
+        """Adds encodings based on Laplacians
+
+        Args:
+            hypergraph:
+                hypergraph dict containing hypergraph, features, label, n
+            verbose:
+                to print more
+            type:
+                the type of Laplacian we use for the encodings
+                Hodge, RW, Normalized
+            rw_type:
+                the type of random walk on the hypergraph
+                EN (Equal Node), WE (Weighted Edge) , EE (Equal Edge)
+
+        Returns:
+            the hypergraph with the Laplacian encodings added to the featuress
         """
-        Compute the HCP based on the ORC.
+        # Computes the dictionary with keys as node
+        # and values as hyperedges
+        if self.hyperedges == None:
+            self.compute_hyperedges(hypergraph)
+
+        laplacian: Laplacians = Laplacians(hypergraph=hypergraph)
+        eigenvalues: np.ndarray
+        eigenvectors: np.ndarray
+        if type == "Hodge":
+            laplacian.compute_hodge_laplacian()
+            # We would use up for edge feature
+            # as the up matrix is number of edge by number of egde
+            # We use down for node feature
+            # as the down matrix is number of nodes by number of nodes
+            print(f"The Hodge Laplacian (down) is \n {laplacian.hodge_laplacian_down}")
+            # Compute the eigenvalues and eigenvectors
+            eigenvalues, eigenvectors = np.linalg.eig(laplacian.hodge_laplacian_down)
+        elif type == "Normalized":
+            laplacian.compute_normalized_laplacian()
+            print(f"The normalized Laplacian is {laplacian.normalized_laplacian}")
+            eigenvalues, eigenvectors = np.linalg.eig(laplacian.normalized_laplacian)
+        elif type == "RW":
+            laplacian.compute_random_walk_laplacian(type=rw_type)
+            print(f"The RW laplacian is \n {laplacian.rw_laplacian})
+            eigenvalues, eigenvectors = np.linalg.eig(laplacian.rw_laplacian)
+
+        # Print the results
+        print("Eigenvalues:")
+        print(eigenvalues)
+        print("Eigenvectors:")
+        print(eigenvectors)
+
+        # That was true for Hodge
+        # if type == "Normalized" or type == "Hodge":
+        #     # Creates a diagonal matrix from the eigenvalues
+        #     diagonal_matrix = np.diag(eigenvalues)
+
+        #     # Reconstructs the original matrix
+        #     reconstructed_matrix = eigenvectors @ diagonal_matrix @ eigenvectors.T
+
+        #     # Compare reconstructed matrix to the original matrix
+        #     if np.allclose(reconstructed_matrix, laplacian.hodge_laplacian_down):
+        #         print("Reconstructed matrix is close to the original matrix.")
+        #         print("Symmetric matrix. Expected for Hodge, normalized")
+        #     else:
+        #         print("Reconstructed matrix differs from the original matrix.")
+
+        # turn the FRC profile into a np.matrix and stack it with the features
+        i: int = 0  # to count the nodes. Same number of evectors as nodes.
+        for node in self.hyperedges.keys():
+            laplacian_vals = eigenvectors[:, i].reshape(1, -1)
+            if verbose:
+                print(
+                    f"The hypergraph features for node {node} are \n {hypergraph['features'][node]}"
+                )
+                print(f"We add the Laplacian based encoding:\n {laplacian_vals}")
+            hypergraph["features"][node] = np.hstack(
+                (hypergraph["features"][node], laplacian_vals)
+            )
+            i += 1
+
+        return hypergraph
+
+    def add_randowm_walks_encodings(
+        self,
+        hypergraph: dict,
+        verbose: bool = True,
+        rw_type: str = "WE",
+        k: int = 20,
+    ) -> dict:
+        """Adds encodings based on RW
+
+        Args:
+            hypergraph:
+                hypergraph dict containing hypergraph, features, label, n
+            verbose:
+                to print more
+            rw_type:
+                WE
+                EE
+            k:
+                number of steps of random walk
+
+        Returns:
+            the hypergraph with the RW encodings added to the featuress
+
         """
-        pass
+        if self.hyperedges == None:
+            self.compute_hyperedges(hypergraph)
+
+        laplacian: Laplacians = Laplacians(hypergraph=hypergraph)
+        # get the laplacian. Take the opposite and add I:
+        # gives probability of going from i to j
+        if verbose:
+            print(f"We are doing a {rw_type} rw")
+        laplacian.compute_random_walk_laplacian(type=rw_type)
+        num_nodes: int = len(self.hyperedges.keys())
+        rw_matrix: np.ndarray = -laplacian.rw_laplacian + np.eye(num_nodes)
+
+        print(f"The random walk matrix is \n {rw_matrix}")
+        print(rw_matrix)
+
+        matrix_powers = []
+
+        for hop in range(k):
+            rw_matrix_k = np.linalg.matrix_power(rw_matrix, hop)
+            matrix_powers.append(np.diag(rw_matrix_k))
+
+        # Convert the list of matrix powers to a numpy array
+        matrix_powers = np.array(matrix_powers)
+
+        assert matrix_powers.shape[0] == k
+
+        i: int = 0  # to count the nodes. Same number of evectors as nodes.
+        for node in self.hyperedges.keys():
+            assert matrix_powers[:, i].shape == (k,)
+            laplacian_vals = matrix_powers[:, i].reshape(1, -1)
+            if verbose:
+                print(
+                    f"The hypergraph features for node {node} are \n {hypergraph['features'][node]}"
+                )
+                print(f"We add the RW based encoding:\n {laplacian_vals}")
+            hypergraph["features"][node] = np.hstack(
+                (hypergraph["features"][node], laplacian_vals)
+            )
+            i += 1
+
+        return hypergraph
 
 
 # Example utilization
@@ -84,7 +277,7 @@ if __name__ == "__main__":
 
     hg: dict[str, dict | int] = {
         "hypergraph": {
-            "yellow": [1, 2, 3],
+            "yellow": [1, 2, 3, 5],
             "red": [2, 3],
             "green": [3, 5, 6],
             "blue": [4, 5],
@@ -96,5 +289,7 @@ if __name__ == "__main__":
 
     # Instantiates the Hypergraph Curvature Profile class
     hgcurvaturprofile = HypergraphCurvatureProfile()
-    hg = hgcurvaturprofile.compute_frc(hg)
+
+    # hg = hgcurvaturprofile.add_laplacian_encodings(hg)
+    hg = hgcurvaturprofile.add_randowm_walks_encodings(hg)
     print(hg)

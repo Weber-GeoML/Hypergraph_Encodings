@@ -43,12 +43,12 @@ def load(args) -> tuple:
 
 
 class parser(object):
-    """an object for parsing data"""
+    """Parses data"""
 
     def __init__(self, data: str, dataset: str) -> None:
-        """initialises the data directory
+        """Initialises the data directory
 
-        arguments:
+        Arguments:
             data:
                 coauthorship/cocitation
             dataset:
@@ -64,8 +64,10 @@ class parser(object):
         self.data, self.dataset = data, dataset
 
     def parse(self):
-        """
-        returns a dataset specific function to parse
+        """Returns a dataset specific function to parse
+
+        Returns:
+            TODO
         """
 
         name: str = "_load_data"
@@ -73,7 +75,7 @@ class parser(object):
         return function()
 
     def _load_data(self, verbose: bool = True) -> dict:
-        """loads the coauthorship hypergraph, features, and labels of cora
+        """Loads the coauthorship hypergraph, features, and labels of cora
 
         assumes the following files to be present in the dataset directory:
         hypergraph.pickle: coauthorship hypergraph
