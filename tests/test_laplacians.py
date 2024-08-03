@@ -2,10 +2,11 @@
 
 Can use the toy hypergraph from our draft"""
 
+from collections import OrderedDict
+
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
-from collections import OrderedDict
 
 from encodings_hnns.laplacians import Laplacians
 
