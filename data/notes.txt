@@ -1,0 +1,3 @@
+It appears we copied it from here:
+https://github.com/malllabiisc/HyperGCN
+And that our file data.py (now call data_handling.py) was also copied from the HypeGCN repo.
