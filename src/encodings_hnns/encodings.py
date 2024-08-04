@@ -7,7 +7,7 @@ to a dataset (curvature, laplacians, random walks).
 
 import numpy as np
 
-from encodings_hnns.curvatures import FormanRicci
+from encodings_hnns.curvatures_frc import FormanRicci
 from encodings_hnns.curvatures_orc import ORC
 from encodings_hnns.laplacians import Laplacians
 
