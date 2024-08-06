@@ -1,3 +1,5 @@
+"""Architectures from UniGNN repo"""
+
 import math
 
 import numpy as np
