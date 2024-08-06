@@ -144,11 +144,14 @@ if __name__ == "__main__":
     # data = parser_instance._load_data()
     # So hypergraph is a dict:
     # key: authors, values: papers participates in.
-    # print(parsed_data["hypergraph"])
+    print("hypergraph")
+    print(parsed_data["hypergraph"])
     # hgh = list(parsed_data["hypergraph"].items())
     # hnx.drawing.draw(hnx.Hypergraph(hgh))
     # plt.show()
+    print("features")
     print(parsed_data["features"][0])
+    print("labels")
     print(parsed_data["labels"][0])
 
     ###### Cora

@@ -205,6 +205,54 @@ class Laplacians:
                         matrix_[i, j] = -i_neighbors_counts[node_j] / count_weights
             self.rw_laplacian = matrix_
 
+    def compute_ldp(self, verbose: bool = True) -> None:
+        """Computes the ldp.
+
+        Args:
+            self:
+            verbose:
+
+        Outline:
+        Iterate through each node.
+        For each node, find its neighbors.
+        Collect the degrees of these neighbors.
+        Calculate the required statistics (min, max, median, and std) for these degrees.
+        Store the results in a new dictionary.
+        """
+
+        if self.node_neighbors == {}:
+            self.compute_node_neighbors()
+
+        if self.node_degrees == {}:
+            self.compute_node_degrees()
+
+        result: dict = {}
+
+        # loops through the nodes
+        for node, neighbors in self.node_neighbors.items():
+            # neighbors is the neighbors of node
+
+            # Get the degrees of the neighbors
+            neighbor_degrees = [self.node_degrees[neighbor] for neighbor in neighbors]
+
+            # Calculate the statistics
+            min_degree = np.min(neighbor_degrees)
+            max_degree = np.max(neighbor_degrees)
+            median_degree = np.median(neighbor_degrees)
+            mean_degree = np.mean(neighbor_degrees)
+            std_degree = np.std(neighbor_degrees)
+
+            # Store the result
+            result[node] = {
+                min_degree,
+                max_degree,
+                median_degree,
+                mean_degree,
+                std_degree,
+            }
+
+        self.ldp = result
+
     # This is also in curvatures so move this to parent class?
     def compute_node_degrees(self) -> None:
         """Compute the degree of each node in the hypergraph."""
@@ -225,7 +273,9 @@ class Laplacians:
         """Compute the neighbors of each node in the hypergraph."""
         assert self.node_neighbors == {}, "Node neighbors already computed."
 
+        # loops though the hyperedges
         for hyperedge in self.hypergraph["hypergraph"].values():
+            # loops through the nodes in the hyperedge.
             for node in hyperedge:
                 if node not in self.node_neighbors:
                     self.node_neighbors[node] = set(hyperedge)
@@ -283,6 +333,11 @@ if __name__ == "__main__":
 
     # Instantiates the Laplacians class
     laplacian = Laplacians(data)
+    laplacian.compute_node_neighbors()
+    print(laplacian.node_neighbors)
+    laplacian.compute_node_degrees()
+    print(laplacian.node_degrees)
+    assert False
     laplacian.compute_random_walk_laplacian(type="WE")
 
     # Computes the Forman-Ricci curvature

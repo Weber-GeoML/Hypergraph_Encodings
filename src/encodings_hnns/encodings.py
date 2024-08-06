@@ -10,6 +10,7 @@ import numpy as np
 from encodings_hnns.curvatures import FormanRicci
 from encodings_hnns.curvatures_orc import ORC
 from encodings_hnns.laplacians import Laplacians
+import random
 
 
 class HypergraphCurvatureProfile:
@@ -51,10 +52,46 @@ class HypergraphCurvatureProfile:
 
         self.hyperedges = hyperedges
 
+    def add_degree_encodings(
+        self, hypergraph: dict, verbose: bool = True,
+    ) -> dict:
+        """Computes the LDP. This is the degree profile.
+
+        Args:
+            hypergraph:
+                hypergraph dict containing hypergraph, features, label, n
+            verbose:
+                to print more
+
+        Returns:
+            the hypergraph with the frc or orc encodings added to the featuress
+
+        """
+        laplacian: Laplacians = Laplacians(hypergraph)
+        laplacian.compute_ldp()
+
+        # for each node, get the min, max, mean, median,
+        # and std of the degrees of the neighbors
+        ld_profile: dict = laplacian.ld_profile
+
+        # turn the degree profile into a np.matrix and stack it with the features
+        for node in self.hyperedges.keys():
+            ld_vals = np.matrix(ld_profile[node])
+            if verbose:
+                print(
+                    f"The hypergraph features for node {node} are \n {hypergraph['features'][node]}"
+                )
+                print(f"We add the encoding:\n {ld_vals}")
+            hypergraph["features"][node] = np.hstack(
+                (hypergraph["features"][node], ld_vals)
+            )
+
+        return hypergraph
+
     def add_curvature_encodings(
         self, hypergraph: dict, verbose: bool = True, type: str = "FRC"
     ) -> dict:
-        """Computes the HCP based on the FRC.
+        """Computes the LCP based on the FRC or ORC.
 
         Args:
             hypergraph:
@@ -189,10 +226,16 @@ class HypergraphCurvatureProfile:
         #     else:
         #         print("Reconstructed matrix differs from the original matrix.")
 
+        # We randonly flip the sign of the eigenvectors
+        # this means that if we use k eigenvectors, we have
+        # 2^k different possibilities
+        sign : int = random.choice([-1, 1])
+
         # turn the FRC profile into a np.matrix and stack it with the features
         i: int = 0  # to count the nodes. Same number of evectors as nodes.
         for node in self.hyperedges.keys():
             laplacian_vals = eigenvectors[:, i].reshape(1, -1)
+            laplacian_vals = sign * laplacian_vals
             if verbose:
                 print(
                     f"The hypergraph features for node {node} are \n {hypergraph['features'][node]}"
