@@ -36,7 +36,7 @@ def toy_hypergraph() -> dict[str, dict | int]:
 @pytest.fixture
 def node_ldp() -> np.ndarray:
     """Returns the local degree profile for the toy hg"""
-    # ordering is min, max, median, mean, std
+    # ordering is degree of node, min, max, median, mean, std
     # 1 has nbors 2, 3 with degree 2, 3
     # 2 has ngbors 1, 3 with degrees 1, 3
     # 3 has ngbors 1, 2, 5, 6 with degrees 1, 2, 2, 1
@@ -44,12 +44,12 @@ def node_ldp() -> np.ndarray:
     # 5 has nghbors 3, 4, 6 with deegree 3, 1, 1
     # 6 has nghbors 3, 5 with degrees 3, 2
     ldp: np.ndarray = {
-        1: [2, 3, 2.5, 2.5, 0.5],
-        2: [1, 3, 2, 2, 1],
-        3: [1, 2, 1.5, 1.5, 0.5],
-        4: [2, 2, 2, 2, 0],
-        5: [1, 3, 1, 5 / 3, np.std([1, 1, 3])],
-        6: [2, 3, 2.5, 2.5, 0.5],
+        1: [1, 2, 3, 2.5, 2.5, 0.5],
+        2: [2, 1, 3, 2, 2, 1],
+        3: [3, 1, 2, 1.5, 1.5, 0.5],
+        4: [1, 2, 2, 2, 2, 0],
+        5: [2, 1, 3, 1, 5 / 3, np.std([1, 1, 3])],
+        6: [1, 2, 3, 2.5, 2.5, 0.5],
     }
 
     return ldp

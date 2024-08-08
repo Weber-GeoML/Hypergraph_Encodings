@@ -252,6 +252,7 @@ class Laplacians:
 
             # Store the result
             result[node] = [
+                self.node_degrees[node],
                 min_degree,
                 max_degree,
                 median_degree,
