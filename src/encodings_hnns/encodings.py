@@ -53,7 +53,9 @@ class HypergraphCurvatureProfile:
         self.hyperedges = hyperedges
 
     def add_degree_encodings(
-        self, hypergraph: dict, verbose: bool = True,
+        self,
+        hypergraph: dict,
+        verbose: bool = True,
     ) -> dict:
         """Computes the LDP. This is the degree profile.
 
@@ -64,7 +66,7 @@ class HypergraphCurvatureProfile:
                 to print more
 
         Returns:
-            the hypergraph with the frc or orc encodings added to the featuress
+            the hypergraph with the degree profile encodings added to the featuress
 
         """
         laplacian: Laplacians = Laplacians(hypergraph)
@@ -72,10 +74,19 @@ class HypergraphCurvatureProfile:
 
         # for each node, get the min, max, mean, median,
         # and std of the degrees of the neighbors
-        ld_profile: dict = laplacian.ld_profile
+        ld_profile: dict = laplacian.ldp
+
+        # NOTE: maybe I should do like I did below
+        # if self.hyperedges == None:
+        #     self.compute_hyperedges(hypergraph)
+        # and then for node in self.hyperedges.keys()
+        # the reason for this is what id the features are empty?
+        # but the con is it is additonal computations
+        # Lukas what do you think?
 
         # turn the degree profile into a np.matrix and stack it with the features
-        for node in self.hyperedges.keys():
+        # loops through node
+        for node in hypergraph["features"].keys():
             ld_vals = np.matrix(ld_profile[node])
             if verbose:
                 print(
@@ -202,7 +213,7 @@ class HypergraphCurvatureProfile:
             eigenvalues, eigenvectors = np.linalg.eig(laplacian.normalized_laplacian)
         elif type == "RW":
             laplacian.compute_random_walk_laplacian(type=rw_type)
-            print(f"The RW laplacian is \n {laplacian.rw_laplacian})
+            print(f"The RW laplacian is \n {laplacian.rw_laplacian}")
             eigenvalues, eigenvectors = np.linalg.eig(laplacian.rw_laplacian)
 
         # Print the results
@@ -229,7 +240,7 @@ class HypergraphCurvatureProfile:
         # We randonly flip the sign of the eigenvectors
         # this means that if we use k eigenvectors, we have
         # 2^k different possibilities
-        sign : int = random.choice([-1, 1])
+        sign: int = random.choice([-1, 1])
 
         # turn the FRC profile into a np.matrix and stack it with the features
         i: int = 0  # to count the nodes. Same number of evectors as nodes.
@@ -332,6 +343,9 @@ if __name__ == "__main__":
 
     # Instantiates the Hypergraph Curvature Profile class
     hgcurvaturprofile = HypergraphCurvatureProfile()
+    hg = hgcurvaturprofile.add_degree_encodings(hg)
+    print("done")
+    assert False
 
     # hg = hgcurvaturprofile.add_laplacian_encodings(hg)
     hg = hgcurvaturprofile.add_randowm_walks_encodings(hg)
