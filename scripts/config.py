@@ -9,6 +9,18 @@ def parse():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     p.add_argument(
+        "--add-encodings",
+        type=bool,
+        default=False,
+        help="whether to add encodings to the features",
+    )
+    p.add_argument(
+        "--encodings",
+        type=str,
+        default="RW",
+        help="what encodings to add",
+    )
+    p.add_argument(
         "--data",
         type=str,
         default="coauthorship",
