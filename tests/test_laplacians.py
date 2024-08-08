@@ -34,6 +34,28 @@ def toy_hypergraph() -> dict[str, dict | int]:
 
 
 @pytest.fixture
+def node_ldp() -> np.ndarray:
+    """Returns the local degree profile for the toy hg"""
+    # ordering is min, max, median, mean, std
+    # 1 has nbors 2, 3 with degree 2, 3
+    # 2 has ngbors 1, 3 with degrees 1, 3
+    # 3 has ngbors 1, 2, 5, 6 with degrees 1, 2, 2, 1
+    # 4 has nghbor 5 with degree 2
+    # 5 has nghbors 3, 4, 6 with deegree 3, 1, 1
+    # 6 has nghbors 3, 5 with degrees 3, 2
+    ldp: np.ndarray = {
+        1: [2, 3, 2.5, 2.5, 0.5],
+        2: [1, 3, 2, 2, 1],
+        3: [1, 2, 1.5, 1.5, 0.5],
+        4: [2, 2, 2, 2, 0],
+        5: [1, 3, 1, 5 / 3, np.std([1, 1, 3])],
+        6: [2, 3, 2.5, 2.5, 0.5],
+    }
+
+    return ldp
+
+
+@pytest.fixture
 def boundary() -> np.ndarray:
     """Returns the boundary matrix"""
     matrix_np: np.ndarray = np.array(
@@ -69,6 +91,21 @@ def ngbors() -> np.ndarray:
             (4, {4, 5}),
             (5, {3, 4, 5, 6}),
             (6, {3, 5, 6}),
+        ]
+    )
+    return nhbors
+
+
+@pytest.fixture
+def ngbors_not_inclusive() -> np.ndarray:
+    nhbors = OrderedDict(
+        [
+            (1, {2, 3}),
+            (2, {1, 3}),
+            (3, {1, 2, 5, 6}),
+            (4, {5}),
+            (5, {3, 4, 6}),
+            (6, {3, 5}),
         ]
     )
     return nhbors
@@ -232,6 +269,21 @@ def test_compute_node_degree(toy_hypergraph, degree_v) -> None:
     assert_array_equal(laplacian.Dv, degree_v)
 
 
+def test_compute_ldp(toy_hypergraph, node_ldp) -> None:
+    """Test for compute_ldp
+
+    Args:
+        toy_hypergraph:
+            hypergraph from draft
+        node_ldp:
+            the local degree profile
+
+    """
+    laplacian: Laplacians = Laplacians(toy_hypergraph)
+    laplacian.compute_ldp()
+    assert_array_equal(laplacian.ldp, node_ldp)
+
+
 def test_compute_edge_degree(toy_hypergraph, degree_e) -> None:
     """Test for compute_edge_degree
 
@@ -288,8 +340,23 @@ def test_compute_node_neighbors(toy_hypergraph, ngbors):
 
     """
     laplacian: Laplacians = Laplacians(toy_hypergraph)
-    laplacian.compute_node_neighbors()
+    laplacian.compute_node_neighbors(include_node=True)
     assert laplacian.node_neighbors == ngbors
+
+
+def test_compute_node_neighbors_not_inclusive(toy_hypergraph, ngbors_not_inclusive):
+    """Test for compute_node_neighbors
+
+    Args:
+        toy_hypergraph:
+            hypergraph from draft
+        nhbors:
+            neighbors of each node in toy_hypergraph
+
+    """
+    laplacian: Laplacians = Laplacians(toy_hypergraph)
+    laplacian.compute_node_neighbors(include_node=False)
+    assert laplacian.node_neighbors == ngbors_not_inclusive
 
 
 def test_compute_random_walk_laplacian_EN(toy_hypergraph, rw_laplacian_EN) -> None:
