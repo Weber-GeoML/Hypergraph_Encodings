@@ -7,7 +7,7 @@ to a dataset (curvature, laplacians, random walks).
 
 import numpy as np
 
-from encodings_hnns.curvatures import FormanRicci
+from encodings_hnns.curvatures_frc import FormanRicci
 from encodings_hnns.curvatures_orc import ORC
 from encodings_hnns.laplacians import Laplacians
 
@@ -165,7 +165,7 @@ class HypergraphCurvatureProfile:
             eigenvalues, eigenvectors = np.linalg.eig(laplacian.normalized_laplacian)
         elif type == "RW":
             laplacian.compute_random_walk_laplacian(type=rw_type)
-            print(f"The RW laplacian is \n {laplacian.rw_laplacian})
+            print(f"The RW laplacian is \n {laplacian.rw_laplacian})")
             eigenvalues, eigenvectors = np.linalg.eig(laplacian.rw_laplacian)
 
         # Print the results

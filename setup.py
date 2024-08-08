@@ -14,6 +14,8 @@ setup(
         "scipy==1.10.0",
         "torch-geometric",
         "torch-scatter",
+        "torch-sparse",
+        "path",
     ],
     extra_requires={
         "dev": [
