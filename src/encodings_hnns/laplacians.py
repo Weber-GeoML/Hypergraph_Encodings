@@ -31,15 +31,23 @@ class Laplacians:
         assert "n" in hypergraph.keys(), "Number of nodes not found."
 
         self.hypergraph = hypergraph
+        # the node degrees
         self.node_degrees: dict = {}
+        # the edge degrees
         self.edge_degrees: dict = {}
         self.node_neighbors: dict = {}
+        # the boundary matrix
         self.boundary_matrix: None | np.ndarray = None
         self.normalized_laplacian: None | np.ndarray = None
         self.hodge_laplacian_up: None | np.ndarray = None
         self.hodge_laplacian_down: None | np.ndarray = None
+        # the random walk laplacian
         self.rw_laplacian: None | np.ndarray = None
+        # the local degree profile
+        self.ldp: None | dict = None
+        # the matrix of node/vertices degree
         self.Dv: None | np.ndarray = None
+        # the matrix of edge degrees
         self.De: None | np.ndarray = None
 
     def compute_boundary(self, verbose: bool = False) -> None:
@@ -170,7 +178,7 @@ class Laplacians:
                         matrix_[i, j] = 1
                     # go to any neighbor of with equal proba
                     elif node_j in self.node_neighbors[node_i]:
-                        matrix_[i, j] = -1 / (len(self.node_neighbors[node_i]) - 1)
+                        matrix_[i, j] = -1 / (len(self.node_neighbors[node_i]))
 
             self.rw_laplacian = matrix_
 
@@ -205,6 +213,55 @@ class Laplacians:
                         matrix_[i, j] = -i_neighbors_counts[node_j] / count_weights
             self.rw_laplacian = matrix_
 
+    def compute_ldp(self, verbose: bool = True) -> None:
+        """Computes the ldp. Local degree profile.
+
+        Args:
+            verbose:
+                to print more info
+
+        Outline:
+            Iterate through each node.
+            For each node, find its neighbors.
+            Collect the degrees of these neighbors.
+            Calculate the required statistics (min, max, median, and std) for these degrees.
+            Store the results in a new dictionary.
+        """
+
+        if self.node_neighbors == {}:
+            self.compute_node_neighbors()
+
+        if self.node_degrees == {}:
+            self.compute_node_degrees()
+
+        result: dict = {}
+
+        # loops through the nodes
+        for node, neighbors in self.node_neighbors.items():
+            # neighbors is the neighbors of node
+
+            # Get the degrees of the neighbors
+            neighbor_degrees = [self.node_degrees[neighbor] for neighbor in neighbors]
+
+            # Calculate the statistics
+            min_degree = np.min(neighbor_degrees)
+            max_degree = np.max(neighbor_degrees)
+            median_degree = np.median(neighbor_degrees)
+            mean_degree = np.mean(neighbor_degrees)
+            std_degree = np.std(neighbor_degrees)
+
+            # Store the result
+            result[node] = [
+                self.node_degrees[node],
+                min_degree,
+                max_degree,
+                median_degree,
+                mean_degree,
+                std_degree,
+            ]
+
+        self.ldp = result
+
     # This is also in curvatures so move this to parent class?
     def compute_node_degrees(self) -> None:
         """Compute the degree of each node in the hypergraph."""
@@ -221,11 +278,19 @@ class Laplacians:
 
         self.Dv: np.ndarray = np.diag(list(self.node_degrees.values()))
 
-    def compute_node_neighbors(self) -> None:
-        """Compute the neighbors of each node in the hypergraph."""
+    def compute_node_neighbors(self, include_node: bool = False) -> None:
+        """Compute the neighbors of each node in the hypergraph.
+
+        Args:
+            inlcude_node:
+                whether to inlcude node i in N(i).
+
+        """
         assert self.node_neighbors == {}, "Node neighbors already computed."
 
+        # loops though the hyperedges
         for hyperedge in self.hypergraph["hypergraph"].values():
+            # loops through the nodes in the hyperedge.
             for node in hyperedge:
                 if node not in self.node_neighbors:
                     self.node_neighbors[node] = set(hyperedge)
@@ -233,6 +298,11 @@ class Laplacians:
                     self.node_neighbors[node].update(hyperedge)
         # Sort the node degrees by keys
         self.node_neighbors = OrderedDict(sorted(self.node_neighbors.items()))
+
+        if not include_node:
+            # Remove i from the ith entry
+            for i in self.node_neighbors.keys():
+                self.node_neighbors[i].discard(i)
 
     def compute_edge_degrees(self) -> None:
         """Compute the degree of each hyperedge in the hypergraph."""
@@ -283,6 +353,11 @@ if __name__ == "__main__":
 
     # Instantiates the Laplacians class
     laplacian = Laplacians(data)
+    laplacian.compute_node_neighbors()
+    print(laplacian.node_neighbors)
+    laplacian.compute_node_degrees()
+    print(laplacian.node_degrees)
+    assert False
     laplacian.compute_random_walk_laplacian(type="WE")
 
     # Computes the Forman-Ricci curvature
