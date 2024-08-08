@@ -10,7 +10,11 @@ from torch.autograd import Variable
 from torch.nn.modules.module import Module
 from torch.nn.parameter import Parameter
 
-# COde from uniGCN paper
+# Code from uniGCN paper
+# https://github.com/RaphaelPellegrin/UniGNN/tree/master
+
+# Check if CUDA is available and move tensors to GPU if possible
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class HyperGCN(nn.Module):
@@ -22,7 +26,7 @@ class HyperGCN(nn.Module):
         """
         super(HyperGCN, self).__init__()
         d, l, c = nfeat, nlayer, nclass
-        cuda = True
+        cuda = False
         args.mediators = True
 
         h = [d]
@@ -69,7 +73,7 @@ class HyperGraphConvolution(Module):
     Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
     """
 
-    def __init__(self, a, b, reapproximate=True, cuda=True):
+    def __init__(self, a, b, reapproximate=True, cuda=False):
         super(HyperGraphConvolution, self).__init__()
         self.a, self.b = a, b
         self.reapproximate, self.cuda = reapproximate, cuda
@@ -93,8 +97,7 @@ class HyperGraphConvolution(Module):
         else:
             A = structure
 
-        if self.cuda:
-            A = A.cuda()
+        A = A.to(device)
         A = Variable(A)
 
         AHW = SparseMM.apply(A, HW)
