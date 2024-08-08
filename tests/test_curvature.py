@@ -6,7 +6,7 @@ from typing import Type
 
 import pytest
 
-from encodings_hnns.curvatures import FormanRicci
+from encodings_hnns.curvatures_frc import FormanRicci
 
 
 @pytest.fixture
