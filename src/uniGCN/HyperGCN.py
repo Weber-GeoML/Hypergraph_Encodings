@@ -1,3 +1,5 @@
+""" File taken from https://github.com/RaphaelPellegrin/UniGNN/tree/master"""
+
 import math
 
 import numpy as np
@@ -5,7 +7,6 @@ import scipy.sparse as sp
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.nn.init as init
 from torch.autograd import Variable
 from torch.nn.modules.module import Module
 from torch.nn.parameter import Parameter
@@ -18,11 +19,16 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class HyperGCN(nn.Module):
-    def __init__(self, args, nfeat, nhid, nclass, nlayer, V, E, X):
-        """
-        d: initial node-feature dimension
-        h: number of hidden units
-        c: number of classes
+    def __init__(self, args, nfeat, nhid, nclass: int, nlayer: int, V, E, X):
+        """TODO
+
+        Args:
+            d:
+                initial node-feature dimension
+            h:
+                number of hidden units
+            c:
+                number of classes
         """
         super(HyperGCN, self).__init__()
         d, l, c = nfeat, nlayer, nclass
@@ -56,6 +62,10 @@ class HyperGCN(nn.Module):
     def forward(self, H):
         """
         an l-layer GCN
+
+        Args:
+            H:
+                TODO
         """
         do, l, m = self.do, self.l, self.m
 
@@ -87,7 +97,17 @@ class HyperGraphConvolution(Module):
         self.W.data.uniform_(-std, std)
         self.bias.data.uniform_(-std, std)
 
-    def forward(self, structure, H, m=True):
+    def forward(self, structure, H, m: int = True):
+        """TODO
+
+        Args:
+            structure:
+                TODO
+            H:
+                TODO
+            m:
+                TODO
+        """
         W, b = self.W, self.bias
         HW = torch.mm(H, W)
 

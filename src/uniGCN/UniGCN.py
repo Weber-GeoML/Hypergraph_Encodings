@@ -1,3 +1,5 @@
+"""File taken from https://github.com/RaphaelPellegrin/UniGNN/tree/master"""
+
 import math
 
 import torch
@@ -14,13 +16,29 @@ from torch_scatter import scatter
 
 
 def glorot(tensor):
+    """TODO
+
+    Args:
+        tensor:
+            TODO
+
+    """
     if tensor is not None:
         stdv = math.sqrt(6.0 / (tensor.size(-2) + tensor.size(-1)))
         tensor.data.uniform_(-stdv, stdv)
 
 
 def normalize_l2(X):
-    """Row-normalize  matrix"""
+    """Row-normalize  matrix
+
+    Args:
+        X:
+            TODO
+
+    Returns:
+        X:
+            TODO
+    """
     rownorm = X.detach().norm(dim=1, keepdim=True)
     scale = rownorm.pow(-1)
     scale[torch.isinf(scale)] = 0.0
@@ -51,6 +69,20 @@ class UniSAGEConv(nn.Module):
         )
 
     def forward(self, X, vertex, edges):
+        """TODO
+
+        Args:
+            X:
+                TODO
+            vertex:
+                TODO
+            edges:
+                TODO
+
+        Returns:
+            TODO
+
+        """
         N = X.shape[0]
 
         # X0 = X # NOTE: reserved for skip connection
@@ -99,6 +131,17 @@ class UniGINConv(nn.Module):
         )
 
     def forward(self, X, vertex, edges):
+        """TODO
+
+        Args:
+            X:
+                TODO
+            vertex:
+                TODO
+            edges:
+                TODO
+
+        """
         N = X.shape[0]
         # X0 = X # NOTE: reserved for skip connection
 
@@ -143,6 +186,17 @@ class UniGCNConv(nn.Module):
         )
 
     def forward(self, X, vertex, edges):
+        """TODO
+
+        Args:
+            X:
+                TODO
+            vertex:
+                TODO
+            edges:
+                TODO
+
+        """
         N = X.shape[0]
         degE = self.args.degE
         degV = self.args.degV
@@ -228,10 +282,10 @@ class UniGATConv(nn.Module):
         args,
         in_channels,
         out_channels,
-        heads=8,
-        dropout=0.0,
-        negative_slope=0.2,
-        skip_sum=False,
+        heads: int = 8,
+        dropout: float = 0.0,
+        negative_slope: float = 0.2,
+        skip_sum: bool = False,
     ):
         super().__init__()
         self.W = nn.Linear(in_channels, heads * out_channels, bias=False)
@@ -257,6 +311,16 @@ class UniGATConv(nn.Module):
         glorot(self.att_e)
 
     def forward(self, X, vertex, edges):
+        """TODO
+
+        Args:
+            X:
+                TODO
+            vertex:
+                TODO
+            edges:
+                TODO
+        """
         H, C, N = self.heads, self.out_channels, X.shape[0]
 
         # X0 = X # NOTE: reserved for skip connection
@@ -293,7 +357,7 @@ class UniGATConv(nn.Module):
         return X
 
 
-__all_convs__ = {
+__all_convs__: dict = {
     "UniGAT": UniGATConv,
     "UniGCN": UniGCNConv,
     "UniGCN2": UniGCNConv2,
@@ -303,18 +367,36 @@ __all_convs__ = {
 
 
 class UniGNN(nn.Module):
-    def __init__(self, args, nfeat, nhid, nclass, nlayer, nhead, V, E):
+    def __init__(
+        self,
+        args,
+        nfeat: int,
+        nhid: int,
+        nclass: int,
+        nlayer: int,
+        nhead: int,
+        V: torch.long,
+        E: torch.long,
+    ):
         """UniGNN
 
         Args:
-            args   (NamedTuple): global args
-            nfeat  (int): dimension of features
-            nhid   (int): dimension of hidden features, note that actually it\'s #nhid x #nhead
-            nclass (int): number of classes
-            nlayer (int): number of hidden layers
-            nhead  (int): number of conv heads
-            V (torch.long): V is the row index for the sparse incident matrix H, |V| x |E|
-            E (torch.long): E is the col index for the sparse incident matrix H, |V| x |E|
+            args:
+                global args
+            nfeat:
+                dimension of features
+            nhid:
+                dimension of hidden features, note that actually it\'s #nhid x #nhead
+            nclass:
+                number of classes
+            nlayer:
+                number of hidden layers
+            nhead:
+                number of conv heads
+            V:
+                V is the row index for the sparse incident matrix H, |V| x |E|
+            E:
+                E is the col index for the sparse incident matrix H, |V| x |E|
         """
         super().__init__()
         Conv = __all_convs__[args.model_name]
@@ -336,6 +418,12 @@ class UniGNN(nn.Module):
         self.dropout = nn.Dropout(args.dropout)
 
     def forward(self, X):
+        """TODO:
+
+        Args:
+            X:
+                TODO
+        """
         V, E = self.V, self.E
 
         X = self.input_drop(X)
@@ -355,6 +443,22 @@ class UniGCNIIConv(nn.Module):
         self.args = args
 
     def forward(self, X, vertex, edges, alpha, beta, X0):
+        """TODO
+
+        Args:
+            X:
+                TODO
+            vertex:
+                TODO
+            edges:
+                TODO
+            alpha:
+                TODO
+            beta:
+                TODO
+            X0:
+                TODO
+        """
         N = X.shape[0]
         degE = self.args.degE
         degV = self.args.degV
@@ -381,18 +485,36 @@ class UniGCNIIConv(nn.Module):
 
 
 class UniGCNII(nn.Module):
-    def __init__(self, args, nfeat, nhid, nclass, nlayer, nhead, V, E):
+    def __init__(
+        self,
+        args,
+        nfeat: int,
+        nhid: int,
+        nclass: int,
+        nlayer: int,
+        nhead: int,
+        V: torch.long,
+        E: torch.long,
+    ):
         """UniGNNII
 
         Args:
-            args   (NamedTuple): global args
-            nfeat  (int): dimension of features
-            nhid   (int): dimension of hidden features, note that actually it\'s #nhid x #nhead
-            nclass (int): number of classes
-            nlayer (int): number of hidden layers
-            nhead  (int): number of conv heads
-            V (torch.long): V is the row index for the sparse incident matrix H, |V| x |E|
-            E (torch.long): E is the col index for the sparse incident matrix H, |V| x |E|
+            args:
+                global args
+            nfeat:
+                dimension of features
+            nhid:
+                dimension of hidden features, note that actually it\'s #nhid x #nhead
+            nclass:
+                number of classes
+            nlayer:
+                number of hidden layers
+            nhead:
+                number of conv heads
+            V:
+                V is the row index for the sparse incident matrix H, |V| x |E|
+            E:
+                E is the col index for the sparse incident matrix H, |V| x |E|
         """
         super().__init__()
         self.V = V
@@ -415,6 +537,12 @@ class UniGCNII(nn.Module):
         self.dropout = nn.Dropout(args.dropout)
 
     def forward(self, x):
+        """TODO
+
+        Args:
+            x:
+                TODO
+        """
         V, E = self.V, self.E
         lamda, alpha = 0.5, 0.1
         x = self.dropout(x)
