@@ -214,7 +214,7 @@ class HypergraphCurvatureProfile:
         elif type == "RW":
             laplacian.compute_random_walk_laplacian(type=rw_type)
             print(f"The RW laplacian is \n {laplacian.rw_laplacian}")
-            eigenvalues, eigenvectors = np.linalg.eig(laplacian.rw_laplacian)
+            print(f"The RW laplacian is \n {laplacian.rw_laplacian})")
 
         # Print the results
         print("Eigenvalues:")

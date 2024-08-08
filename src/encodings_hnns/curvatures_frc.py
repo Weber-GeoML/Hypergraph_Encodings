@@ -1,5 +1,5 @@
 """
-curvatures.py
+curvatures_frc.py
 
 This module contains functions for computing the Forman-Ricci 
 curvatures of an undirected hypergraph.

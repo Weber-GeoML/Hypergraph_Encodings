@@ -16,10 +16,9 @@ warnings.simplefilter("ignore")
 
 # Not used yet?
 def load(args) -> tuple:
-    """
-    parses the dataset
+    """Parses the dataset
 
-    Argument:
+    Args:
         args:
             an object with attributes data, dataset and splits
     """
