@@ -11,13 +11,13 @@ def parse():
     p.add_argument(
         "--add-encodings",
         type=bool,
-        default=False,
+        default=True,
         help="whether to add encodings to the features",
     )
     p.add_argument(
         "--encodings",
         type=str,
-        default="RW",
+        default="LCP",
         help="what encodings to add",
     )
     p.add_argument(

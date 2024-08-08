@@ -96,8 +96,9 @@ def get_split(Y, p: float = 0.2) -> tuple[list[int], list[int]]:
 # load data
 X: torch.Tensor
 Y: torch.Tensor
-X, Y, G = fetch_data(args)
-print(f"X are the features \n {X}")
+print(f"We are adding the {args.encodings} encodings")
+X, Y, G = fetch_data(args, add_encodings=args.add_encodings, encodings=args.encodings)
+print(f"X are the features \n {X} \n with shape {X.shape}")
 print(f"Y are the labels \n {Y}")
 print(f"G is the hg")
 

@@ -198,9 +198,9 @@ class HypergraphCurvatureProfile:
                     f"The hypergraph features for node {node} are \n {hypergraph['features'][node]}"
                 )
                 print(f"We add the Laplacian based encoding:\n {laplacian_vals}")
-            hypergraph["features"][node] = np.hstack(
-                (hypergraph["features"][node], laplacian_vals)
-            )
+            stacked_features = np.hstack((hypergraph["features"][node], laplacian_vals))
+            print(f"The stacked features are {stacked_features}")
+            hypergraph["features"][node] = stacked_features
             i += 1
 
         return hypergraph
@@ -263,7 +263,10 @@ class HypergraphCurvatureProfile:
                 print(
                     f"The hypergraph features for node {node} are \n {hypergraph['features'][node]}"
                 )
-                print(f"We add the RW based encoding:\n {laplacian_vals}")
+                print(f"The shape is {len(hypergraph['features'][node])}")
+                print(
+                    f"We add the RW based encoding:\n {laplacian_vals} \n with shape {laplacian_vals.shape}"
+                )
             hypergraph["features"][node] = np.hstack(
                 (hypergraph["features"][node], laplacian_vals)
             )
