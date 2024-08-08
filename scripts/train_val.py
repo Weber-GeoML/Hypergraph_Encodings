@@ -4,13 +4,12 @@ import datetime
 import os
 import shutil
 import time
-from random import sample, shuffle
+from random import sample
 
 import config
 import numpy as np
 import path
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from torch.optim import optimizer
 
@@ -39,17 +38,17 @@ os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 os.environ["PYTHONHASHSEED"] = str(args.seed)
 
 
-use_norm = "use-norm" if args.use_norm else "no-norm"
-add_self_loop = "add-self-loop" if args.add_self_loop else "no-self-loop"
+use_norm: str = "use-norm" if args.use_norm else "no-norm"
+add_self_loop: str = "add-self-loop" if args.add_self_loop else "no-self-loop"
 
 
 #### configure output directory
 
-dataname = f"{args.data}_{args.dataset}"
-model_name = args.model_name
-nlayer = args.nlayer
+dataname: str = f"{args.data}_{args.dataset}"
+model_name: str = args.model_name
+nlayer: int = args.nlayer
 dirname = f"{datetime.datetime.now()}".replace(" ", "_").replace(":", ".")
-out_dir = path.Path(
+out_dir: str = path.Path(
     f"./{args.out_dir}/{model_name}_{nlayer}_{dataname}/seed_{args.seed}"
 )
 
@@ -64,28 +63,43 @@ resultlogger = get_logger("result logger", f"{out_dir}/result.log", not args.nos
 baselogger.info(args)
 
 
-test_accs = []
-best_val_accs, best_test_accs = [], []
+test_accs: list = []
+best_val_accs: list = []
+best_test_accs: list = []
 
 resultlogger.info(args)
 
 
-def get_split(Y, p=0.2):
+def get_split(Y, p: float = 0.2) -> tuple[list[int], list[int]]:
+    """TODO
 
-    Y = Y.tolist()
-    N, nclass = len(Y), len(set(Y))
-    D = [[] for _ in range(nclass)]
+    Args:
+        Y:
+        p:
+
+    """
+    Y: list = Y.tolist()
+    N: int = len(Y)
+    nclass: int = len(set(Y))
+    D: list = [[] for _ in range(nclass)]
     for i, y in enumerate(Y):
         D[y].append(i)
-    k = int(N * p / nclass)
-    val_idx = torch.cat([torch.LongTensor(sample(idxs, k)) for idxs in D]).tolist()
-    test_idx = list(set(range(N)) - set(val_idx))
+    k: int = int(N * p / nclass)
+    val_idx: list[int] = torch.cat(
+        [torch.LongTensor(sample(idxs, k)) for idxs in D]
+    ).tolist()
+    test_idx: list[int] = list(set(range(N)) - set(val_idx))
 
     return val_idx, test_idx
 
 
 # load data
+X: torch.Tensor
+Y: torch.Tensor
 X, Y, G = fetch_data(args)
+print(f"X are the features \n {X}")
+print(f"Y are the labels \n {Y}")
+print(f"G is the hg")
 
 
 for run in range(1, args.n_runs + 1):
@@ -96,9 +110,9 @@ for run in range(1, args.n_runs + 1):
     args.split = run
     _, train_idx, test_idx = load(args)
     val_idx, test_idx = get_split(Y[test_idx], 0.2)
-    train_idx = torch.LongTensor(train_idx).to(device)
-    val_idx = torch.LongTensor(val_idx).to(device)
-    test_idx = torch.LongTensor(test_idx).to(device)
+    train_idx: torch.Tensor = torch.LongTensor(train_idx).to(device)
+    val_idx: torch.Tensor = torch.LongTensor(val_idx).to(device)
+    test_idx: torch.Tensor = torch.LongTensor(test_idx).to(device)
 
     # model
     model, optimizer = initialise(X, Y, G, args)
