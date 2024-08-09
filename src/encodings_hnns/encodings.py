@@ -99,7 +99,7 @@ class HypergraphCurvatureProfile:
             i += 1
         # Extracting the values and combining them into a matrix
         hypergraph["feature"] = np.array(
-            [dict_of_features[key] for key in dict_of_features.keys()]
+            [dict_of_features[key] for key in sorted(dict_of_features.keys())]
         )
 
         return hypergraph
@@ -173,7 +173,7 @@ class HypergraphCurvatureProfile:
             i += 1
         # Extracting the values and combining them into a matrix
         hypergraph["feature"] = np.array(
-            [dict_of_features[key] for key in dict_of_features.keys()]
+            [dict_of_features[key] for key in sorted(dict_of_features.keys())]
         )
 
         return hypergraph
@@ -273,7 +273,7 @@ class HypergraphCurvatureProfile:
             i += 1
         # Extracting the values and combining them into a matrix
         hypergraph["feature"] = np.array(
-            [dict_of_features[key] for key in dict_of_features.keys()]
+            [dict_of_features[key] for key in sorted(dict_of_features.keys())]
         )
 
         return hypergraph
@@ -353,7 +353,7 @@ class HypergraphCurvatureProfile:
             i += 1
         # Extracting the values and combining them into a matrix
         hypergraph["feature"] = np.array(
-            [dict_of_features[key] for key in dict_of_features.keys()]
+            [dict_of_features[key] for key in sorted(dict_of_features.keys())]
         )
 
         return hypergraph
@@ -370,6 +370,18 @@ if __name__ == "__main__":
             "blue": [4, 5],
         },
         "features": {1: [[1]], 2: [[1]], 3: [[1]], 4: [[1]], 5: [[1]], 6: [[1]]},
+        "labels": {},
+        "n": 6,
+    }
+
+    hg: dict[str, dict | int] = {
+        "hypergraph": {
+            "yellow": [1, 2, 3, 5],
+            "red": [2, 3],
+            "green": [3, 5, 6],
+            "blue": [4, 5],
+        },
+        "features": {[[1], [1], [1], [1], [1], [1]]},
         "labels": {},
         "n": 6,
     }
