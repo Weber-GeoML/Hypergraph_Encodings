@@ -1,0 +1,9 @@
+These files are from the Orchid repo.
+
+I have just added comments. They do reading and writing: the next step would be to modify the code so that I can
+pass an hgraph as an arg and get back the dictionary of curvature information out.
+
+I have taken the liberty to rename variables for more clarity.
+
+E -> Edges
+A -> Aggregation
