@@ -18,7 +18,7 @@ from encodings_hnns.data_handling import load
 
 ### configure logger
 from uniGCN.logger import get_logger
-from uniGCN.prepare import fetch_data, initialise, accuracy
+from uniGCN.prepare import accuracy, fetch_data, initialise
 
 # File originally taken from UniGCN repo
 

@@ -2,8 +2,6 @@
 
 Can use the toy hypergraph from our draft"""
 
-from typing import Type
-
 import pytest
 
 from encodings_hnns.curvatures_frc import FormanRicci

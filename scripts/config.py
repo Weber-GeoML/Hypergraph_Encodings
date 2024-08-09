@@ -17,7 +17,7 @@ def parse():
     p.add_argument(
         "--encodings",
         type=str,
-        default="LCP",
+        default="LDP",
         help="what encodings to add",
     )
     p.add_argument(

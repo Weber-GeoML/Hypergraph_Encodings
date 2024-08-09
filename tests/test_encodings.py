@@ -2,10 +2,8 @@
 
 Can use the toy hypergraph from our draft"""
 
-from typing import Type
-
 import pytest
-from numpy.testing import assert_allclose, assert_array_equal
+from numpy.testing import assert_array_equal
 
 from encodings_hnns.encodings import HypergraphCurvatureProfile
 

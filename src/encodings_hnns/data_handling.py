@@ -131,7 +131,7 @@ class parser(object):
 
 # Example utilization
 if __name__ == "__main__":
-    data_type = "cocitation"
+    data_type = "coauthorship"
     dataset_name = "cora"
 
     # Creates an instance of the parser class
@@ -149,7 +149,8 @@ if __name__ == "__main__":
     # hnx.drawing.draw(hnx.Hypergraph(hgh))
     # plt.show()
     print("features")
-    print(parsed_data["features"][0])
+    print(parsed_data["features"])
+    assert False
     print("labels")
     print(parsed_data["labels"][0])
 
