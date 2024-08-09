@@ -34,11 +34,11 @@ def toy_hypergraph() -> dict[str, dict]:
 
 @pytest.fixture
 def toy_hypergraph_2() -> dict[str, dict]:
-    """Build toy hypergraph
+    """Build toy hypergraph number 2
 
     Returns:
-        toy_hypergraph:
-            hypergraph from draft
+        toy_hypergraph_2:
+            hypergraph
     """
     # We don't care about features or labels
     hg: dict[str, dict] = {
