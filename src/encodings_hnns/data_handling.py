@@ -150,7 +150,6 @@ if __name__ == "__main__":
     # plt.show()
     print("features")
     print(parsed_data["features"])
-    assert False
     print("labels")
     print(parsed_data["labels"][0])
 

@@ -2,6 +2,9 @@
 
 Can use the toy hypergraph from our draft"""
 
+# TODO: I would like to test if the encodings are empty
+# And if there are already features
+
 import pytest
 from numpy.testing import assert_array_equal
 
@@ -53,6 +56,27 @@ def toy_hypergraph_2() -> dict[str, dict]:
 
 
 @pytest.fixture
+def toy_hypergraph_3() -> dict[str, dict]:
+    """Build toy hypergraph number 3
+
+    Returns:
+        toy_hypergraph_3:
+            hypergraph
+    """
+    # We don't care about features or labels
+    hg: dict[str, dict] = {
+        "hypergraph": {
+            "yellow": [7, 5, 4],
+            "red": [7, 5],
+        },
+        "features": {},
+        "labels": {},
+        "n": 3,
+    }
+    return hg
+
+
+@pytest.fixture
 def hyperedges() -> dict[str, dict]:
     """Build toy hypergraph's hyperedges
 
@@ -91,6 +115,24 @@ def hyperedges_2() -> dict[str, dict]:
     return he
 
 
+@pytest.fixture
+def hyperedges_3() -> dict[str, dict]:
+    """Build toy hypergraph 3's hyperedges
+
+    Returns:
+        he:
+            the dictionary with keys the nodes, values the
+            hedges the node belongs to
+    """
+    # We don't care about features or labels
+    he: dict[str, dict] = {
+        4: ["yellow"],
+        5: ["yellow", "red"],
+        7: ["yellow", "red"],
+    }
+    return he
+
+
 def test_compute_hyperedges(toy_hypergraph, hyperedges) -> None:
     """
     Test for compute_hyperedges
@@ -109,7 +151,7 @@ def test_compute_hyperedges(toy_hypergraph, hyperedges) -> None:
     assert_array_equal(hypergraphcurvatureprofile.hyperedges, hyperedges)
 
 
-def test_compute_hyperedges(toy_hypergraph_2, hyperedges_2) -> None:
+def test_compute_hyperedges_2(toy_hypergraph_2, hyperedges_2) -> None:
     """
     Test for compute_hyperedges
 
@@ -125,3 +167,21 @@ def test_compute_hyperedges(toy_hypergraph_2, hyperedges_2) -> None:
     # as values the hyperedges the node belongs to.
     hypergraphcurvatureprofile.compute_hyperedges(toy_hypergraph_2)
     assert_array_equal(hypergraphcurvatureprofile.hyperedges, hyperedges_2)
+
+
+def test_compute_hyperedges_3(toy_hypergraph_3, hyperedges_3) -> None:
+    """
+    Test for compute_hyperedges
+
+    Args:
+        toy_hypergraph_3:
+            hypergraph number 3
+    """
+    hypergraphcurvatureprofile: HypergraphCurvatureProfile = (
+        HypergraphCurvatureProfile()
+    )
+    # Computes a dictionary called hyperedges.
+    # The dictionary contains as keys the nodes,
+    # as values the hyperedges the node belongs to.
+    hypergraphcurvatureprofile.compute_hyperedges(toy_hypergraph_3)
+    assert_array_equal(hypergraphcurvatureprofile.hyperedges, hyperedges_3)

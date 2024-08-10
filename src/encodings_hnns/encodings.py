@@ -86,6 +86,9 @@ class HypergraphCurvatureProfile:
         # dictionary to store the features
         # keys will be nodes
         dict_of_features: dict = {}
+        if len(hypergraph["features"]) == 0:
+            print("Will be implemented")
+            raise NotImplementedError
         for node in self.hyperedges.keys():
             ld_vals = np.matrix(ld_profile[node])
             if verbose:
@@ -162,6 +165,9 @@ class HypergraphCurvatureProfile:
         # dictionary to store the features
         # keys will be nodes
         dict_of_features: dict = {}
+        if len(hypergraph["features"]) == 0:
+            print("Will be implemented")
+            raise NotImplementedError
         for node in self.hyperedges.keys():
             rc_vals = np.matrix(rc_profile[node])
             if verbose:
@@ -259,6 +265,9 @@ class HypergraphCurvatureProfile:
         # dictionary to store the features
         # keys will be nodes
         dict_of_features: dict = {}
+        if len(hypergraph["features"]) == 0:
+            print("Will be implemented")
+            raise NotImplementedError
         for node in self.hyperedges.keys():
             laplacian_vals = eigenvectors[:, i].reshape(1, -1)
             laplacian_vals = sign * laplacian_vals
@@ -267,6 +276,7 @@ class HypergraphCurvatureProfile:
                     f"The hypergraph features for node {node} are \n {hypergraph['features'][i]}"
                 )
                 print(f"We add the Laplacian based encoding:\n {laplacian_vals}")
+            # this assumes that the features are present
             stacked_features = np.hstack((hypergraph["features"][node], laplacian_vals))
             print(f"The stacked features are {stacked_features}")
             dict_of_features[node] = stacked_features
@@ -335,6 +345,9 @@ class HypergraphCurvatureProfile:
         # dictionary to store the features
         # keys will be nodes
         dict_of_features: dict = {}
+        if len(hypergraph["features"]) == 0:
+            print("Will be implemented")
+            raise NotImplementedError
         for node in self.hyperedges.keys():
             print(f"The node is {node}")
             assert matrix_powers[:, i].shape == (k,)
@@ -381,16 +394,18 @@ if __name__ == "__main__":
             "green": [3, 5, 6],
             "blue": [4, 5],
         },
-        "features": {[[1], [1], [1], [1], [1], [1]]},
+        "features": np.matrix([[1], [1], [1], [1], [1], [1]]),
         "labels": {},
         "n": 6,
     }
-
+    # print(hg["features"])
+    # print(len(hg["features"]))
+    # assert False
     # Instantiates the Hypergraph Curvature Profile class
     hgcurvaturprofile = HypergraphCurvatureProfile()
+    hg = hgcurvaturprofile.add_randowm_walks_encodings(hg)
     hg = hgcurvaturprofile.add_degree_encodings(hg)
     print("done")
-    assert False
 
     # hg = hgcurvaturprofile.add_laplacian_encodings(hg)
     hg = hgcurvaturprofile.add_randowm_walks_encodings(hg)

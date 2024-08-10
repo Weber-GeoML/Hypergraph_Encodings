@@ -51,6 +51,27 @@ def toy_hypergraph_2() -> dict[str, dict]:
     return hg
 
 
+@pytest.fixture
+def toy_hypergraph_3() -> dict[str, dict]:
+    """Build toy hypergraph number 3
+
+    Returns:
+        toy_hypergraph_3:
+            hypergraph
+    """
+    # We don't care about features or labels
+    hg: dict[str, dict] = {
+        "hypergraph": {
+            "yellow": [7, 5, 4],
+            "red": [7, 5],
+        },
+        "features": {},
+        "labels": {},
+        "n": 3,
+    }
+    return hg
+
+
 def test_compute_node_degrees(toy_hypergraph) -> None:
     """
     Test for compute_node_degrees
@@ -75,6 +96,22 @@ def test_compute_node_degrees_2(toy_hypergraph_2) -> None:
             hypergraph where the nodes do not start at 1
     """
     forman_ricci = FormanRicci(toy_hypergraph_2)
+    # Computes the Forman-Ricci curvature
+    forman_ricci.compute_forman_ricci()
+    print(forman_ricci.node_degrees)
+    assert forman_ricci.node_degrees == {4: 1, 5: 2, 7: 2}
+
+
+def test_compute_node_degrees_3(toy_hypergraph_3) -> None:
+    """
+    Test for compute_node_degrees
+
+    Args:
+        toy_hypergraph_3:
+            hypergraph where the nodes do not start at 1
+            and unsorted
+    """
+    forman_ricci = FormanRicci(toy_hypergraph_3)
     # Computes the Forman-Ricci curvature
     forman_ricci.compute_forman_ricci()
     print(forman_ricci.node_degrees)

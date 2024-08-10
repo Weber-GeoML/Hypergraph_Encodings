@@ -76,7 +76,7 @@ def fetch_data(args, add_encodings: bool = False, encodings: str = "RW"):
     return X, Y, G
 
 
-def initialise(X, Y, G, args, unseen=None):
+def initialise(X, Y, G, args, unseen=None) -> tuple:
     """Initialises model, optimiser, normalises graph, and features
 
     Arguments:

@@ -18,12 +18,14 @@ contains the interface.
 We follow the interface from UniGCN:
 
 ```
-python scripts/train.py --data=coauthorship --dataset=dblp --model-name=UniSAGE 
+python scripts/train_val.py --data=coauthorship --dataset=dblp --model-name=UniSAGE 
 ```
 
 ```
 optional arguments:
   -h, --help            show this help message and exit
+  --add-encodings BOOL  whether to add encodings (default: True)
+  --encodings ENCODING  which encoding to add (default: LDP)
   --data DATA           data name (coauthorship/cocitation) (default:
                         coauthorship)
   --dataset DATASET     dataset name (e.g.: cora/dblp for coauthorship,
@@ -66,7 +68,20 @@ optional arguments:
 
 # Data
 
-Presented as dictionaries. For coauthorship, Keys are authors, values are int (papers they participate in).
+Presented as dictionaries. 
+
+DBLP [Rossi and Ahmed, 2015], Pubmed, Cite-
+seer and Cora [Sen et al., 2008] are used for all the experiments. 
+
+The hypergraph is created with each vertex representing a document. 
+
+The coauthorship hypergraphs, constructed from DBLP and Cora. For coauthorship, keys are authors, values are int for papers they co-authored. The hyperedges thus connect all documents co-authored by one author as one hyperedge. 
+
+The co-citation hypergraphs are built
+with PubMed, Citeseer and Cora. They use one hyperedge to represent all documents cited by an author.
+
+IMPORTANT NOTE: We are working on making the code as general, but for now, assume that the hyperedges (lists) contains
+vertices in sorted order.
 
 # How to run
 

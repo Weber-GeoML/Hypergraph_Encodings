@@ -56,6 +56,30 @@ def toy_hypergraph_2() -> dict[str, dict]:
 
 
 @pytest.fixture
+def toy_hypergraph_3() -> dict[str, dict]:
+    """Build toy hypergraph number 3
+
+    Same as 2 but different ordering
+    To see if everything is fine.
+
+    Returns:
+        toy_hypergraph_3:
+            hypergraph
+    """
+    # We don't care about features or labels
+    hg: dict[str, dict] = {
+        "hypergraph": {
+            "yellow": [7, 5, 4],
+            "red": [7, 5],
+        },
+        "features": {},
+        "labels": {},
+        "n": 3,
+    }
+    return hg
+
+
+@pytest.fixture
 def node_ldp() -> np.ndarray:
     """Returns the local degree profile for the toy hg"""
     # ordering is degree of node, min, max, median, mean, std
@@ -93,6 +117,21 @@ def node_ldp_2() -> np.ndarray:
 
 
 @pytest.fixture
+def node_ldp_3() -> np.ndarray:
+    """Returns the local degree profile for the toy hg 3"""
+    # ordering is degree of node, min, max, median, mean, std
+    # 4 has nbors 5,7 with degree 2, 2
+    # 5 has ngbors 4, 7 with degrees 1, 2
+    # 7 has ngbors 4, 5 with degrees 1, 2
+    ldp: np.ndarray = {
+        4: [1, 2, 2, 2, 2, 0],
+        5: [2, 1, 2, 1.5, 1.5, 0.5],
+        7: [2, 1, 2, 1.5, 1.5, 0.5],
+    }
+    return ldp
+
+
+@pytest.fixture
 def boundary() -> np.ndarray:
     """Returns the boundary matrix"""
     matrix_np: np.ndarray = np.array(
@@ -100,6 +139,22 @@ def boundary() -> np.ndarray:
     )
 
     return matrix_np.T
+
+
+@pytest.fixture
+def boundary_2() -> np.ndarray:
+    """Returns the boundary matrix for toy hg 2"""
+    matrix_np: np.ndarray = np.array([[1, 0], [1, 1], [1, 1]])
+
+    return matrix_np
+
+
+@pytest.fixture
+def boundary_3() -> np.ndarray:
+    """Returns the boundary matrix for toy hg 3"""
+    matrix_np: np.ndarray = np.array([[1, 0], [1, 1], [1, 1]])
+
+    return matrix_np
 
 
 @pytest.fixture
@@ -158,6 +213,13 @@ def degree_e() -> np.ndarray:
 @pytest.fixture
 def degree_e_2() -> np.ndarray:
     """Returns the degree (edge) matrix for toy hg 2"""
+    d_e: np.ndarray = np.array([[3, 0], [0, 2]])
+    return d_e
+
+
+@pytest.fixture
+def degree_e_3() -> np.ndarray:
+    """Returns the degree (edge) matrix for toy hg 3"""
     d_e: np.ndarray = np.array([[3, 0], [0, 2]])
     return d_e
 
@@ -279,6 +341,34 @@ def test_compute_boundary(toy_hypergraph, boundary) -> None:
     assert_array_equal(laplacian.boundary_matrix, boundary)
 
 
+def test_compute_boundary_2(toy_hypergraph_2, boundary_2) -> None:
+    """Test for compute_laplacian
+
+    Args:
+        toy_hypergraph:
+            hypergraph from draft
+        boundary:
+            the boundary matrix
+    """
+    laplacian: Laplacians = Laplacians(toy_hypergraph_2)
+    laplacian.compute_boundary()
+    assert_array_equal(laplacian.boundary_matrix, boundary_2)
+
+
+def test_compute_boundary_3(toy_hypergraph_3, boundary_3) -> None:
+    """Test for compute_laplacian
+
+    Args:
+        toy_hypergraph:
+            hypergraph from draft
+        boundary:
+            the boundary matrix
+    """
+    laplacian: Laplacians = Laplacians(toy_hypergraph_3)
+    laplacian.compute_boundary()
+    assert_array_equal(laplacian.boundary_matrix, boundary_3)
+
+
 def test_compute_hodge_laplacian(
     toy_hypergraph, hodge_laplacian_down, hodge_laplacian_up
 ) -> None:
@@ -333,7 +423,7 @@ def test_compute_ldp_2(toy_hypergraph_2, node_ldp_2) -> None:
 
     Args:
         toy_hypergraph:
-            hypergraph from draft
+            hypergraph
         node_ldp:
             the local degree profile
 
@@ -341,6 +431,21 @@ def test_compute_ldp_2(toy_hypergraph_2, node_ldp_2) -> None:
     laplacian: Laplacians = Laplacians(toy_hypergraph_2)
     laplacian.compute_ldp()
     assert_array_equal(laplacian.ldp, node_ldp_2)
+
+
+def test_compute_ldp_3(toy_hypergraph_3, node_ldp_3) -> None:
+    """Test for compute_ldp
+
+    Args:
+        toy_hypergraph:
+            hypergraph
+        node_ldp:
+            the local degree profile
+
+    """
+    laplacian: Laplacians = Laplacians(toy_hypergraph_3)
+    laplacian.compute_ldp()
+    assert_array_equal(laplacian.ldp, node_ldp_3)
 
 
 def test_compute_edge_degree(toy_hypergraph, degree_e) -> None:
@@ -371,6 +476,21 @@ def test_compute_edge_degree_2(toy_hypergraph_2, degree_e_2) -> None:
     laplacian: Laplacians = Laplacians(toy_hypergraph_2)
     laplacian.compute_edge_degrees()
     assert_array_equal(laplacian.De, degree_e_2)
+
+
+def test_compute_edge_degree_3(toy_hypergraph_3, degree_e_3) -> None:
+    """Test for compute_edge_degree
+
+    Args:
+        toy_hypergraph:
+            hypergraph from draft
+        degree_e:
+            edge degree matrix
+
+    """
+    laplacian: Laplacians = Laplacians(toy_hypergraph_3)
+    laplacian.compute_edge_degrees()
+    assert_array_equal(laplacian.De, degree_e_3)
 
 
 def test_compute_normalized_laplacian(toy_hypergraph, normalized_laplacian) -> None:
