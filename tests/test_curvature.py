@@ -51,6 +51,9 @@ def toy_hypergraph_2() -> dict[str, dict]:
     return hg
 
 
+# NOTE: We mandate that the hyperedges are sorted
+# This is a fixture to see if our code is robust
+# even if one does not follow the aforementioned guideline
 @pytest.fixture
 def toy_hypergraph_3() -> dict[str, dict]:
     """Build toy hypergraph number 3

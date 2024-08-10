@@ -55,6 +55,9 @@ def toy_hypergraph_2() -> dict[str, dict]:
     return hg
 
 
+# NOTE: We mandate that the hyperedges are sorted
+# This is a fixture to see if our code is robust
+# even if one does not follow the aforementioned guideline
 @pytest.fixture
 def toy_hypergraph_3() -> dict[str, dict]:
     """Build toy hypergraph number 3
@@ -158,6 +161,9 @@ def test_compute_hyperedges_2(toy_hypergraph_2, hyperedges_2) -> None:
     Args:
         toy_hypergraph_2:
             hypergraph number 2
+        hyperedges_2:
+            the dict of keys: nodes, values: hyperedges
+            for hg 2
     """
     hypergraphcurvatureprofile: HypergraphCurvatureProfile = (
         HypergraphCurvatureProfile()
@@ -176,6 +182,9 @@ def test_compute_hyperedges_3(toy_hypergraph_3, hyperedges_3) -> None:
     Args:
         toy_hypergraph_3:
             hypergraph number 3
+        hyperedges_3:
+            the dict of keys: nodes, values: hyperedges
+            for hg 3
     """
     hypergraphcurvatureprofile: HypergraphCurvatureProfile = (
         HypergraphCurvatureProfile()
