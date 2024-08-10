@@ -311,6 +311,20 @@ def hodge_laplacian_up() -> np.ndarray:
 
 
 @pytest.fixture
+def hodge_laplacian_up_2() -> np.ndarray:
+    """Returns the Hodge Laplacian (down)"""
+    l_up: np.ndarray = np.array([[3, 2], [2, 2]])
+    return l_up
+
+
+@pytest.fixture
+def hodge_laplacian_up_3() -> np.ndarray:
+    """Returns the Hodge Laplacian (down)"""
+    l_up: np.ndarray = np.array([[3, 2], [2, 2]])
+    return l_up
+
+
+@pytest.fixture
 def hodge_laplacian_down() -> np.ndarray:
     """Returns the Hodge Laplacian (up)"""
     l_down: np.ndarray = np.array(
@@ -321,6 +335,32 @@ def hodge_laplacian_down() -> np.ndarray:
             [0, 0, 0, 1, 1, 0],
             [0, 0, 1, 1, 2, 1],
             [0, 0, 1, 0, 1, 1],
+        ]
+    )
+    return l_down
+
+
+@pytest.fixture
+def hodge_laplacian_down_2() -> np.ndarray:
+    """Returns the Hodge Laplacian (up)"""
+    l_down: np.ndarray = np.array(
+        [
+            [1, 1, 1],
+            [1, 2, 2],
+            [1, 2, 2],
+        ]
+    )
+    return l_down
+
+
+@pytest.fixture
+def hodge_laplacian_down_3() -> np.ndarray:
+    """Returns the Hodge Laplacian (up)"""
+    l_down: np.ndarray = np.array(
+        [
+            [1, 1, 1],
+            [1, 2, 2],
+            [1, 2, 2],
         ]
     )
     return l_down
@@ -389,6 +429,32 @@ def rw_laplacian_EN() -> np.ndarray:
 
 
 @pytest.fixture
+def rw_laplacian_EN_2() -> np.ndarray:
+    """Returns the rw Laplacian, EN"""
+    rw_laplacian: np.ndarray = np.array(
+        [
+            [1, -1 / 2, -1 / 2],
+            [-1 / 2, 1, -1 / 2],
+            [-1 / 2, -1 / 2, 1],
+        ]
+    )
+    return rw_laplacian
+
+
+@pytest.fixture
+def rw_laplacian_EN_3() -> np.ndarray:
+    """Returns the rw Laplacian, EN"""
+    rw_laplacian: np.ndarray = np.array(
+        [
+            [1, -1 / 2, -1 / 2],
+            [-1 / 2, 1, -1 / 2],
+            [-1 / 2, -1 / 2, 1],
+        ]
+    )
+    return rw_laplacian
+
+
+@pytest.fixture
 def rw_laplacian_WE() -> np.ndarray:
     """Returns the rw Laplacian, WE"""
     L_WE_alpha_0 = np.array(
@@ -399,6 +465,32 @@ def rw_laplacian_WE() -> np.ndarray:
             [0, 0, 0, 1, -1, 0],
             [0, 0, -1 / 3, -1 / 3, 1, -1 / 3],
             [0, 0, -1 / 2, 0, -1 / 2, 1],
+        ]
+    )
+    return L_WE_alpha_0
+
+
+@pytest.fixture
+def rw_laplacian_WE_2() -> np.ndarray:
+    """Returns the rw Laplacian, WE"""
+    L_WE_alpha_0 = np.array(
+        [
+            [1, -1 / 2, -1 / 2],
+            [-1 / 3, 1, -2 / 3],
+            [-1 / 3, -2 / 3, 1],
+        ]
+    )
+    return L_WE_alpha_0
+
+
+@pytest.fixture
+def rw_laplacian_WE_3() -> np.ndarray:
+    """Returns the rw Laplacian, WE"""
+    L_WE_alpha_0 = np.array(
+        [
+            [1, -1 / 2, -1 / 2],
+            [-1 / 3, 1, -2 / 3],
+            [-1 / 3, -2 / 3, 1],
         ]
     )
     return L_WE_alpha_0
@@ -463,6 +555,44 @@ def test_compute_hodge_laplacian(
     laplacian.compute_hodge_laplacian()
     assert_array_equal(laplacian.hodge_laplacian_down, hodge_laplacian_down)
     assert_array_equal(laplacian.hodge_laplacian_up, hodge_laplacian_up)
+
+
+def test_compute_hodge_laplacian_2(
+    toy_hypergraph_2, hodge_laplacian_down_2, hodge_laplacian_up_2
+) -> None:
+    """Test for compute_hodge_laplacian
+
+    Args:
+        toy_hypergraph_2:
+            hypergraph from draft
+        hodge_laplacian_down_2:
+            hodge laplacian (down)
+        hodge_laplacian_up_2:
+            hodge laplacian (up)
+    """
+    laplacian: Laplacians = Laplacians(toy_hypergraph_2)
+    laplacian.compute_hodge_laplacian()
+    assert_array_equal(laplacian.hodge_laplacian_down, hodge_laplacian_down_2)
+    assert_array_equal(laplacian.hodge_laplacian_up, hodge_laplacian_up_2)
+
+
+def test_compute_hodge_laplacian_3(
+    toy_hypergraph_3, hodge_laplacian_down_3, hodge_laplacian_up_3
+) -> None:
+    """Test for compute_hodge_laplacian
+
+    Args:
+        toy_hypergraph_3:
+            hypergraph from draft
+        hodge_laplacian_down_3:
+            hodge laplacian (down)
+        hodge_laplacian_up_3:
+            hodge laplacian (up)
+    """
+    laplacian: Laplacians = Laplacians(toy_hypergraph_3)
+    laplacian.compute_hodge_laplacian()
+    assert_array_equal(laplacian.hodge_laplacian_down, hodge_laplacian_down_3)
+    assert_array_equal(laplacian.hodge_laplacian_up, hodge_laplacian_up_3)
 
 
 def test_compute_node_degree(toy_hypergraph, degree_v) -> None:
@@ -740,6 +870,42 @@ def test_compute_random_walk_laplacian_EN(toy_hypergraph, rw_laplacian_EN) -> No
     assert_allclose(laplacian.rw_laplacian, rw_laplacian_EN, atol=1e-8)
 
 
+def test_compute_random_walk_laplacian_EN_2(
+    toy_hypergraph_2, rw_laplacian_EN_2
+) -> None:
+    """Test for compute_random_walk_laplacian (EN)
+
+    Args:
+        toy_hypergraph_2:
+            hypergraph from draft
+        rw_laplacian_EN_2:
+            rw laplacian for EN scheme
+
+
+    """
+    laplacian: Laplacians = Laplacians(toy_hypergraph_2)
+    laplacian.compute_random_walk_laplacian(type="EN")
+    assert_allclose(laplacian.rw_laplacian, rw_laplacian_EN_2, atol=1e-8)
+
+
+def test_compute_random_walk_laplacian_EN_3(
+    toy_hypergraph_3, rw_laplacian_EN_3
+) -> None:
+    """Test for compute_random_walk_laplacian (EN)
+
+    Args:
+        toy_hypergraph_3:
+            hypergraph from draft
+        rw_laplacian_EN_3:
+            rw laplacian for EN scheme
+
+
+    """
+    laplacian: Laplacians = Laplacians(toy_hypergraph_3)
+    laplacian.compute_random_walk_laplacian(type="EN")
+    assert_allclose(laplacian.rw_laplacian, rw_laplacian_EN_3, atol=1e-8)
+
+
 def test_compute_random_walk_laplacian_WE(toy_hypergraph, rw_laplacian_WE) -> None:
     """Test for compute_random_walk_laplacian (WE)
 
@@ -754,3 +920,39 @@ def test_compute_random_walk_laplacian_WE(toy_hypergraph, rw_laplacian_WE) -> No
     laplacian: Laplacians = Laplacians(toy_hypergraph)
     laplacian.compute_random_walk_laplacian(type="WE")
     assert_allclose(laplacian.rw_laplacian, rw_laplacian_WE, atol=1e-8)
+
+
+def test_compute_random_walk_laplacian_WE_2(
+    toy_hypergraph_2, rw_laplacian_WE_2
+) -> None:
+    """Test for compute_random_walk_laplacian (WE)
+
+    Args:
+        toy_hypergraph_2:
+            hypergraph from draft
+        rw_laplacian_WE_2:
+            rw laplacian for WE scheme
+
+
+    """
+    laplacian: Laplacians = Laplacians(toy_hypergraph_2)
+    laplacian.compute_random_walk_laplacian(type="WE")
+    assert_allclose(laplacian.rw_laplacian, rw_laplacian_WE_2, atol=1e-8)
+
+
+def test_compute_random_walk_laplacian_WE_3(
+    toy_hypergraph_3, rw_laplacian_WE_3
+) -> None:
+    """Test for compute_random_walk_laplacian (WE)
+
+    Args:
+        toy_hypergraph_3:
+            hypergraph from draft
+        rw_laplacian_WE_3:
+            rw laplacian for WE scheme
+
+
+    """
+    laplacian: Laplacians = Laplacians(toy_hypergraph_3)
+    laplacian.compute_random_walk_laplacian(type="WE")
+    assert_allclose(laplacian.rw_laplacian, rw_laplacian_WE_3, atol=1e-8)
