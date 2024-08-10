@@ -5,12 +5,13 @@ This module contains functions for adding encodings
 to a dataset (curvature, laplacians, random walks).
 """
 
+import random
+
 import numpy as np
 
 from encodings_hnns.curvatures_frc import FormanRicci
 from encodings_hnns.curvatures_orc import ORC
 from encodings_hnns.laplacians import Laplacians
-import random
 
 
 class HypergraphCurvatureProfile:
@@ -76,26 +77,30 @@ class HypergraphCurvatureProfile:
         # and std of the degrees of the neighbors
         ld_profile: dict = laplacian.ldp
 
-        # NOTE: maybe I should do like I did below
-        # if self.hyperedges == None:
-        #     self.compute_hyperedges(hypergraph)
-        # and then for node in self.hyperedges.keys()
-        # the reason for this is what id the features are empty?
-        # but the con is it is additonal computations
-        # Lukas what do you think?
+        if self.hyperedges == None:
+            self.compute_hyperedges(hypergraph)
 
         # turn the degree profile into a np.matrix and stack it with the features
         # loops through node
-        for node in hypergraph["features"].keys():
+        i: int = 0  # to count the nodes.
+        # dictionary to store the features
+        # keys will be nodes
+        dict_of_features: dict = {}
+        for node in self.hyperedges.keys():
             ld_vals = np.matrix(ld_profile[node])
             if verbose:
                 print(
-                    f"The hypergraph features for node {node} are \n {hypergraph['features'][node]}"
+                    f"The hypergraph features for node {node}, index {i} are \n {hypergraph['features'][i]}"
                 )
-                print(f"We add the encoding:\n {ld_vals}")
-            hypergraph["features"][node] = np.hstack(
-                (hypergraph["features"][node], ld_vals)
-            )
+                print(f"We add the degree encoding:\n {ld_vals}")
+            stacked_features = np.hstack((hypergraph["features"][i], ld_vals))
+            print(f"The stacked features are \n {stacked_features}")
+            dict_of_features[node] = stacked_features
+            i += 1
+        # Extracting the values and combining them into a matrix
+        hypergraph["feature"] = np.array(
+            [dict_of_features[key] for key in sorted(dict_of_features.keys())]
+        )
 
         return hypergraph
 
@@ -153,16 +158,23 @@ class HypergraphCurvatureProfile:
             ]
 
         # turn the RC profile into a np.matrix and stack it with the features
+        i: int = 0  # to count the nodes.
+        # dictionary to store the features
+        # keys will be nodes
+        dict_of_features: dict = {}
         for node in self.hyperedges.keys():
             rc_vals = np.matrix(rc_profile[node])
             if verbose:
                 print(
-                    f"The hypergraph features for node {node} are \n {hypergraph['features'][node]}"
+                    f"The hypergraph features for node {node}, index {i} are \n {hypergraph['features'][i]}"
                 )
                 print(f"We add the encoding:\n {rc_vals}")
-            hypergraph["features"][node] = np.hstack(
-                (hypergraph["features"][node], rc_vals)
-            )
+            dict_of_features[node] = np.hstack((hypergraph["features"][node], rc_vals))
+            i += 1
+        # Extracting the values and combining them into a matrix
+        hypergraph["feature"] = np.array(
+            [dict_of_features[key] for key in sorted(dict_of_features.keys())]
+        )
 
         return hypergraph
 
@@ -244,18 +256,25 @@ class HypergraphCurvatureProfile:
 
         # turn the FRC profile into a np.matrix and stack it with the features
         i: int = 0  # to count the nodes. Same number of evectors as nodes.
+        # dictionary to store the features
+        # keys will be nodes
+        dict_of_features: dict = {}
         for node in self.hyperedges.keys():
             laplacian_vals = eigenvectors[:, i].reshape(1, -1)
             laplacian_vals = sign * laplacian_vals
             if verbose:
                 print(
-                    f"The hypergraph features for node {node} are \n {hypergraph['features'][node]}"
+                    f"The hypergraph features for node {node} are \n {hypergraph['features'][i]}"
                 )
                 print(f"We add the Laplacian based encoding:\n {laplacian_vals}")
-            hypergraph["features"][node] = np.hstack(
-                (hypergraph["features"][node], laplacian_vals)
-            )
+            stacked_features = np.hstack((hypergraph["features"][node], laplacian_vals))
+            print(f"The stacked features are {stacked_features}")
+            dict_of_features[node] = stacked_features
             i += 1
+        # Extracting the values and combining them into a matrix
+        hypergraph["feature"] = np.array(
+            [dict_of_features[key] for key in sorted(dict_of_features.keys())]
+        )
 
         return hypergraph
 
@@ -309,19 +328,33 @@ class HypergraphCurvatureProfile:
 
         assert matrix_powers.shape[0] == k
 
+        # this is because the nodes might not be labelled 0,1,2,3 but eg A, B, C, D
+        # so we need to keep track of the nodes
+        # TODO: very important. Make sure the self.hyperedges.keys
         i: int = 0  # to count the nodes. Same number of evectors as nodes.
+        # dictionary to store the features
+        # keys will be nodes
+        dict_of_features: dict = {}
         for node in self.hyperedges.keys():
+            print(f"The node is {node}")
             assert matrix_powers[:, i].shape == (k,)
             laplacian_vals = matrix_powers[:, i].reshape(1, -1)
             if verbose:
                 print(
-                    f"The hypergraph features for node {node} are \n {hypergraph['features'][node]}"
+                    f"The hypergraph features for node {node} are \n {hypergraph['features'][i]}"
                 )
-                print(f"We add the RW based encoding:\n {laplacian_vals}")
-            hypergraph["features"][node] = np.hstack(
-                (hypergraph["features"][node], laplacian_vals)
-            )
+                print(f"The shape is {len(hypergraph['features'][i])}")
+                print(
+                    f"We add the RW based encoding:\n {laplacian_vals} \n with shape {laplacian_vals.shape}"
+                )
+            # NOTE: souldn't this be hypergraph["feature"][i]??
+            stacked_features = np.hstack((hypergraph["features"][i], laplacian_vals))
+            dict_of_features[node] = stacked_features
             i += 1
+        # Extracting the values and combining them into a matrix
+        hypergraph["feature"] = np.array(
+            [dict_of_features[key] for key in sorted(dict_of_features.keys())]
+        )
 
         return hypergraph
 
@@ -337,6 +370,18 @@ if __name__ == "__main__":
             "blue": [4, 5],
         },
         "features": {1: [[1]], 2: [[1]], 3: [[1]], 4: [[1]], 5: [[1]], 6: [[1]]},
+        "labels": {},
+        "n": 6,
+    }
+
+    hg: dict[str, dict | int] = {
+        "hypergraph": {
+            "yellow": [1, 2, 3, 5],
+            "red": [2, 3],
+            "green": [3, 5, 6],
+            "blue": [4, 5],
+        },
+        "features": {[[1], [1], [1], [1], [1], [1]]},
         "labels": {},
         "n": 6,
     }
