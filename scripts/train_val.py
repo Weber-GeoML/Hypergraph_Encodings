@@ -77,7 +77,21 @@ def get_split(Y, p: float = 0.2) -> tuple[list[int], list[int]]:
     return val_idx, test_idx
 
 
-for seed in range(1):
+out_dir: str = path.Path(f"./{args.out_dir}/{model_name}_{nlayer}_{dataname}/")
+if out_dir.exists():
+    shutil.rmtree(out_dir)
+out_dir.makedirs_p()
+baselogger = get_logger("base logger", f"{out_dir}/logging.log", not args.nostdout)
+resultlogger = get_logger("result logger", f"{out_dir}/result.log", not args.nostdout)
+baselogger.info(args)
+
+resultlogger.info(args)
+
+
+# Keep track of the test accuracy for the best val accuracy
+overall_test_accuracies_best_val: list = []
+
+for seed in range(1, 9):
     seed += 1
     # gpu, seed
     torch.manual_seed(seed)
@@ -94,14 +108,6 @@ for seed in range(1):
     if out_dir.exists():
         shutil.rmtree(out_dir)
     out_dir.makedirs_p()
-
-    baselogger = get_logger("base logger", f"{out_dir}/logging.log", not args.nostdout)
-    resultlogger = get_logger(
-        "result logger", f"{out_dir}/result.log", not args.nostdout
-    )
-    baselogger.info(args)
-
-    resultlogger.info(args)
 
     for run in range(1, args.n_runs + 1):
         run_dir = out_dir / f"{run}"
@@ -127,6 +133,9 @@ for seed in range(1):
         tic_run = time.time()
 
         best_val_acc, best_test_acc, test_acc, Z, bad_counter = 0, 0, 0, None, 0
+        test_accs_for_best_val = (
+            []
+        )  # List to store test accuracy for the best validation accuracy
         for epoch in range(args.epochs):
             # train
             tic_epoch = time.time()
@@ -153,13 +162,16 @@ for seed in range(1):
                 best_val_acc = val_acc
                 best_test_acc = test_acc
                 bad_counter = 0
+                test_accs_for_best_val.append(
+                    test_acc
+                )  # Save the test accuracy when validation accuracy improves
             else:
                 bad_counter += 1
                 if bad_counter >= args.patience:
                     break
             if epoch % 20 == 0:
                 baselogger.info(
-                    f"epoch:{epoch} | loss:{loss:.4f} | train acc:{train_acc:.2f} | val acc:{val_acc:.2f} | best_test_acc: {best_test_acc:.2f} | test acc:{test_acc:.2f} | time:{train_time*1000:.1f}ms"
+                    f"epoch:{epoch} | loss:{loss:.4f} | train acc:{train_acc:.2f} | val acc:{val_acc:.2f} | test_acc_best_val: {test_accs_for_best_val[-1]:.2f}  | best_test_acc: {best_test_acc:.2f} | test acc:{test_acc:.2f} | time:{train_time*1000:.1f}ms"
                 )
 
         resultlogger.info(
@@ -168,9 +180,13 @@ for seed in range(1):
         test_accs.append(test_acc)
         best_val_accs.append(best_val_acc)
         best_test_accs.append(best_test_acc)
+        overall_test_accuracies_best_val.append(test_accs_for_best_val[-1])
 
 
 resultlogger.info(f"We had {len(test_accs)} runs")
+resultlogger.info(
+    f"Average test accuracy for best val: {np.mean(overall_test_accuracies_best_val)} ± {np.std(overall_test_accuracies_best_val)}"
+)
 resultlogger.info(
     f"Average final test accuracy: {np.mean(test_accs)} ± {np.std(test_accs)}"
 )
