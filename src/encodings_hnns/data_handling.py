@@ -144,14 +144,40 @@ if __name__ == "__main__":
     # So hypergraph is a dict:
     # key: authors, values: papers participates in.
     print("hypergraph")
-    print(parsed_data["hypergraph"])
+    # print(parsed_data["hypergraph"])
     # hgh = list(parsed_data["hypergraph"].items())
     # hnx.drawing.draw(hnx.Hypergraph(hgh))
     # plt.show()
     print("features")
-    print(parsed_data["features"])
-    print("labels")
+    # print(parsed_data["features"])
+    print("features shape")
+    print(parsed_data["features"].shape)
+    print("labels shape")
+    print(parsed_data["labels"].shape)
     print(parsed_data["labels"][0])
+
+    # Number of unique nodes
+    all_nodes = set()
+    for nodes in parsed_data["hypergraph"].values():
+        all_nodes.update(nodes)
+
+    num_nodes = len(all_nodes)
+    min_node = min(all_nodes)
+    max_node = max(all_nodes)
+
+    print(f"Number of unique nodes: {num_nodes}")
+    print(parsed_data["n"])
+    print(min_node)
+    print(max_node)
+    complete_set = set(range(max_node))
+    # Find the difference: elements in complete_set but not in all_nodes
+    missing_nodes = complete_set - all_nodes
+
+    print(f"Nodes in the complete set but not in all_nodes: {missing_nodes}")
+    # Number of key-value pairs
+    num_hyperedges = len(parsed_data["hypergraph"])
+    print(f"Number of hyperedges (key-value pairs): {num_hyperedges}")
+    assert False
 
     ###### Cora
     data_type = "coauthorship"
