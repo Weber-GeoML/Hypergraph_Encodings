@@ -26,6 +26,10 @@ optional arguments:
   -h, --help            show this help message and exit
   --add-encodings BOOL  whether to add encodings (default: True)
   --encodings ENCODING  which encoding to add (default: LDP)
+  --random-walk-type    which random walk (WE, EN, EE)
+  --curvature-type      which curvature (ORC or FRC)
+  --laplacia-type       whcih Laplacian type (Normalized, Hodge, more to come)
+  --k-rw                number of hops for RW encodings
   --data DATA           data name (coauthorship/cocitation) (default:
                         coauthorship)
   --dataset DATASET     dataset name (e.g.: cora/dblp for coauthorship,
