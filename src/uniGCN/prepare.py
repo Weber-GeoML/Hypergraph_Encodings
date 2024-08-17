@@ -9,7 +9,7 @@ import torch_sparse
 from torch_scatter import scatter
 
 from encodings_hnns.data_handling import load
-from encodings_hnns.encodings import HypergraphCurvatureProfile
+from encodings_hnns.encodings import HypergraphEncodings
 from uniGCN.HyperGCN import HyperGCN
 from uniGCN.UniGCN import UniGCNII, UniGNN
 
@@ -29,7 +29,15 @@ def accuracy(Z, Y):
     return 100 * Z.argmax(1).eq(Y).float().mean().item()
 
 
-def fetch_data(args, add_encodings: bool = False, encodings: str = "RW"):
+def fetch_data(
+    args,
+    add_encodings: bool = False,
+    encodings: str = "RW",
+    laplacian_type: str = "Hodge",
+    random_walk_type: str = "WE",
+    k_rw: int = 20,
+    curvature_type: str = "ORC",
+):
     """TODO
 
     Args:
@@ -40,28 +48,56 @@ def fetch_data(args, add_encodings: bool = False, encodings: str = "RW"):
         encodings: added by RP!
             which encoding to add
             Can be RW, Laplacian, LCP, LDP
+        laplacian_type:
+            Which laplacian to use
+            Hodge or Normalized
+        random_walk_type:
+            which rw to use
+            WE or EN or EE
+        k_rw:
+            number of hops for RW
+            default is 20
+        curvature_type:
+            ORC or FRC
+
 
     """
     dataset, _, _ = load(args)
     args.dataset_dict = dataset
 
+    shape_before = dataset["features"].shape
+    print(f"The features shape are {shape_before}")
+
     # added by RP!
     if add_encodings:
         print("We are adding encodings!")
-        hgcurvaturprofile = HypergraphCurvatureProfile()
+        hgencodings = HypergraphEncodings()
         if encodings == "RW":
             print("Adding the RW encodings")
-            dataset = hgcurvaturprofile.add_randowm_walks_encodings(dataset)
+            dataset = hgencodings.add_randowm_walks_encodings(
+                dataset, rw_type=random_walk_type, k=k_rw
+            )
         elif encodings == "Laplacian":
             print("Adding the Laplacian encodings")
-            dataset = hgcurvaturprofile.add_laplacian_encodings(dataset)
+            dataset = hgencodings.add_laplacian_encodings(dataset, type=laplacian_type)
         elif encodings == "LCP":
             print("Adding the LCP encodings")
-            dataset = hgcurvaturprofile.add_curvature_encodings(dataset)
+            dataset = hgencodings.add_curvature_encodings(dataset, type=curvature_type)
         elif encodings == "LDP":
             print("Adding the LDP encodings")
-            dataset = hgcurvaturprofile.add_degree_encodings(dataset)
+            dataset = hgencodings.add_degree_encodings(dataset)
 
+        print(f"The features are {dataset['features']}")
+        shape_after = dataset["features"].shape
+        print(f"The features shape are {dataset['features'].shape}")
+        # use the toy hypergraph
+        # check that the features are added there
+        assert (
+            shape_before[0] == shape_after[0]
+        ), f"The shape are {shape_before} and {shape_after}"
+        assert (
+            shape_before[1] != shape_after[1]
+        ), f"The shape are {shape_before} and {shape_after}"
     X, Y, G = dataset["features"], dataset["labels"], dataset["hypergraph"]
 
     # node features in sparse representation
@@ -171,6 +207,7 @@ def initialise(X, Y, G, args, unseen=None) -> tuple:
         optimiser = optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
 
     model.to(device)
+    print("Managed to get the model to the device")
 
     return model, optimiser
 
