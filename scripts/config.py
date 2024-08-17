@@ -17,13 +17,37 @@ def parse():
     p.add_argument(
         "--encodings",
         type=str,
-        default="LDP",
+        default="LCP",
         help="what encodings to add",
+    )
+    p.add_argument(
+        "--random-walk-type",
+        type=str,
+        default="WE",
+        help="what random walk to use - WE, EN, EE",
+    )
+    p.add_argument(
+        "--curvature-type",
+        type=str,
+        default="FRC",
+        help="what curvature to use. ORC or FRC",
+    )
+    p.add_argument(
+        "--laplacian-type",
+        type=str,
+        default="Hodge",
+        help="what Laplacian to use (Hodge or Normalized)",
+    )
+    p.add_argument(
+        "--k-rw",
+        type=int,
+        default=20,
+        help="number of hops for random walks",
     )
     p.add_argument(
         "--data",
         type=str,
-        default="coauthorship",
+        default="cocitation",
         help="data name (coauthorship/cocitation)",
     )
     p.add_argument(
