@@ -48,8 +48,17 @@ dirname = f"{datetime.datetime.now()}".replace(" ", "_").replace(":", ".")
 X: torch.Tensor
 Y: torch.Tensor
 print(f"We are adding the {args.encodings} encodings")
-X, Y, G = fetch_data(args, add_encodings=args.add_encodings, encodings=args.encodings)
+X, Y, G = fetch_data(
+    args,
+    add_encodings=args.add_encodings,
+    encodings=args.encodings,
+    laplacian_type=args.laplacian_type,
+    random_walk_type=args.random_walk_type,
+    k_rw=args.k_rw,
+    curvature_type=args.curvature_type,
+)
 print(f"X are the features \n {X} \n with shape {X.shape}")
+features_shape = X.shape[0]
 print(f"Y are the labels \n {Y}")
 print(f"G is the hg")
 
@@ -93,6 +102,7 @@ overall_test_accuracies_best_val: list = []
 
 for seed in range(1, 9):
     seed += 1
+    print(f"The seed is {seed}")
     # gpu, seed
     torch.manual_seed(seed)
     np.random.seed(seed)
