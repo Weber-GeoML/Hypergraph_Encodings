@@ -63,7 +63,7 @@ class Laplacians:
             set(node for hyperedge in hypergraph.values() for node in hyperedge)
         )
         if verbose:
-            print(f"The nodes are {all_nodes}")
+            print(f"The nodes are {all_nodes}. \n We have {len(all_nodes)} nodes.")
 
         # Creates mapping from nodes to column indices
         node_to_col: dict = {node: idx for idx, node in enumerate(all_nodes)}
@@ -138,6 +138,9 @@ class Laplacians:
         all_nodes: list = sorted(
             set(node for hyperedge in hypergraph.values() for node in hyperedge)
         )
+        # NOTE: we noticed that the number of nodes is not the number of nodes reported in HyperGCN
+        # so the following assert does not pass
+        # assert len(all_nodes) == self.hypergraph["n"]
         if verbose:
             print(f"The nodes are {all_nodes}")
 

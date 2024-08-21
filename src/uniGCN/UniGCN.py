@@ -50,8 +50,14 @@ def normalize_l2(X):
 class UniSAGEConv(nn.Module):
 
     def __init__(
-        self, args, in_channels, out_channels, heads=8, dropout=0.0, negative_slope=0.2
-    ):
+        self,
+        args,
+        in_channels: int,
+        out_channels: int,
+        heads: int = 8,
+        dropout: float = 0.0,
+        negative_slope: float = 0.2,
+    ) -> None:
         super().__init__()
         # TODO: bias?
         self.W = nn.Linear(in_channels, heads * out_channels, bias=False)
@@ -280,13 +286,13 @@ class UniGATConv(nn.Module):
     def __init__(
         self,
         args,
-        in_channels,
-        out_channels,
+        in_channels: int,
+        out_channels: int,
         heads: int = 8,
         dropout: float = 0.0,
         negative_slope: float = 0.2,
         skip_sum: bool = False,
-    ):
+    ) -> None:
         super().__init__()
         self.W = nn.Linear(in_channels, heads * out_channels, bias=False)
 
@@ -306,7 +312,7 @@ class UniGATConv(nn.Module):
             self.__class__.__name__, self.in_channels, self.out_channels, self.heads
         )
 
-    def reset_parameters(self):
+    def reset_parameters(self) -> None:
         glorot(self.att_v)
         glorot(self.att_e)
 
@@ -377,7 +383,7 @@ class UniGNN(nn.Module):
         nhead: int,
         V: torch.long,
         E: torch.long,
-    ):
+    ) -> None:
         """UniGNN
 
         Args:
@@ -437,7 +443,7 @@ class UniGNN(nn.Module):
 
 
 class UniGCNIIConv(nn.Module):
-    def __init__(self, args, in_features, out_features):
+    def __init__(self, args, in_features, out_features) -> None:
         super().__init__()
         self.W = nn.Linear(in_features, out_features, bias=False)
         self.args = args
@@ -495,7 +501,7 @@ class UniGCNII(nn.Module):
         nhead: int,
         V: torch.long,
         E: torch.long,
-    ):
+    ) -> None:
         """UniGNNII
 
         Args:
