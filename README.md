@@ -1,6 +1,6 @@
 # Hypergraph_Encodings
 
-# Organisation of repo
+## Organisation of repo
 
 ```data/``` 
 
@@ -57,7 +57,7 @@ optional arguments:
 ```
 
 
-# Data
+## Data
 
 Presented as dictionaries. 
 
@@ -74,7 +74,7 @@ with PubMed, Citeseer and Cora. They use one hyperedge to represent all document
 IMPORTANT NOTE: We are working on making the code as general, but for now, assume that the hyperedges (lists) contains
 vertices in sorted order.
 
-# How to run
+## How to run
 
 Create a virtual env, activate it and install the required packages.
 
@@ -85,7 +85,17 @@ pip install -e .
 ```
 You might need to install julia separately as well as the ORC routine calls julia code.
 
-# Tests
+## Debugging
+
+Using Visual Studio, navigate to the file 
+
+```
+scripts/train_val.py
+``` 
+
+and use the build in debugger. You can add breakpoints etc.
+
+## Tests
 
 We have a test suite that runs using pytest.
 
@@ -108,7 +118,7 @@ pytest tests/test_curvature.py
 ``` 
 
 
-# Julia
+## Julia
 
 A bit hacky for now.
 
