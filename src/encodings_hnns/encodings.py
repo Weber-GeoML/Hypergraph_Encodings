@@ -114,7 +114,7 @@ class HypergraphEncodings:
             ld_vals = np.matrix(ld_profile[node])
             if verbose:
                 print(
-                    f"The hypergraph features for node {node}, index {i} are \n {hypergraph['features'][node]}"
+                    f"The hypergraph features for node {node}, are \n {hypergraph['features'][node]}"
                 )
                 print(f"We add the degree encoding:\n {ld_vals}")
             stacked_features = np.hstack((hypergraph["features"][node], ld_vals))
@@ -204,7 +204,7 @@ class HypergraphEncodings:
             rc_vals = np.matrix(rc_profile[node])
             if verbose:
                 print(
-                    f"The hypergraph features for node {node}, index {i} are \n {hypergraph['features'][node]}"
+                    f"The hypergraph features for node {node}, are \n {hypergraph['features'][node]}"
                 )
                 print(f"We add the encoding:\n {rc_vals}")
             padded_features[node] = np.hstack((hypergraph["features"][node], rc_vals))
@@ -299,7 +299,7 @@ class HypergraphEncodings:
         # Determines the target shape
         target_shape = (
             features_augmented.shape[0],
-            features_augmented.shape[1] + eigenvalues[0].shape[0],
+            features_augmented.shape[1] + eigenvectors[0].shape[0],
         )
 
         # Creates a new array of zeros with the target shape
@@ -312,6 +312,7 @@ class HypergraphEncodings:
         if len(hypergraph["features"]) == 0:
             print("Will be implemented")
             raise NotImplementedError
+        i = 0
         for node in self.hyperedges.keys():
             laplacian_vals = eigenvectors[:, i].reshape(1, -1)
             laplacian_vals = sign * laplacian_vals
@@ -324,7 +325,8 @@ class HypergraphEncodings:
             stacked_features = np.hstack((hypergraph["features"][node], laplacian_vals))
             if verbose:
                 print(f"The stacked features are {stacked_features}")
-            hypergraph["features"][node] = stacked_features
+            padded_features[node] = stacked_features
+            i += 1
 
         hypergraph["features"] = padded_features
         assert (
