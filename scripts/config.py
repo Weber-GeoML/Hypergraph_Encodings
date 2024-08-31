@@ -33,7 +33,7 @@ def parse():
         help="what curvature to use. ORC or FRC",
     )
     p.add_argument(
-        "--normalize",
+        "--normalize-features",
         type=bool,
         default=True,
         help="whether to normalize features",
