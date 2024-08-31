@@ -14,6 +14,10 @@ contains functions for the package.
 
 contains the interface.
 
+```computed_encodings/```
+
+contains the precomputed encodings saved as pickle files.
+
 
 We follow the interface from UniGCN:
 
