@@ -37,8 +37,10 @@ def fetch_data(
     random_walk_type: str = "WE",
     k_rw: int = 20,
     curvature_type: str = "ORC",
+    normalize_features: bool = False,
+    normalize_encodings: bool = False,
 ):
-    """TODO
+    """Gets the data
 
     Args:
         args:
@@ -59,8 +61,10 @@ def fetch_data(
             default is 20
         curvature_type:
             ORC or FRC
-
-
+        normalize_features:
+            whether to normalize the features
+        normalize_encodings:
+            whether to normalize the encodings
     """
     dataset, _, _ = load(args)
     args.dataset_dict = dataset
@@ -68,41 +72,144 @@ def fetch_data(
     shape_before = dataset["features"].shape
     print(f"The features shape are {shape_before}")
 
-    # added by RP!
-    if add_encodings:
-        print("We are adding encodings!")
-        hgencodings = HypergraphEncodings()
-        if encodings == "RW":
-            print("Adding the RW encodings")
-            dataset = hgencodings.add_randowm_walks_encodings(
-                dataset, rw_type=random_walk_type, k=k_rw
-            )
-        elif encodings == "Laplacian":
-            print("Adding the Laplacian encodings")
-            dataset = hgencodings.add_laplacian_encodings(dataset, type=laplacian_type)
-        elif encodings == "LCP":
-            print("Adding the LCP encodings")
-            dataset = hgencodings.add_curvature_encodings(dataset, type=curvature_type)
-        elif encodings == "LDP":
-            print("Adding the LDP encodings")
-            dataset = hgencodings.add_degree_encodings(dataset)
+    # No normalization
+    if not normalize_features:
+        normalize_encodings = False
+        # added by RP!
+        if add_encodings:
+            print("We are adding encodings!")
+            hgencodings = HypergraphEncodings()
+            if encodings == "RW":
+                print("Adding the RW encodings")
+                dataset = hgencodings.add_randowm_walks_encodings(
+                    dataset, rw_type=random_walk_type, k=k_rw, normalized=True
+                )  # normalized is True because of some formatting. normalized is just whether to add [] around festures/encodings...
+            elif encodings == "Laplacian":
+                print("Adding the Laplacian encodings")
+                dataset = hgencodings.add_laplacian_encodings(
+                    dataset, type=laplacian_type, normalized=True
+                )
+            elif encodings == "LCP":
+                print("Adding the LCP encodings")
+                dataset = hgencodings.add_curvature_encodings(
+                    dataset, type=curvature_type, normalized=True
+                )
+            elif encodings == "LDP":
+                print("Adding the LDP encodings")
+                dataset = hgencodings.add_degree_encodings(dataset, normalized=True)
 
-        print(f"The features are {dataset['features']}")
-        shape_after = dataset["features"].shape
-        print(f"The features shape are {dataset['features'].shape}")
-        # use the toy hypergraph
-        # check that the features are added there
-        assert (
-            shape_before[0] == shape_after[0]
-        ), f"The shape are {shape_before} and {shape_after}"
-        assert (
-            shape_before[1] != shape_after[1]
-        ), f"The shape are {shape_before} and {shape_after}"
-    X, Y, G = dataset["features"], dataset["labels"], dataset["hypergraph"]
+            print(f"The features are {dataset['features']}")
+            shape_after = dataset["features"].shape
+            print(f"The features shape are {dataset['features'].shape}")
+            # use the toy hypergraph
+            # check that the features are added there
+            assert (
+                shape_before[0] == shape_after[0]
+            ), f"The shape are {shape_before} and {shape_after}"
+            assert (
+                shape_before[1] != shape_after[1]
+            ), f"The shape are {shape_before} and {shape_after}"
+        # nothing has been normalized
+        X, Y, G = dataset["features"], dataset["labels"], dataset["hypergraph"]
+        # node features in sparse representation
+        X = sp.csr_matrix(X, dtype=np.float32)
+        X = torch.FloatTensor(np.array(X.todense()))
 
-    # node features in sparse representation
-    X = sp.csr_matrix(normalise(np.array(X)), dtype=np.float32)
-    X = torch.FloatTensor(np.array(X.todense()))
+    # normalize the features
+    elif normalize_features == True:
+        if normalize_encodings or not add_encodings:
+            # added by RP!
+            if add_encodings:
+                print("We are adding encodings!")
+                hgencodings = HypergraphEncodings()
+                if encodings == "RW":
+                    print("Adding the RW encodings")
+                    dataset = hgencodings.add_randowm_walks_encodings(
+                        dataset, rw_type=random_walk_type, k=k_rw, normalized=True
+                    )
+                elif encodings == "Laplacian":
+                    print("Adding the Laplacian encodings")
+                    dataset = hgencodings.add_laplacian_encodings(
+                        dataset, type=laplacian_type, normalized=True
+                    )
+                elif encodings == "LCP":
+                    print("Adding the LCP encodings")
+                    dataset = hgencodings.add_curvature_encodings(
+                        dataset, type=curvature_type, normalized=True
+                    )
+                elif encodings == "LDP":
+                    print("Adding the LDP encodings")
+                    dataset = hgencodings.add_degree_encodings(dataset, normalized=True)
+
+                print(f"The features are {dataset['features']}")
+                shape_after = dataset["features"].shape
+                print(f"The features shape are {dataset['features'].shape}")
+                # use the toy hypergraph
+                # check that the features are added there
+                assert (
+                    shape_before[0] == shape_after[0]
+                ), f"The shape are {shape_before} and {shape_after}"
+                assert (
+                    shape_before[1] != shape_after[1]
+                ), f"The shape are {shape_before} and {shape_after}"
+            X, Y, G = dataset["features"], dataset["labels"], dataset["hypergraph"]
+
+            # normalize everything here (features and encodings, if added)
+            # node features in sparse representation
+            X = sp.csr_matrix(normalise(np.array(X)), dtype=np.float32)
+            X = torch.FloatTensor(np.array(X.todense()))
+
+        # normalize the features, but not the encodings
+        elif not normalize_encodings:
+            # normalize here
+            dataset["features"] = normalise(np.array(dataset["features"]))
+            shape_after = dataset["features"].shape
+            print(f"The features shape are {shape_after}")
+
+            # added by RP!
+            if add_encodings:
+                print("We are adding encodings!")
+                hgencodings = HypergraphEncodings()
+                if encodings == "RW":
+                    print("Adding the RW encodings")
+                    dataset = hgencodings.add_randowm_walks_encodings(
+                        dataset,
+                        rw_type=random_walk_type,
+                        k=k_rw,
+                        normalized=normalize_encodings,
+                    )
+                elif encodings == "Laplacian":
+                    print("Adding the Laplacian encodings")
+                    dataset = hgencodings.add_laplacian_encodings(
+                        dataset, type=laplacian_type, normalized=normalize_encodings
+                    )
+                elif encodings == "LCP":
+                    print("Adding the LCP encodings")
+                    dataset = hgencodings.add_curvature_encodings(
+                        dataset, type=curvature_type, normalized=normalize_encodings
+                    )
+                elif encodings == "LDP":
+                    print("Adding the LDP encodings")
+                    dataset = hgencodings.add_degree_encodings(
+                        dataset, normalized=normalize_encodings
+                    )
+
+                print(f"The features are {dataset['features']}")
+                shape_after = dataset["features"].shape
+                print(f"The features shape are {dataset['features'].shape}")
+                # use the toy hypergraph
+                # check that the features are added there
+                assert (
+                    shape_before[0] == shape_after[0]
+                ), f"The shape are {shape_before} and {shape_after}"
+                assert (
+                    shape_before[1] != shape_after[1]
+                ), f"The shape are {shape_before} and {shape_after}"
+            # encodings are unormalized
+            X, Y, G = dataset["features"], dataset["labels"], dataset["hypergraph"]
+            # node features in sparse representation
+            X = sp.csr_matrix(X, dtype=np.float32)
+            X = torch.FloatTensor(np.array(X.todense()))
 
     # labels
     Y = np.array(Y)

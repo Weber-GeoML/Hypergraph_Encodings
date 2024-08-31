@@ -10,6 +10,9 @@ to a dataset (curvature, laplacians, random walks).
 # assert that all_nodes is {0,1,2,3..., number of nodes}
 
 import random
+import pickle
+import json
+import os
 
 import numpy as np
 
@@ -68,6 +71,8 @@ class HypergraphEncodings:
         self,
         hypergraph: dict,
         verbose: bool = False,
+        normalized: bool = True,
+        name=None,
     ) -> dict:
         """Computes the LDP. This is the degree profile.
 
@@ -76,11 +81,19 @@ class HypergraphEncodings:
                 hypergraph dict containing hypergraph, features, label, n
             verbose:
                 to print more
-
+            normalized:
+                technical detail about needeing [] when we normalize in some cases
         Returns:
             the hypergraph with the degree profile encodings added to the featuress
 
         """
+        # if name:
+        #     filename = f"{name}.pkl"
+        #     if os.path.exists(filename):
+        #         with open(filename, "rb") as f:
+        #             print(f"Loading hypergraph from {filename}")
+        #             return pickle.load(f)
+
         assert (
             hypergraph["features"].shape[0] == hypergraph["n"]
         ), f"BEFORE: The shape is {hypergraph['features'].shape[0]} but n is {hypergraph['n']}"
@@ -117,7 +130,10 @@ class HypergraphEncodings:
                     f"The hypergraph features for node {node}, are \n {hypergraph['features'][node]}"
                 )
                 print(f"We add the degree encoding:\n {ld_vals}")
-            stacked_features = np.hstack((hypergraph["features"][node], ld_vals))
+            if normalized:
+                stacked_features = np.hstack((hypergraph["features"][node], ld_vals))
+            elif not normalized:
+                stacked_features = np.hstack(([hypergraph["features"][node]], ld_vals))
             if verbose:
                 print(f"The stacked features are \n {stacked_features}")
             padded_features[node] = stacked_features
@@ -125,10 +141,19 @@ class HypergraphEncodings:
         assert (
             hypergraph["features"].shape[0] == hypergraph["n"]
         ), f"The shape is {hypergraph['features'].shape[0]} but n is {hypergraph['n']}"
+
+        # if name:
+        #     with open(f"{name}.pkl", "wb") as f:
+        #         pickle.dump(hypergraph, f)
+        #     print(f"Hypergraph saved as {name}.pkl")
         return hypergraph
 
     def add_curvature_encodings(
-        self, hypergraph: dict, verbose: bool = True, type: str = "FRC"
+        self,
+        hypergraph: dict,
+        verbose: bool = True,
+        type: str = "FRC",
+        normalized: bool = True,
     ) -> dict:
         """Computes the LCP based on the FRC or ORC.
 
@@ -207,7 +232,14 @@ class HypergraphEncodings:
                     f"The hypergraph features for node {node}, are \n {hypergraph['features'][node]}"
                 )
                 print(f"We add the encoding:\n {rc_vals}")
-            padded_features[node] = np.hstack((hypergraph["features"][node], rc_vals))
+            if normalized:
+                padded_features[node] = np.hstack(
+                    (hypergraph["features"][node], rc_vals)
+                )
+            elif not normalized:
+                padded_features[node] = np.hstack(
+                    ([hypergraph["features"][node]], rc_vals)
+                )
         hypergraph["features"] = padded_features
         assert (
             hypergraph["features"].shape[0] == hypergraph["n"]
@@ -220,6 +252,7 @@ class HypergraphEncodings:
         verbose: bool = True,
         type: str = "Hodge",
         rw_type: str = "EN",
+        normalized: bool = True,
     ) -> dict:
         """Adds encodings based on Laplacians
 
@@ -268,6 +301,9 @@ class HypergraphEncodings:
             laplacian.compute_random_walk_laplacian(type=rw_type)
             print(f"The RW laplacian is \n {laplacian.rw_laplacian}")
             print(f"The RW laplacian is \n {laplacian.rw_laplacian})")
+
+        # TODO: take the real part of the eigenvalues/eigenvectors
+        # put a flag to catch if it larger than 10e-3 (imaginary part)
 
         # Print the results
         print("Eigenvalues:")
@@ -322,7 +358,14 @@ class HypergraphEncodings:
                 )
                 print(f"We add the Laplacian based encoding:\n {laplacian_vals}")
             # this assumes that the features are present
-            stacked_features = np.hstack((hypergraph["features"][node], laplacian_vals))
+            if normalized:
+                stacked_features = np.hstack(
+                    (hypergraph["features"][node], laplacian_vals)
+                )
+            elif not normalized:
+                stacked_features = np.hstack(
+                    ([hypergraph["features"][node]], laplacian_vals)
+                )
             if verbose:
                 print(f"The stacked features are {stacked_features}")
             padded_features[node] = stacked_features
@@ -340,6 +383,7 @@ class HypergraphEncodings:
         verbose: bool = True,
         rw_type: str = "WE",
         k: int = 20,
+        normalized: bool = True,
     ) -> dict:
         """Adds encodings based on RW
 
@@ -353,6 +397,8 @@ class HypergraphEncodings:
                 EE
             k:
                 number of steps of random walk
+            normalized:
+                whether we normalized the encodings
 
         Returns:
             the hypergraph with the RW encodings added to the featuress
@@ -416,7 +462,14 @@ class HypergraphEncodings:
                 print(
                     f"We add the RW based encoding:\n {laplacian_vals} \n with shape {laplacian_vals.shape}"
                 )
-            stacked_features = np.hstack((hypergraph["features"][node], laplacian_vals))
+            if normalized:
+                stacked_features = np.hstack(
+                    (hypergraph["features"][node], laplacian_vals)
+                )
+            elif not normalized:
+                stacked_features = np.hstack(
+                    ([hypergraph["features"][node]], laplacian_vals)
+                )
             padded_features[node] = stacked_features
             i += 1
 
