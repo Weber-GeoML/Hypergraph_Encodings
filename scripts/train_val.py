@@ -56,6 +56,8 @@ X, Y, G = fetch_data(
     random_walk_type=args.random_walk_type,
     k_rw=args.k_rw,
     curvature_type=args.curvature_type,
+    normalize_features=args.normalize_features,  # whether or not to normalize the features
+    normalize_encodings=args.normalize_encodings,  # whether or not to normalize the encodings
 )
 print(f"X are the features \n {X} \n with shape {X.shape}")
 features_shape = X.shape[0]
