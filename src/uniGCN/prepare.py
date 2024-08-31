@@ -68,6 +68,7 @@ def fetch_data(
     """
     dataset, _, _ = load(args)
     args.dataset_dict = dataset
+    dataset_name: str = f"{args.data}_{args.dataset}"
 
     shape_before = dataset["features"].shape
     print(f"The features shape are {shape_before}")
@@ -82,21 +83,33 @@ def fetch_data(
             if encodings == "RW":
                 print("Adding the RW encodings")
                 dataset = hgencodings.add_randowm_walks_encodings(
-                    dataset, rw_type=random_walk_type, k=k_rw, normalized=True
+                    dataset,
+                    rw_type=random_walk_type,
+                    k=k_rw,
+                    normalized=True,
+                    dataset_name=dataset_name,
                 )  # normalized is True because of some formatting. normalized is just whether to add [] around festures/encodings...
             elif encodings == "Laplacian":
                 print("Adding the Laplacian encodings")
                 dataset = hgencodings.add_laplacian_encodings(
-                    dataset, type=laplacian_type, normalized=True
+                    dataset,
+                    type=laplacian_type,
+                    normalized=True,
+                    dataset_name=dataset_name,
                 )
             elif encodings == "LCP":
                 print("Adding the LCP encodings")
                 dataset = hgencodings.add_curvature_encodings(
-                    dataset, type=curvature_type, normalized=True
+                    dataset,
+                    type=curvature_type,
+                    normalized=True,
+                    dataset_name=dataset_name,
                 )
             elif encodings == "LDP":
                 print("Adding the LDP encodings")
-                dataset = hgencodings.add_degree_encodings(dataset, normalized=True)
+                dataset = hgencodings.add_degree_encodings(
+                    dataset, normalized=True, dataset_name=dataset_name
+                )
 
             print(f"The features are {dataset['features']}")
             shape_after = dataset["features"].shape
@@ -125,21 +138,33 @@ def fetch_data(
                 if encodings == "RW":
                     print("Adding the RW encodings")
                     dataset = hgencodings.add_randowm_walks_encodings(
-                        dataset, rw_type=random_walk_type, k=k_rw, normalized=True
+                        dataset,
+                        rw_type=random_walk_type,
+                        k=k_rw,
+                        normalized=True,
+                        dataset_name=dataset_name,
                     )
                 elif encodings == "Laplacian":
                     print("Adding the Laplacian encodings")
                     dataset = hgencodings.add_laplacian_encodings(
-                        dataset, type=laplacian_type, normalized=True
+                        dataset,
+                        type=laplacian_type,
+                        normalized=True,
+                        dataset_name=dataset_name,
                     )
                 elif encodings == "LCP":
                     print("Adding the LCP encodings")
                     dataset = hgencodings.add_curvature_encodings(
-                        dataset, type=curvature_type, normalized=True
+                        dataset,
+                        type=curvature_type,
+                        normalized=True,
+                        dataset_name=dataset_name,
                     )
                 elif encodings == "LDP":
                     print("Adding the LDP encodings")
-                    dataset = hgencodings.add_degree_encodings(dataset, normalized=True)
+                    dataset = hgencodings.add_degree_encodings(
+                        dataset, normalized=True, dataset_name=dataset_name
+                    )
 
                 print(f"The features are {dataset['features']}")
                 shape_after = dataset["features"].shape
@@ -177,21 +202,30 @@ def fetch_data(
                         rw_type=random_walk_type,
                         k=k_rw,
                         normalized=normalize_encodings,
+                        dataset_name=dataset_name,
                     )
                 elif encodings == "Laplacian":
                     print("Adding the Laplacian encodings")
                     dataset = hgencodings.add_laplacian_encodings(
-                        dataset, type=laplacian_type, normalized=normalize_encodings
+                        dataset,
+                        type=laplacian_type,
+                        normalized=normalize_encodings,
+                        dataset_name=dataset_name,
                     )
                 elif encodings == "LCP":
                     print("Adding the LCP encodings")
                     dataset = hgencodings.add_curvature_encodings(
-                        dataset, type=curvature_type, normalized=normalize_encodings
+                        dataset,
+                        type=curvature_type,
+                        normalized=normalize_encodings,
+                        dataset_name=dataset_name,
                     )
                 elif encodings == "LDP":
                     print("Adding the LDP encodings")
                     dataset = hgencodings.add_degree_encodings(
-                        dataset, normalized=normalize_encodings
+                        dataset,
+                        normalized=normalize_encodings,
+                        dataset_name=dataset_name,
                     )
 
                 print(f"The features are {dataset['features']}")
