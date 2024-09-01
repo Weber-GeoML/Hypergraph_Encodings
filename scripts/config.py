@@ -17,7 +17,7 @@ def parse():
     p.add_argument(
         "--encodings",
         type=str,
-        default="LCP",
+        default="RW",
         help="what encodings to add",
     )
     p.add_argument(
@@ -31,6 +31,18 @@ def parse():
         type=str,
         default="FRC",
         help="what curvature to use. ORC or FRC",
+    )
+    p.add_argument(
+        "--normalize-features",
+        type=bool,
+        default=True,
+        help="whether to normalize features",
+    )
+    p.add_argument(
+        "--normalize-encodings",
+        type=bool,
+        default=True,
+        help="whether to normalize encodings",
     )
     p.add_argument(
         "--laplacian-type",
