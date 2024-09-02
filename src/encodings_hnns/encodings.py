@@ -159,9 +159,10 @@ class HypergraphEncodings:
                 hypergraph["features"].shape[0] == hypergraph["n"]
             ), f"The shape is {hypergraph['features'].shape[0]} but n is {hypergraph['n']}"
 
-            with open(filename, "wb") as f:
-                pickle.dump(hypergraph, f)
-            print(f"Hypergraph saved as {filename}")
+            if dataset_name is not None:
+                with open(filename, "wb") as f:
+                    pickle.dump(hypergraph, f)
+                print(f"Hypergraph saved as {filename}")
             return hypergraph
 
     def add_curvature_encodings(
@@ -278,10 +279,10 @@ class HypergraphEncodings:
             assert (
                 hypergraph["features"].shape[0] == hypergraph["n"]
             ), f"The shape is {hypergraph['features'].shape[0]} but n is {hypergraph['n']}"
-
-            with open(filename, "wb") as f:
-                pickle.dump(hypergraph, f)
-            print(f"Hypergraph saved as {filename}")
+            if dataset_name is not None:
+                with open(filename, "wb") as f:
+                    pickle.dump(hypergraph, f)
+                print(f"Hypergraph saved as {filename}")
             return hypergraph
 
     def add_laplacian_encodings(
@@ -438,9 +439,10 @@ class HypergraphEncodings:
             assert (
                 hypergraph["features"].shape[0] == hypergraph["n"]
             ), f"The shape is {hypergraph['features'].shape[0]} but n is {hypergraph['n']}"
-            with open(filename, "wb") as f:
-                pickle.dump(hypergraph, f)
-            print(f"Hypergraph saved as {filename}")
+            if dataset_name is not None:
+                with open(filename, "wb") as f:
+                    pickle.dump(hypergraph, f)
+                print(f"Hypergraph saved as {filename}")
             return hypergraph
 
     def add_randowm_walks_encodings(
@@ -558,9 +560,10 @@ class HypergraphEncodings:
             assert (
                 hypergraph["features"].shape[0] == hypergraph["n"]
             ), f"The shape is {hypergraph['features'].shape[0]} but n is {hypergraph['n']}"
-            with open(filename, "wb") as f:
-                pickle.dump(hypergraph, f)
-            print(f"Hypergraph saved as {filename}")
+            if dataset_name is not None:
+                with open(filename, "wb") as f:
+                    pickle.dump(hypergraph, f)
+                print(f"Hypergraph saved as {filename}")
             return hypergraph
 
 
