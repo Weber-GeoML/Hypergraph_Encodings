@@ -1,11 +1,11 @@
 #!/bin/bash
 
-add_encodings=(True False)
+add_encodings=(True)
 models=("UniSAGE" "UniGCNII")
 data_types=("cocitation")
 coauthorship_datasets=("cora" "dblp")
 cocitation_datasets=("cora" "citeseer" "pubmed")
-encodings=("LCP" "RW")
+encodings=("LDP")
 rw_types=("EE" "EN")
 curvature_types=("FRC")
 laplacian_types=("Hodge" "Normalized")

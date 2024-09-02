@@ -28,7 +28,7 @@ def load(args) -> tuple:
     current = os.path.abspath(inspect.getfile(inspect.currentframe()))
     Dir, _ = os.path.split(current)
     Dir = os.path.dirname(os.path.dirname(Dir))
-    file = os.path.join(
+    file: str = os.path.join(
         Dir, "data", args.data, args.dataset, "splits", str(args.split) + ".pickle"
     )
 
@@ -59,7 +59,10 @@ class parser(object):
         )
         current = os.path.dirname(os.path.dirname(current))
         # Makes the path
-        self.d: str = os.path.join(current, "data", data, dataset)
+        if data == "coauthorship" or data == "cocitation":
+            self.d: str = os.path.join(current, "data", data, dataset)
+        else:
+            self.d: str = os.path.join(current, "data", data)
         self.data, self.dataset = data, dataset
 
     def parse(self):
@@ -74,7 +77,7 @@ class parser(object):
         return function()
 
     def _load_data(self, verbose: bool = True) -> dict:
-        """Loads the coauthorship hypergraph, features, and labels of cora
+        """Loads the coauthorship hypergraph, features, and labels
 
         assumes the following files to be present in the dataset directory:
         hypergraph.pickle: coauthorship hypergraph
@@ -131,6 +134,7 @@ class parser(object):
 
 # Example utilization
 if __name__ == "__main__":
+
     data_type = "coauthorship"
     dataset_name = "cora"
 
