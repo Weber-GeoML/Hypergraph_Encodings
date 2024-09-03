@@ -80,10 +80,21 @@ class encodings_saver(object):
                 # list of hypergraphs
                 hypergraphs: list[dict] = pickle.load(handle)
                 # loop through the list of hypergraphs
-                for hg in hypergraphs:
+                count = 0
+                for hg in hypergraphs[1:]:
+                    print(lukas_file)
+                    print(count)
                     # construct the hypergraph object in the same way we are used to
                     hypergraph: dict = hg["hypergraph"]
                     features: np.ndarray = hg["features"]
+                    all_nodes: list = sorted(
+                        set(
+                            node
+                            for hyperedge in hypergraph.values()
+                            for node in hyperedge
+                        )
+                    )
+                    print(f"we have {len(all_nodes)} nodes")
                     features_shapes = features.shape
                     print(f"The features have shape {features.shape}")
                     labels: np.ndarray = hg["labels"]
@@ -165,6 +176,8 @@ class encodings_saver(object):
                     except DisconnectedError as e:
                         print(f"Error: {e}")
                         list_hgs_ldp.append(dataset_copy)
+
+                    count += 1
 
             encoding_map: dict = {
                 "rw_EE": list_hgs_rw_EE,
