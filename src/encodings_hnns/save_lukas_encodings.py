@@ -6,6 +6,7 @@ And now the "features" field of every dict will have been updated with the featu
 """
 
 import inspect
+import csv
 import os
 import pickle
 import warnings
@@ -86,6 +87,16 @@ class encodings_saver(object):
                     print(count)
                     # construct the hypergraph object in the same way we are used to
                     hypergraph: dict = hg["hypergraph"]
+
+                    with open("debug.csv", "w", newline="") as csvfile:
+                        writer = csv.writer(csvfile)
+                        for key, value in hypergraph.items():
+                            # If the value is a list, you may want to expand it into multiple columns
+                            if isinstance(value, list):
+                                writer.writerow([key] + value)
+                            else:
+                                writer.writerow([key, value])
+
                     features: np.ndarray = hg["features"]
                     all_nodes: list = sorted(
                         set(
