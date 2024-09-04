@@ -518,7 +518,9 @@ class HypergraphEncodings:
                     for node in hyperedge
                 )
             )
-            assert len(all_nodes) == num_nodes
+            assert (
+                len(all_nodes) == num_nodes
+            ), f"We have {len(all_nodes)} vs {num_nodes}"
             try:
                 rw_matrix: np.ndarray = -laplacian.rw_laplacian + np.eye(num_nodes)
             except:
