@@ -13,6 +13,12 @@ from scipy.linalg import fractional_matrix_power
 from encodings_hnns.data_handling import parser
 
 
+class DisconnectedError(Exception):
+    """Exception raised when a node is found to be disconnected."""
+
+    pass
+
+
 class Laplacians:
     def __init__(self, hypergraph) -> None:
         """Initialize the Laplacian object.
@@ -245,6 +251,7 @@ class Laplacians:
 
             # Get the degrees of the neighbors
             neighbor_degrees = [self.node_degrees[neighbor] for neighbor in neighbors]
+            assert neighbor_degrees
 
             # Calculate the statistics
             min_degree = np.min(neighbor_degrees)
@@ -306,6 +313,12 @@ class Laplacians:
             # Remove i from the ith entry
             for i in self.node_neighbors.keys():
                 self.node_neighbors[i].discard(i)
+
+        # Assertion
+        if not all(len(v) >= 1 for v in self.node_neighbors.values()):
+            raise DisconnectedError(
+                "A node is disconnected: one or more nodes have no neighbors."
+            )
 
     def compute_edge_degrees(self) -> None:
         """Compute the degree of each hyperedge in the hypergraph."""

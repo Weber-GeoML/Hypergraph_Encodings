@@ -49,11 +49,20 @@ class HypergraphEncodings:
         it for eg FRC, we can reuse it for ORC.
         """
         if verbose:
-            print(f"The hypergraph has {len(hypergraph['hypergraph'])} hedges")
+            print(f"The hypergraph has {len(hypergraph['hypergraph'])} (hyper)edges")
 
         # for each node, get the hyperedges it belongs to
         # keys are node, values are hyperedges name the node belongs to
         hyperedges: dict = {}
+
+        # adding this to debug
+        all_nodes: list = sorted(
+            set(
+                node
+                for hyperedge in hypergraph["hypergraph"].values()
+                for node in hyperedge
+            )
+        )
 
         # loops through hyperedges
         for hyperedge_name, hyperedge in hypergraph["hypergraph"].items():
@@ -68,6 +77,9 @@ class HypergraphEncodings:
                     hyperedges[node] = []
                 hyperedges[node].append(hyperedge_name)
         self.hyperedges = hyperedges
+        assert len(self.hyperedges) == len(
+            all_nodes
+        ), f"We have {len(self.hyperedges)} vs {len(all_nodes)}"
 
     def add_degree_encodings(
         self,
@@ -499,7 +511,21 @@ class HypergraphEncodings:
                 print(f"We are doing a {rw_type} rw")
             laplacian.compute_random_walk_laplacian(type=rw_type)
             num_nodes: int = len(self.hyperedges.keys())
-            rw_matrix: np.ndarray = -laplacian.rw_laplacian + np.eye(num_nodes)
+            all_nodes: list = sorted(
+                set(
+                    node
+                    for hyperedge in hypergraph["hypergraph"].values()
+                    for node in hyperedge
+                )
+            )
+            assert (
+                len(all_nodes) == num_nodes
+            ), f"We have {len(all_nodes)} vs {num_nodes}"
+            try:
+                rw_matrix: np.ndarray = -laplacian.rw_laplacian + np.eye(num_nodes)
+            except:
+                print(self.hyperedges.keys())
+                assert False
 
             print(f"The random walk matrix is \n {rw_matrix}")
             print(rw_matrix)
