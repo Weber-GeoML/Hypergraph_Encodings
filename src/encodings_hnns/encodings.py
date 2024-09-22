@@ -30,7 +30,7 @@ class HypergraphEncodings:
     def __init__(self):
         self.hyperedges: None | dict = None
 
-    def compute_hyperedges(self, hypergraph: dict, verbose: bool = True) -> None:
+    def compute_hyperedges(self, hypergraph: dict, verbose: bool = False) -> None:
         """Computes a dictionary called hyperedges.
 
         The dictionary contains as keys the nodes,
@@ -130,7 +130,7 @@ class HypergraphEncodings:
             ld_profile: dict = laplacian.ldp
 
             if self.hyperedges == None:
-                self.compute_hyperedges(hypergraph)
+                self.compute_hyperedges(hypergraph, verbose=verbose)
 
             features_augmented = hypergraph["features"]
             # Determines the target shape
@@ -182,7 +182,7 @@ class HypergraphEncodings:
     def add_curvature_encodings(
         self,
         hypergraph: dict,
-        verbose: bool = True,
+        verbose: bool = False,
         type: str = "FRC",
         normalized: bool = True,
         dataset_name: str | None = None,
@@ -228,7 +228,7 @@ class HypergraphEncodings:
                 rc.compute_orc()
 
             if self.hyperedges == None:
-                self.compute_hyperedges(hypergraph)
+                self.compute_hyperedges(hypergraph, verbose=verbose)
                 if verbose:
                     print("the hyperedges are")
                     print(self.hyperedges)
@@ -303,7 +303,7 @@ class HypergraphEncodings:
     def add_laplacian_encodings(
         self,
         hypergraph: dict,
-        verbose: bool = True,
+        verbose: bool = False,
         type: str = "Hodge",
         rw_type: str = "EN",
         normalized: bool = True,
@@ -352,7 +352,7 @@ class HypergraphEncodings:
             # Computes the dictionary with keys as node
             # and values as hyperedges
             if self.hyperedges == None:
-                self.compute_hyperedges(hypergraph)
+                self.compute_hyperedges(hypergraph, verbose=verbose)
 
             laplacian: Laplacians = Laplacians(hypergraph=hypergraph)
             eigenvalues: np.ndarray
@@ -373,7 +373,10 @@ class HypergraphEncodings:
                 )
             elif type == "Normalized":
                 laplacian.compute_normalized_laplacian()
-                print(f"The normalized Laplacian is {laplacian.normalized_laplacian}")
+                if verbose:
+                    print(
+                        f"The normalized Laplacian is {laplacian.normalized_laplacian}"
+                    )
                 eigenvalues, eigenvectors = np.linalg.eig(
                     laplacian.normalized_laplacian
                 )
@@ -466,7 +469,7 @@ class HypergraphEncodings:
     def add_randowm_walks_encodings(
         self,
         hypergraph: dict,
-        verbose: bool = True,
+        verbose: bool = False,
         rw_type: str = "WE",
         k: int = 20,
         normalized: bool = True,
@@ -508,7 +511,7 @@ class HypergraphEncodings:
             ), f"BEFORE: The shape is {hypergraph['features'].shape[0]} but n is {hypergraph['n']}"
 
             if self.hyperedges == None:
-                self.compute_hyperedges(hypergraph)
+                self.compute_hyperedges(hypergraph, verbose=verbose)
 
             laplacian: Laplacians = Laplacians(hypergraph=hypergraph)
             # get the laplacian. Take the opposite and add I:
