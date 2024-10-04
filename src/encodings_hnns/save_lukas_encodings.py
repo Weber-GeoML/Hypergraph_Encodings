@@ -162,7 +162,7 @@ class encodings_saver(object):
             list_hgs_lape_hodge.append(dataset_copy)
             list_hgs_lape_normalized.append(dataset_copy)
         try:
-            for curvature_type in ["FRC", "ORC"]:
+            for curvature_type in ["FRC"]:
                 hgencodings = HypergraphEncodings()
                 dataset_copy = dataset.copy()
                 dataset_copy = hgencodings.add_curvature_encodings(
@@ -194,6 +194,27 @@ class encodings_saver(object):
         except DisconnectedError as e:
             print(f"Error: {e}")
             list_hgs_ldp.append(dataset_copy)
+
+        encoding_map: dict = {
+            "rw_EE": list_hgs_rw_EE,
+            "rw_EN": list_hgs_rw_EN,
+            "rw_WE": list_hgs_rw_WE,
+            "lape_hodge": list_hgs_lape_hodge,
+            "lape_normalized": list_hgs_lape_normalized,
+            "orc": list_hgs_orc,
+            "frc": list_hgs_frc,
+            "ldp": list_hgs_ldp,
+            # Add other mappings as needed
+        }
+
+        for encoding_type, encoding_list in encoding_map.items():
+            save_file = (
+                f"{lukas_file}_with_encodings_{encoding_type}_count_{count}.pickle"
+            )
+            with open(
+                os.path.join(self.d, "individual_files", save_file), "wb"
+            ) as handle:
+                pickle.dump(encoding_list, handle)
 
         return (
             list_hgs_rw_EE,
@@ -232,60 +253,54 @@ class encodings_saver(object):
             hypergraphs: list[dict] = pickle.load(handle)
             print(f"The file contains {len(hypergraphs)} hypergraphs")
             with mp.Pool() as pool:
-                results = [
-                    pool.apply_async(self._process_hypergraph, (hg, lukas_file, count))
-                    for count, hg in enumerate(hypergraphs)
-                ]
+                for count, hg in enumerate(hypergraphs):
+                    pool.apply_async(
+                        self._process_hypergraph,
+                        (hg, lukas_file, count),
+                    )
+                pool.close()
+                pool.join()
 
-                # tqdm to show progress as results are gathered
-                with tqdm(
-                    total=len(hypergraphs),
-                    desc=f"Processing hypergraphs in {lukas_file}",
-                ) as pbar:
-                    # Collect the results and update the progress bar
-                    results = [r.get() for r in results]
-                    for _ in results:
-                        pbar.update(1)
+        # for result in results:
+        #     list_hgs_rw_EE.extend(result[0])
+        #     list_hgs_rw_EN.extend(result[1])
+        #     list_hgs_rw_WE.extend(result[2])
+        #     list_hgs_lape_hodge.extend(result[3])
+        #     list_hgs_lape_normalized.extend(result[4])
+        #     list_hgs_orc.extend(result[5])
+        #     list_hgs_frc.extend(result[6])
+        #     list_hgs_ldp.extend(result[7])
 
-        for result in results:
-            list_hgs_rw_EE.extend(result[0])
-            list_hgs_rw_EN.extend(result[1])
-            list_hgs_rw_WE.extend(result[2])
-            list_hgs_lape_hodge.extend(result[3])
-            list_hgs_lape_normalized.extend(result[4])
-            list_hgs_orc.extend(result[5])
-            list_hgs_frc.extend(result[6])
-            list_hgs_ldp.extend(result[7])
+        # encoding_map: dict = {
+        #     "rw_EE": list_hgs_rw_EE,
+        #     "rw_EN": list_hgs_rw_EN,
+        #     "rw_WE": list_hgs_rw_WE,
+        #     "lape_hodge": list_hgs_lape_hodge,
+        #     "lape_normalized": list_hgs_lape_normalized,
+        #     "orc": list_hgs_orc,
+        #     "frc": list_hgs_frc,
+        #     "ldp": list_hgs_ldp,
+        #     # Add other mappings as needed
+        # }
 
-        encoding_map: dict = {
-            "rw_EE": list_hgs_rw_EE,
-            "rw_EN": list_hgs_rw_EN,
-            "rw_WE": list_hgs_rw_WE,
-            "lape_hodge": list_hgs_lape_hodge,
-            "lape_normalized": list_hgs_lape_normalized,
-            "orc": list_hgs_orc,
-            "frc": list_hgs_frc,
-            "ldp": list_hgs_ldp,
-            # Add other mappings as needed
-        }
+        # # Loop through the encoding map and save each list to a file
+        # for encoding_type, encoding_list in encoding_map.items():
+        #     save_file = f"{lukas_file}_with_encodings_{encoding_type}.pickle"
+        #     with open(os.path.join(self.d, save_file), "wb") as handle:
+        #         pickle.dump(encoding_list, handle)
 
-        # Loop through the encoding map and save each list to a file
-        for encoding_type, encoding_list in encoding_map.items():
-            save_file = f"{lukas_file}_with_encodings_{encoding_type}.pickle"
-            with open(os.path.join(self.d, save_file), "wb") as handle:
-                pickle.dump(encoding_list, handle)
-
-        # Return all lists
-        return (
-            list_hgs_rw_EE,
-            list_hgs_rw_EN,
-            list_hgs_rw_WE,
-            list_hgs_lape_hodge,
-            list_hgs_lape_normalized,
-            list_hgs_orc,
-            list_hgs_frc,
-            list_hgs_ldp,
-        )
+        # # Return all lists
+        # return (
+        #     list_hgs_rw_EE,
+        #     list_hgs_rw_EN,
+        #     list_hgs_rw_WE,
+        #     list_hgs_lape_hodge,
+        #     list_hgs_lape_normalized,
+        #     list_hgs_orc,
+        #     list_hgs_frc,
+        #     list_hgs_ldp,
+        # )
+        return None
 
     def _compute_encodings(self, verbose: bool = True) -> dict:
         """Computes the encodings on the data

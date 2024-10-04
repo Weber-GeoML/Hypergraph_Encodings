@@ -300,6 +300,10 @@ class HypergraphEncodings:
                 print(f"Hypergraph saved as {filename}")
             return hypergraph
 
+    # def add_laplacian_encodings()
+    # pick the eignevectors corresponding to the k largest eigenvalues
+    # U tilde matrix, has k columns, and take every row
+
     def add_laplacian_encodings(
         self,
         hypergraph: dict,
@@ -381,7 +385,7 @@ class HypergraphEncodings:
                     laplacian.normalized_laplacian
                 )
             elif type == "RW":
-                laplacian.compute_random_walk_laplacian(type=rw_type)
+                laplacian.compute_random_walk_laplacian(type=rw_type, verbose=verbose)
                 if verbose:
                     print(f"The RW laplacian is \n {laplacian.rw_laplacian}")
                     print(f"The RW laplacian is \n {laplacian.rw_laplacian})")
@@ -518,7 +522,7 @@ class HypergraphEncodings:
             # gives probability of going from i to j
             if verbose:
                 print(f"We are doing a {rw_type} rw")
-            laplacian.compute_random_walk_laplacian(type=rw_type)
+            laplacian.compute_random_walk_laplacian(type=rw_type, verbose=verbose)
             num_nodes: int = len(self.hyperedges.keys())
             all_nodes: list = sorted(
                 set(
