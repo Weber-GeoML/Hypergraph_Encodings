@@ -155,18 +155,21 @@ function aggregate(::Type{AggregateMax}, S::Vector, W)
 end
 
 function node_curvature_neighborhood(i::Int, W, neighbors)
+    # Get the neighbors of node i
     N = neighbors[i]
+    # If node i has no neighbors or only one neighbor, return curvature 1.0
     if length(N) <= 1
         1.0
     else
         sum(N) do j
             j == i ? 0.0 : 1.0 - W[mm(i, j)]
-        end / (length(N) - 1)
+        end / (length(N) - 1) # Normalize by the number of neighbors (excluding the node itself)
     end
 end
 
 function node_curvature_edges(node, dist, rc)
     degree = length(rc[node])
+    # If the node has no edges, return curvature 1.0
     if degree == 0
         1.0
     else
