@@ -127,11 +127,11 @@ class ORC:
             aggregation_type:
                 Mean or Max. See eq 8, 10 (not implement) and 11 in Choupette (Orchid)
                 Mean:
-                This is equivalent to computing the curvature of e based on the average over all W1 distances of
-                probability measures associated with nodes contained in
+                    This is equivalent to computing the curvature of e based on the average over all W1 distances of
+                    probability measures associated with nodes contained in
                 Max:
-                captures the maximum amount
-                of work needed to transport all probability mass from one node in e to another node in
+                    captures the maximum amount
+                    of work needed to transport all probability mass from one node in e to another node in
 
         """
 

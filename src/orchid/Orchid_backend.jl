@@ -66,8 +66,10 @@ end
 abstract type CostMatrix end
 abstract type CostOndemand end
 
-function prepare_cost_matrix(::Type{CostMatrix}, neighbors)
-    @info "Preparing Cost Matrix"
+function prepare_cost_matrix(::Type{CostMatrix}, neighbors, verbose::Bool = false)
+    if verbose
+        @info "Preparing Cost Matrix"
+    end
 
     K = length(neighbors)
     C = fill(Int8(3), (K, K))
@@ -87,8 +89,10 @@ function prepare_cost_matrix(::Type{CostMatrix}, neighbors)
     C
 end
 
-function prepare_cost_matrix(::Type{CostOndemand}, neighbors)
-    @info "Preparing Ondemand Cost Computation"
+function prepare_cost_matrix(::Type{CostOndemand}, neighbors, verbose::Bool = false)
+    if verbose
+        @info "Preparing Ondemand Cost Computation"
+    end
     ThreadsX.map(BitSet, neighbors)
 end
 
@@ -151,18 +155,21 @@ function aggregate(::Type{AggregateMax}, S::Vector, W)
 end
 
 function node_curvature_neighborhood(i::Int, W, neighbors)
+    # Get the neighbors of node i
     N = neighbors[i]
+    # If node i has no neighbors or only one neighbor, return curvature 1.0
     if length(N) <= 1
         1.0
     else
         sum(N) do j
             j == i ? 0.0 : 1.0 - W[mm(i, j)]
-        end / (length(N) - 1)
+        end / (length(N) - 1) # Normalize by the number of neighbors (excluding the node itself)
     end
 end
 
 function node_curvature_edges(node, dist, rc)
     degree = length(rc[node])
+    # If the node has no edges, return curvature 1.0
     if degree == 0
         1.0
     else
@@ -182,22 +189,30 @@ function neighborhoods(rc, cr)
     end
 end
 
-function hypergraph_curvatures(dispersion::Type, aggregations, rc, cr, alpha, cost)
-    @info "Preparing Neighborhoods"
+function hypergraph_curvatures(dispersion::Type, aggregations, rc, cr, alpha, cost, verbose::Bool = false)
+    if verbose
+        @info "Preparing Neighborhoods"
+    end
     neighbors = neighborhoods(rc, cr)
 
     C = prepare_cost_matrix(cost, neighbors)
 
-    @info "Preparing Dispersion"
+    if verbose
+        @info "Preparing Dispersion"
+    end
     rw = dispersion == DisperseWeightedClique ? prepare_weights(rc, cr, neighbors) : nothing
 
-    @info "Computing Dispersions"
+    if verbose
+        @info "Computing Dispersions"
+    end
     D = ThreadsX.map(
         n -> disperse(dispersion, n, alpha, neighbors, rc, cr, rw),
         eachindex(rc),
     )
 
-    @info "Computing Directional Curvature"
+    if verbose
+        @info "Computing Directional Curvature"
+    end
     w = zeros(Float32, length(rc), length(rc))
     ThreadsX.foreach(eachindex(rc)) do i
         for j = (i+1):length(rc)
@@ -209,10 +224,14 @@ function hypergraph_curvatures(dispersion::Type, aggregations, rc, cr, alpha, co
     nc = ThreadsX.map(n -> node_curvature_neighborhood(n, w, neighbors), eachindex(rc))
 
     ac = map(aggregations) do aggregation
-        @info "Computing Edge Curvature"
+        if verbose
+            @info "Computing Edge Curvature"
+        end
         ec = ThreadsX.map(e -> 1 - aggregate(aggregation, cr[e], w), eachindex(cr))
 
-        @info "Computing Node Curvature Edges"
+        if verbose
+            @info "Computing Node Curvature Edges"
+        end
         nce = ThreadsX.map(n -> node_curvature_edges(n, ec, rc), eachindex(rc))
 
         (aggregation = Symbol(aggregation), edge_curvature = ec, node_curvature_edges = nce)
@@ -258,8 +277,11 @@ function hypergraph_curvatures(
     incidence::AbstractSparseMatrix,
     alpha::Float64,
     cost::Type,
+    verbose::Bool = false  # Optional print control
 ) where {A}
-    @info "Preparing Input"
+    if verbose
+        @info "Preparing Input"
+    end
     n, m = size(incidence)
     I, J, _ = findnz(incidence)
     rc, cr = edgelist_format(J, I, m), edgelist_format(I, J, n)
@@ -273,8 +295,11 @@ function hypergraph_curvatures(
     incidence::Vector{B},
     alpha::Float64,
     cost::Type,
+    verbose::Bool = false  # Optional print control
 ) where {A,B}
-    @info "Preparing Input"
+    if verbose
+        @info "Preparing Input"
+    end
     rc, cr = transpose_edgelist(incidence), incidence
     aggregation = hasmethod(length, Tuple{A}) ? aggregation : [aggregation]
     hypergraph_curvatures(dispersion, aggregation, rc, cr, alpha, cost)
