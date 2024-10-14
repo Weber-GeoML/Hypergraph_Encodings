@@ -15,17 +15,28 @@ warnings.simplefilter("ignore")
 
 
 # Not used yet?
-def load(args) -> tuple:
+def load(args) -> tuple[dict[dict, np.matrix, np.ndarray, int], list, list]:
     """Parses the dataset
 
     Args:
         args:
             an object with attributes data, dataset and splits
+
+    Returns:
+        dataset:
+            a dict with hypergraph, features, labels, n
+        train:
+            indices of train nodes
+        test:
+            indices of test nodes
+
+        the len of train and test sums to the number of nodes.
     """
     print(f"The split is {args.split}")
     dataset = parser(args.data, args.dataset).parse()
 
-    current = os.path.abspath(inspect.getfile(inspect.currentframe()))
+    current: str = os.path.abspath(inspect.getfile(inspect.currentframe()))
+    Dir: str
     Dir, _ = os.path.split(current)
     Dir = os.path.dirname(os.path.dirname(Dir))
     file: str = os.path.join(
@@ -54,7 +65,7 @@ class parser(object):
                 cora/dblp/acm for coauthorship and cora/citeseer/pubmed for cocitation
         """
 
-        current = os.path.dirname(
+        current: str = os.path.dirname(
             os.path.abspath(inspect.getfile(inspect.currentframe()))
         )
         current = os.path.dirname(os.path.dirname(current))
@@ -89,19 +100,22 @@ class parser(object):
         and number of features as keys
         """
 
+        # loads the hypergraph (and only the hypergraph, as a dict)
         with open(os.path.join(self.d, "hypergraph.pickle"), "rb") as handle:
-            hypergraph = pickle.load(handle)
+            hypergraph: dict = pickle.load(handle)
             print("number of hyperedges is", len(hypergraph))
 
+        # loads the features, an np.matrix
         with open(os.path.join(self.d, "features.pickle"), "rb") as handle:
-            features = pickle.load(handle).todense()
+            features: np.matrix = pickle.load(handle).todense()
 
+        # loads the labels
         with open(os.path.join(self.d, "labels.pickle"), "rb") as handle:
-            labels = self._1hot(pickle.load(handle))
+            labels: np.array[int] = self._1hot(pickle.load(handle))
 
         if verbose:
-            total_length = sum(len(value) for value in hypergraph.values())
-            average_length = total_length / len(hypergraph)
+            total_length: int = sum(len(value) for value in hypergraph.values())
+            average_length: float = total_length / len(hypergraph)
             print(
                 f"The hypergraph {self.dataset}/{self.data} has {len(hypergraph)} hyperedges where authors are hyperedges"
             )
@@ -114,7 +128,7 @@ class parser(object):
             "n": features.shape[0],  # one-hot encoded
         }
 
-    def _1hot(self, labels: list) -> np.ndarray:
+    def _1hot(self, labels: list) -> np.ndarray[int]:
         """converts each positive integer (representing a unique class) into ints one-hot form
 
         Arguments:
@@ -125,7 +139,7 @@ class parser(object):
 
         """
 
-        classes = set(labels)
+        classes: set = set(labels)  # the set of unique labels
         onehot: dict = {
             c: np.identity(len(classes))[i, :] for i, c in enumerate(classes)
         }
