@@ -25,9 +25,9 @@ from uniGCN.prepare import fetch_data, initialise, accuracy
 # Check if CUDA is available and move tensors to GPU if possible
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-test_accs: list = []
-best_val_accs: list = []
-best_test_accs: list = []
+test_accs: list[float] = []
+best_val_accs: list[float] = []
+best_test_accs: list[float] = []
 
 
 args = config.parse()
@@ -39,14 +39,17 @@ use_norm: str = "use-norm" if args.use_norm else "no-norm"
 add_self_loop: str = "add-self-loop" if args.add_self_loop else "no-self-loop"
 
 dataname: str = f"{args.data}_{args.dataset}"
+# model name (eg UniCGN)
 model_name: str = args.model_name
+# depth of the neural networks
 nlayer: int = args.nlayer
 dirname = f"{datetime.datetime.now()}".replace(" ", "_").replace(":", ".")
 
 
 # load data
-X: torch.Tensor
-Y: torch.Tensor
+X: torch.Tensor  # the features
+Y: torch.Tensor  # the labels
+G: dict  # the whole hypergraph
 print(f"We are adding the {args.encodings} encodings")
 X, Y, G = fetch_data(
     args,
@@ -66,16 +69,24 @@ print(f"G is the hg")
 
 
 def get_split(Y, p: float = 0.2) -> tuple[list[int], list[int]]:
-    """TODO
+    """Splits Y into a test and val set.
 
     Args:
         Y:
+            the labels of nodes.
         p:
+            the proportion of nodes in the val set
+
+    Returns:
+        val_idx:
+            the indices of nodes in the val set
+        test_idx:
+            the indices of nodes in the test set
 
     """
     Y: list = Y.tolist()
-    N: int = len(Y)
-    nclass: int = len(set(Y))
+    N: int = len(Y)  # number of nodes
+    nclass: int = len(set(Y))  # number of different labels
     D: list = [[] for _ in range(nclass)]
     for i, y in enumerate(Y):
         D[y].append(i)
@@ -100,8 +111,9 @@ resultlogger.info(args)
 
 
 # Keep track of the test accuracy for the best val accuracy
-overall_test_accuracies_best_val: list = []
+overall_test_accuracies_best_val: list[float] = []
 
+seed: int
 for seed in range(1, 9):
     seed += 1
     print(f"The seed is {seed}")
@@ -128,6 +140,8 @@ for seed in range(1, 9):
         # load data
         args.split = run
         _, train_idx, test_idx = load(args)
+        val_idx: list[int]
+        test_idx: list[int]
         val_idx, test_idx = get_split(Y[test_idx], 0.2)
         train_idx: torch.Tensor = torch.LongTensor(train_idx).to(device)
         val_idx: torch.Tensor = torch.LongTensor(val_idx).to(device)
@@ -144,7 +158,11 @@ for seed in range(1, 9):
 
         tic_run = time.time()
 
-        best_val_acc, best_test_acc, test_acc, Z, bad_counter = 0, 0, 0, None, 0
+        best_val_acc: float = 0
+        best_test_acc: float = 0
+        test_acc: float = 0
+        Z: torch.tensor | None = None
+        bad_counter: int = 0
         test_accs_for_best_val = (
             []
         )  # List to store test accuracy for the best validation accuracy
@@ -154,7 +172,7 @@ for seed in range(1, 9):
             model.train()
 
             optimizer.zero_grad()
-            Z = model(X)
+            Z = model(X)  # this call forward.
             loss = F.nll_loss(Z[train_idx], Y[train_idx])
 
             loss.backward()
@@ -164,16 +182,18 @@ for seed in range(1, 9):
 
             # eval
             model.eval()
-            Z = model(X)
-            train_acc = accuracy(Z[train_idx], Y[train_idx])
-            test_acc = accuracy(Z[test_idx], Y[test_idx])
-            val_acc = accuracy(Z[val_idx], Y[val_idx])
+            Z: torch.tensor = model(X)  # this calls forward
+
+            # gets the trains, test and val accuracy
+            train_acc: float = accuracy(Z[train_idx], Y[train_idx])
+            test_acc: float = accuracy(Z[test_idx], Y[test_idx])
+            val_acc: float = accuracy(Z[val_idx], Y[val_idx])
 
             # log acc
             if best_val_acc < val_acc:
-                best_val_acc = val_acc
-                best_test_acc = test_acc
-                bad_counter = 0
+                best_val_acc: float = val_acc
+                best_test_acc: float = test_acc
+                bad_counter: int = 0
                 test_accs_for_best_val.append(
                     test_acc
                 )  # Save the test accuracy when validation accuracy improves
