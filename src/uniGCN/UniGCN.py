@@ -175,15 +175,41 @@ class UniGINConv(nn.Module):
 class UniGCNConv(nn.Module):
 
     def __init__(
-        self, args, in_channels, out_channels, heads=8, dropout=0.0, negative_slope=0.2
-    ):
+        self,
+        args,
+        in_channels: int,
+        out_channels: int,
+        heads: int = 8,
+        dropout: float = 0.0,
+        negative_slope: float = 0.2,
+    ) -> None:
+        """
+
+        Args:
+            args,
+            in_channels:
+                dimension of input (in our case it will be feature dimension)
+            out_channels:
+                dimension of output
+            heads:
+                number of conv heads
+            dropout:
+                TODO
+            negative_slope:
+                TODO
+
+        """
         super().__init__()
-        self.W = nn.Linear(in_channels, heads * out_channels, bias=False)
-        self.heads = heads
-        self.in_channels = in_channels
-        self.out_channels = out_channels
-        self.negative_slope = negative_slope
-        self.dropout = dropout
+        # in_features: size of each input sample
+        # out_features: size of each output sample
+        self.W = nn.Linear(
+            in_features=in_channels, out_features=heads * out_channels, bias=False
+        )
+        self.heads: int = heads
+        self.in_channels: int = in_channels
+        self.out_channels: int = out_channels
+        self.negative_slope: float = negative_slope
+        self.dropout: float = dropout
         self.args = args
 
     def __repr__(self):
@@ -191,38 +217,87 @@ class UniGCNConv(nn.Module):
             self.__class__.__name__, self.in_channels, self.out_channels, self.heads
         )
 
-    def forward(self, X, vertex, edges):
-        """TODO
+    def forward(
+        self,
+        X: torch.Tensor,  # Node feature matrix (N, C) where N is the number of nodes and C is feature dimension
+        vertex: torch.Tensor,
+        edges: torch.Tensor,
+        verbose: bool = False,
+    ) -> torch.Tensor:
+        """Performs 1/srqrt(di) * [sum_e 1/sqrt(d_e)Wh_e], ie x tilde i
+
+        This is the formula for UniGCN from the paper. What it does
+        here is that it does it all at once.
 
         Args:
             X:
-                TODO
+                the tensor of features.
+                Size is number of nodes times dim of features ie N by C
             vertex:
-                TODO
+                a tensor of vertices.
+                this will be of the form eg [1, 0, 1]
+                with edges [0, 1, 1]
+                meaning vertex 1 is in edge 0
+                and vertex 0 is in edge 1
+                and vertex 1 is in edge 1
             edges:
-                TODO
+                see above
 
+        Returns:
+            x tilde i from UniGCN.
         """
-        N = X.shape[0]
+        if verbose:
+            print(f"vertex is {vertex}")
+            print(f"edges {edges}")
+            print(f"X is \n {X}")
+        N: int = X.shape[0]  # the number of nodes
+        if verbose:
+            print(f"N is {N}")
+        # combined degree of Edges
         degE = self.args.degE
+        if verbose:
+            print(f"degE is {degE}")
+        # degree of vertices
         degV = self.args.degV
+        if verbose:
+            print(f"degV is {degV}")
 
         # v1: X -> XW -> AXW -> norm
 
+        # first step: aggregate node attribute at the edge level.
+        # multiply by W
         X = self.W(X)
 
-        Xve = X[vertex]  # [nnz, C]
-        Xe = scatter(Xve, edges, dim=0, reduce=self.args.first_aggregate)  # [E, C]
+        # select the relevant features for the vertices
+        # ie this grabs the relevant rows
+        Xve = X[vertex]  # [number of elem in vertex, C]
+        # aggregation at the edge level using node features.
+        # called h_e
+        Xe: torch.Tensor = scatter(
+            Xve, edges, dim=0, reduce=self.args.first_aggregate
+        )  # [E, C]
 
+        # 1/sqrt(d_e)Wh_e
         Xe = Xe * degE
 
+        # this return the row ofs Xev for edges
+        # ie only the features h_e for edges
         Xev = Xe[edges]  # [nnz, C]
-        Xv = scatter(Xev, vertex, dim=0, reduce="sum", dim_size=N)  # [N, C]
+        # [sum_e 1/sqrt(d_e)Wh_e]
+        # aggregate at the node level using edge features
+        Xv: torch.Tensor = scatter(
+            Xev, vertex, dim=0, reduce="sum", dim_size=N
+        )  # [N, C]
 
-        Xv = Xv * degV
+        # 1/srqrt(di) * [sum_e 1/sqrt(d_e)Wh_e]
+        # where [sum_e 1/sqrt(d_e)Wh_2] is Xv
+        Xv = (
+            Xv * degV
+        )  # Scale node features by the reciprocal of the square root of vertex degrees
 
         X = Xv
 
+        # Optionally apply L2 normalization to the node features
         if self.args.use_norm:
             X = normalize_l2(X)
 
@@ -376,11 +451,11 @@ class UniGNN(nn.Module):
     def __init__(
         self,
         args,
-        nfeat: int,
+        nfeat: int,  # dimension of features
         nhid: int,
-        nclass: int,
-        nlayer: int,
-        nhead: int,
+        nclass: int,  # number of classes
+        nlayer: int,  # depth of the neural network.
+        nhead: int,  # number of heads
         V: torch.long,
         E: torch.long,
     ) -> None:
@@ -398,14 +473,15 @@ class UniGNN(nn.Module):
             nlayer:
                 number of hidden layers
             nhead:
-                number of conv heads
+                number of conv heads.
+
             V:
                 V is the row index for the sparse incident matrix H, |V| x |E|
             E:
                 E is the col index for the sparse incident matrix H, |V| x |E|
         """
         super().__init__()
-        Conv = __all_convs__[args.model_name]
+        Conv = __all_convs__[args.model_name]  # this is just UniGCNConv
         self.conv_out = Conv(
             args, nhid * nhead, nclass, heads=1, dropout=args.attn_drop
         )
@@ -417,23 +493,30 @@ class UniGNN(nn.Module):
             ]
         )
         self.V = V
+        # print(f"V is \n {self.V}")
         self.E = E
+        # print(f"E is {self.E}")
         act = {"relu": nn.ReLU(), "prelu": nn.PReLU()}
         self.act = act[args.activation]
         self.input_drop = nn.Dropout(args.input_drop)
         self.dropout = nn.Dropout(args.dropout)
 
-    def forward(self, X):
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
         """TODO:
 
         Args:
             X:
-                TODO
+                the features.
+                Has shape number of nodes time size of features.
+
+        Returns:
+            a tensor/vector that has gone
+            through a softmax.
         """
         V, E = self.V, self.E
 
         X = self.input_drop(X)
-        for conv in self.convs:
+        for conv in self.convs:  # note that we loop for as many layers as specified
             X = conv(X, V, E)
             X = self.act(X)
             X = self.dropout(X)
@@ -441,31 +524,76 @@ class UniGNN(nn.Module):
         X = self.conv_out(X, V, E)
         return F.log_softmax(X, dim=1)
 
+    def forward_hypergraph_classification(
+        self, list_hypergraphs: list[torch.Tensor]
+    ) -> list[torch.Tensor | float]:
+        """UniGCN for hypergraph classification.
+
+        TODO: to finish
+
+        Performs the same as regular UniGCN, but then aggregates
+        all outputs (node level) to have just one prediction at the hypergraph
+        level.
+
+        Args:
+            X:
+                the list of features the features.
+                Has shape number of nodes time size of features.
+
+        Returns:
+            a tensor/vector that has gone
+            through a softmax.
+        """
+        list_preds: list[float] = []
+        for X in list_hypergraphs:
+            # get V TODO
+            # get E TODO
+            X = self.input_drop(X)
+            for conv in self.convs:  # note that we loop for as many layers as specified
+                X = conv(X, V, E)
+                X = self.act(X)
+                X = self.dropout(X)
+
+            X = self.conv_out(X, V, E)
+            output = F.log_softmax(X, dim=1)
+            # need to aggregate at hypergraph level TODO
+            # list_preds.append(modified_output)
+        return list_preds
+
 
 class UniGCNIIConv(nn.Module):
-    def __init__(self, args, in_features, out_features) -> None:
+    def __init__(self, args, in_features: int, out_features: int) -> None:
         super().__init__()
-        self.W = nn.Linear(in_features, out_features, bias=False)
+        # this is just a matrix
+        self.W: torch.Tensor = nn.Linear(in_features, out_features, bias=False)
         self.args = args
 
-    def forward(self, X, vertex, edges, alpha, beta, X0):
+    def forward(
+        self,
+        X: torch.Tensor,
+        vertex: torch.Tensor,
+        edges: torch.Tensor,
+        alpha: float,
+        beta: float,
+        X0: torch.Tensor,
+    ) -> torch.Tensor:
         """TODO
 
         Args:
             X:
-                TODO
+                the torch-tensor of features.
             vertex:
                 TODO
             edges:
                 TODO
             alpha:
-                TODO
+                a hyper-parameter that goes into UniGCNII.
             beta:
-                TODO
+                a hyper-parameter that goes into UniGCNII
             X0:
-                TODO
+                the values of x_i at time 0.
         """
-        N = X.shape[0]
+        N: int = X.shape[0]
         degE = self.args.degE
         degV = self.args.degV
 
@@ -484,7 +612,12 @@ class UniGCNIIConv(nn.Module):
         if self.args.use_norm:
             X = normalize_l2(X)
 
+        # alpha is a hyper-parameter. XO is the original feature
+        # this is the whole trick of UniGCNII to avoid over-smoothing
+        # use X0
         Xi = (1 - alpha) * X + alpha * X0
+        # this is the UniGCNII x tile i
+        # beta is a hyperparameter
         X = (1 - beta) * Xi + beta * self.W(Xi)
 
         return X
