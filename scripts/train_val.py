@@ -161,7 +161,7 @@ for seed in range(1, 9):
         best_val_acc: float = 0
         best_test_acc: float = 0
         test_acc: float = 0
-        Z: torch.tensor | None = None
+        Z: torch.Tensor | None = None
         bad_counter: int = 0
         test_accs_for_best_val = (
             []
@@ -182,7 +182,7 @@ for seed in range(1, 9):
 
             # eval
             model.eval()
-            Z: torch.tensor = model(X)  # this calls forward
+            Z: torch.Tensor = model(X)  # this calls forward
 
             # gets the trains, test and val accuracy
             train_acc: float = accuracy(Z[train_idx], Y[train_idx])
