@@ -17,14 +17,19 @@ from uniGCN.UniGCN import UniGCNII, UniGNN
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def accuracy(Z, Y):
-    """TODO
+def accuracy(Z: torch.Tensor, Y: torch.Tensor) -> float:
+    """Computes the accuracy between prediction Z and true labels
+    Y.
 
     Args:
         Z:
-            TODO
+            predictions Z. As a vector or probabilities
         Y:
-            TODO
+            the labels
+
+    Returns:
+        the accuracy between the prediction Z and the labels
+        Y.
     """
     return 100 * Z.argmax(1).eq(Y).float().mean().item()
 
@@ -39,8 +44,11 @@ def fetch_data(
     curvature_type: str = "ORC",
     normalize_features: bool = False,
     normalize_encodings: bool = False,
-):
-    """Gets the data
+) -> tuple[torch.Tensor, torch.Tensor, dict]:
+    """Gets the data.
+
+    Also adds the encodings, if specified
+    by the args.
 
     Args:
         args:
@@ -65,6 +73,14 @@ def fetch_data(
             whether to normalize the features
         normalize_encodings:
             whether to normalize the encodings
+
+    Returns:
+        X:
+            the features
+        Y:
+            the labels
+        G:
+            the whole hypergraph
     """
     dataset, _, _ = load(args)
     args.dataset_dict = dataset
@@ -253,13 +269,23 @@ def fetch_data(
     return X, Y, G
 
 
-def initialise(X, Y, G, args, unseen=None) -> tuple:
+def initialise(
+    X: torch.Tensor, Y: torch.Tensor, G: dict, args, unseen: None = None
+) -> tuple:
     """Initialises model, optimiser, normalises graph, and features
 
     Arguments:
-        X, Y, G: the entire dataset (with graph, features, labels)
-    args: arguments
-    unseen: if not None, remove these nodes from hypergraphs
+        X:
+            the features
+        Y:
+            the labels
+        G:
+            the graph
+        args:
+            arguments
+        unseen:
+            if not None, remove these nodes from hypergraphs
+            TODO: add more description.
 
     Returns:
         a tuple with model details (UniGNN, optimiser)
@@ -270,7 +296,7 @@ def initialise(X, Y, G, args, unseen=None) -> tuple:
     if unseen is not None:
         unseen = set(unseen)
         # remove unseen nodes
-        for e, vs in G.items():
+        for e, vs in G.items():  # loops through edges and the vertices they contain
             G[e] = list(set(vs) - unseen)
 
     if args.add_self_loop:
@@ -285,26 +311,112 @@ def initialise(X, Y, G, args, unseen=None) -> tuple:
         for v in Vs:
             G[f"self-loop-{v}"] = [v]
 
+    N: int  # number of nodes, number of rows
+    M: int  # number of edges, number of columns
     N, M = X.shape[0], len(G)
+    indptr: list[int]
+    indices: list[int]  # the row indices for each element of data.
+    data: list[int]  # keeps track of the values of non-zero elements of H
+    # they are all 1.
     indptr, indices, data = [0], [], []
+    # loop through G items, which are keys: edges, values edge as a list that contains the vertices
     for e, vs in G.items():
-        indices += vs
-        data += [1] * len(vs)
-        indptr.append(len(indices))
-    H = sp.csc_matrix((data, indices, indptr), shape=(N, M), dtype=int).tocsr()  # V x E
-    degV = torch.from_numpy(H.sum(1)).view(-1, 1).float()
-    degE2 = torch.from_numpy(H.sum(0)).view(-1, 1).float()
+        indices += vs  # the corresponding row indice, as nodes are rows
+        # this keep tracks of the non-zero elements in the final matrix H
+        data += [1] * len(vs)  # extend data by adding as many '1's as there are vs
+        # the matrix H only contain 1s!
+        indptr.append(len(indices))  # keep track of the number of vertices in each edge
+        # this is just used to tell use where column begin and start in data
 
+    # csc_matrix((data, indices, indptr), [shape=(M, N)])
+    # is the standard CSC representation where the row indices for
+    # column i are stored in ``indices[indptr[i]:indptr[i+1]]``
+    # and their corresponding values are stored in
+    # ``data[indptr[i]:indptr[i+1]]``.  If the shape parameter is
+    # not supplied, the matrix dimensions are inferred from
+    # the index arrays.
+    # More explanations:
+    # csc_matrix((data, indices, indptr), [shape=(M, N)])
+    # This represents a sparse matrix in Compressed Sparse Column (CSC) format.
+    # 'data' contains the non-zero values of the matrix.
+    # 'indices' contains the row indices corresponding to each non-zero value in 'data'.
+    # 'indptr' is an array that specifies where each column starts in 'data' and 'indices'.
+    # The entries for column i are found between indptr[i] and indptr[i+1] in 'data' and 'indices'.
+    # eg
+    # Construct the spare matrix:
+    # 0  10  0
+    # 20 0   30
+    # 0  40  50
+    # 60 0   0
+    # data = [20, 60, 10, 40, 30, 50]  # (column 1: 20, 60), (column 2: 10, 40), (column 3: 30, 50)
+    # indices: The corresponding row indices for each non-zero element:
+    # indices = [1, 3, 0, 2, 1, 2]
+    # indptr: Array indicating the start of each column in the data array:
+    # Column 0 starts at index 0 in data.
+    # Column 1 starts at index 2 in data.
+    # Column 2 starts at index 4 in data
+    # indptr = [0, 2, 4, 6]
+    # N, M = 4, 3  # Shape of the matrix (4 rows, 3 columns)
+    # H = sp.csc_matrix((data, indices, indptr), shape=(N, M), dtype=int).tocsr()
+    H = sp.csc_matrix((data, indices, indptr), shape=(N, M), dtype=int).tocsr()  # V x E
+    print(f"H is \n {H}")  # this is just the incidence matrix
+
+    # Calculate the degree of each vertex (degV) by summing the values
+    # in each row of the matrix H.
+    # This gives the number of edges connected to each vertex.
+    # The result is converted from NumPy to a PyTorch tensor, reshaped into a
+    # column vector (N x 1), and cast to float.
+    degV: torch.Tensor = (
+        torch.from_numpy(H.sum(1)).view(-1, 1).float()
+    )  # the degree of each vertices
+
+    # Similarly, calculate the degree of each edge (degE2) by summing
+    # the values in each column of the matrix H.
+    # This gives the number of vertices connected to each edge.
+    # Again, the result is converted from NumPy to a PyTorch tensor,
+    # reshaped, and cast to float.
+    degE2: torch.Tensor = (
+        torch.from_numpy(H.sum(0)).view(-1, 1).float()
+    )  # the degree of each edge
+
+    # Say:
+    # [[0 1 0]
+    #  [2 0 3]
+    #  [0 4 0]]
+    # then:
+    # (row, col), value = torch_sparse.from_scipy(H)
+    # are as follow
+    # Row indices: tensor([0, 1, 1, 2])  # Rows of non-zero elements
+    # Column indices: tensor([1, 0, 2, 1])  # Columns of non-zero elements
+    # Values: tensor([1, 2, 3, 4])  # Non-zero values at corresponding (row, col)
     (row, col), value = torch_sparse.from_scipy(H)
+    # V represents the row indices (i.e., vertices), and E represents
+    # the column indices (i.e., edges) of the non-zero elements in H.
     V, E = row, col
+    # eg: vertex 0 is in edge 1,
+    # vertex 1 is in edge 0
+    # vertex 1 is in edge 2
+    # vertex 2 is in edge 1
+    # taking the example above
 
     assert args.first_aggregate in (
         "mean",
         "sum",
     ), "use `mean` or `sum` for first-stage aggregation"
+    # So, degV[V] selects values from degV at positions indicated by V.
+    # This operation retrieves the degree values corresponding to specific vertices.
+    # degE represents aggregated degree values of edges after combining the corresponding vertices'
+    # degree values.
+    # this matches this from the paper:
+    #
+    # where we define de = (1/|e|) sum di as the average degree
+    # of a hyperedge. In that case we use mean, without (1/|e|) we would use sum.
     degE = scatter(degV[V], E, dim=0, reduce=args.first_aggregate)
-    degE = degE.pow(-0.5)
-    degV = degV.pow(-0.5)
+    # this is what goes into the UniGCN/UniGCNII formula
+    # for d_i and d_e
+    # x_i= 1/√d_i sum 1/√d_e Wh_e,
+    degE: torch.Tensor = degE.pow(-0.5)
+    degV: torch.Tensor = degV.pow(-0.5)
     degV[degV.isinf()] = (
         1  # when not added self-loop, some nodes might not be connected with any edge
     )
@@ -314,10 +426,14 @@ def initialise(X, Y, G, args, unseen=None) -> tuple:
     args.degE = degE.to(device)
     args.degE2 = degE2.pow(-1.0).to(device)
 
+    # nfeat: the dimension of the features
+    # nclass: the number of classes in the labels
+    nfeat: int
+    nclass: int
     nfeat, nclass = X.shape[1], len(Y.unique())
-    nlayer = args.nlayer
-    nhid = args.nhid
-    nhead = args.nhead
+    nlayer: int = args.nlayer
+    nhid: int = args.nhid
+    nhead: int = args.nhead
 
     # UniGNN and optimiser
     if args.model_name == "UniGCNII":
@@ -344,6 +460,11 @@ def initialise(X, Y, G, args, unseen=None) -> tuple:
         )
         optimiser = optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
     else:
+        # include UniGCN, UniGAT, UniGIN, UniSAGE
+        # print(f"args \n {args}")
+        # print(type(args))
+        # print(f"V \n {V}")
+        # print(type(V))
         model = UniGNN(args, nfeat, nhid, nclass, nlayer, nhead, V, E)
         optimiser = optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
 
