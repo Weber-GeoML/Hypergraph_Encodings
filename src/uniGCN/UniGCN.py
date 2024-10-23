@@ -8,6 +8,8 @@ import torch.nn.functional as F
 from torch_geometric.utils import softmax
 from torch_scatter import scatter
 
+from uniGCN.prepare import calculate_V_E
+
 # code from UniGCN paper
 # https://github.com/RaphaelPellegrin/UniGNN/tree/master
 
@@ -258,6 +260,8 @@ class UniGCNConv(nn.Module):
         if verbose:
             print(f"degE is {degE}")
         # degree of vertices
+        # TODO: Modify this so that it is a dictionary (ie self.args.degV is a dictionary, with the
+        # first hg having it's first degV saved, etc)
         degV = self.args.degV
         if verbose:
             print(f"degV is {degV}")
@@ -456,8 +460,6 @@ class UniGNN(nn.Module):
         nclass: int,  # number of classes
         nlayer: int,  # depth of the neural network.
         nhead: int,  # number of heads
-        V: torch.long,
-        E: torch.long,
     ) -> None:
         """UniGNN
 
@@ -474,11 +476,6 @@ class UniGNN(nn.Module):
                 number of hidden layers
             nhead:
                 number of conv heads.
-
-            V:
-                V is the row index for the sparse incident matrix H, |V| x |E|
-            E:
-                E is the col index for the sparse incident matrix H, |V| x |E|
         """
         super().__init__()
         Conv = __all_convs__[args.model_name]  # this is just UniGCNConv
@@ -492,16 +489,18 @@ class UniGNN(nn.Module):
                 for _ in range(nlayer - 2)
             ]
         )
-        self.V = V
-        # print(f"V is \n {self.V}")
-        self.E = E
-        # print(f"E is {self.E}")
         act = {"relu": nn.ReLU(), "prelu": nn.PReLU()}
         self.act = act[args.activation]
         self.input_drop = nn.Dropout(args.input_drop)
         self.dropout = nn.Dropout(args.dropout)
+        self.args = args
 
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self,
+        X: torch.Tensor,
+        V: torch.Tensor,
+        E: torch.Tensor,
+    ) -> torch.Tensor:
         """TODO:
 
         Args:
@@ -513,7 +512,7 @@ class UniGNN(nn.Module):
             a tensor/vector that has gone
             through a softmax.
         """
-        V, E = self.V, self.E
+        V, E
 
         X = self.input_drop(X)
         for conv in self.convs:  # note that we loop for as many layers as specified
@@ -525,11 +524,9 @@ class UniGNN(nn.Module):
         return F.log_softmax(X, dim=1)
 
     def forward_hypergraph_classification(
-        self, list_hypergraphs: list[torch.Tensor]
+        self, list_hypergraphs: list
     ) -> list[torch.Tensor | float]:
         """UniGCN for hypergraph classification.
-
-        TODO: to finish
 
         Performs the same as regular UniGCN, but then aggregates
         all outputs (node level) to have just one prediction at the hypergraph
@@ -545,9 +542,14 @@ class UniGNN(nn.Module):
             through a softmax.
         """
         list_preds: list[float] = []
-        for X in list_hypergraphs:
+        for dico in list_hypergraphs:
+            X: torch.Tensor
+            Y: torch.Tensor
+            G: dict
             # get V TODO
             # get E TODO
+            V, E = calculate_V_E(X, G, self.args)
+            # TODO: DO I give V, E here. DO I compute before?
             X = self.input_drop(X)
             for conv in self.convs:  # note that we loop for as many layers as specified
                 X = conv(X, V, E)
@@ -632,8 +634,6 @@ class UniGCNII(nn.Module):
         nclass: int,
         nlayer: int,
         nhead: int,
-        V: torch.long,
-        E: torch.long,
     ) -> None:
         """UniGNNII
 
@@ -650,14 +650,8 @@ class UniGCNII(nn.Module):
                 number of hidden layers
             nhead:
                 number of conv heads
-            V:
-                V is the row index for the sparse incident matrix H, |V| x |E|
-            E:
-                E is the col index for the sparse incident matrix H, |V| x |E|
         """
         super().__init__()
-        self.V = V
-        self.E = E
         nhid = nhid * nhead
         act = {"relu": nn.ReLU(), "prelu": nn.PReLU()}
         self.act = act[args.activation]
@@ -675,14 +669,13 @@ class UniGCNII(nn.Module):
         )
         self.dropout = nn.Dropout(args.dropout)
 
-    def forward(self, x):
+    def forward(self, x, V, E):
         """TODO
 
         Args:
             x:
                 TODO
         """
-        V, E = self.V, self.E
         lamda, alpha = 0.5, 0.1
         x = self.dropout(x)
         x = F.relu(self.convs[0](x))

@@ -18,7 +18,7 @@ from encodings_hnns.data_handling import load
 
 ### configure logger
 from uniGCN.logger import get_logger
-from uniGCN.prepare import fetch_data, initialise, accuracy
+from uniGCN.prepare import fetch_data, initialise, accuracy, calculate_V_E
 
 # File originally taken from UniGCN repo
 
@@ -66,6 +66,7 @@ print(f"X are the features \n {X} \n with shape {X.shape}")
 features_shape = X.shape[0]
 print(f"Y are the labels \n {Y}")
 print(f"G is the hg")
+V, E = calculate_V_E(X, G, args)
 
 
 def get_split(Y, p: float = 0.2) -> tuple[list[int], list[int]]:
@@ -172,7 +173,7 @@ for seed in range(1, 9):
             model.train()
 
             optimizer.zero_grad()
-            Z = model(X)  # this call forward.
+            Z = model(X, V, E)  # this call forward.
             loss = F.nll_loss(Z[train_idx], Y[train_idx])
 
             loss.backward()
@@ -182,7 +183,7 @@ for seed in range(1, 9):
 
             # eval
             model.eval()
-            Z: torch.Tensor = model(X)  # this calls forward
+            Z: torch.Tensor = model(X, V, E)  # this calls forward
 
             # gets the trains, test and val accuracy
             train_acc: float = accuracy(Z[train_idx], Y[train_idx])
