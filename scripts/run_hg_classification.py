@@ -215,8 +215,8 @@ for seed in range(1, 9):
         test_idx: torch.Tensor = torch.LongTensor(test_idx).to(device)
 
         # model
-        model, optimizer = initialise_for_hypergraph_classification(
-            imdb, args
+        model, optimizer, degVs, degEs, degE2s = (
+            initialise_for_hypergraph_classification(imdb, args)
         )  # using imdb as an example for now
 
         baselogger.info(f"Run {run}/{args.n_runs}, Total Epochs: {args.epochs}")
@@ -241,7 +241,9 @@ for seed in range(1, 9):
             model.train()
 
             optimizer.zero_grad()
-            Z = model(X, V, E)  # this call forward.
+            Z = model.forward_hypergraph_classification(
+                imdb, degEs, degVs
+            )  # this call forward.
             loss = F.nll_loss(Z[train_idx], Y[train_idx])
 
             loss.backward()
@@ -251,7 +253,9 @@ for seed in range(1, 9):
 
             # eval
             model.eval()
-            Z: torch.Tensor = model(X, V, E)  # this calls forward
+            Z: torch.Tensor = model.forward_hypergraph_classification(
+                imdb, degEs, degVs
+            )  # this calls forward
 
             # gets the trains, test and val accuracy
             train_acc: float = accuracy(Z[train_idx], Y[train_idx])
