@@ -6,19 +6,20 @@ import shutil
 import time
 from random import sample
 
-import config
 import numpy as np
 import path
 import torch
 import torch.nn.functional as F
-from torch.optim import optimizer
 
 # load data
 from encodings_hnns.data_handling import load
+from torch.optim import optimizer
 
 ### configure logger
 from uniGCN.logger import get_logger
-from uniGCN.prepare import fetch_data, initialise, accuracy, calculate_V_E
+from uniGCN.prepare import accuracy, calculate_V_E, fetch_data, initialise
+
+import config
 
 # File originally taken from UniGCN repo
 
