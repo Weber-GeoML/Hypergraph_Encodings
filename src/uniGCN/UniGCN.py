@@ -225,6 +225,9 @@ class UniGCNConv(nn.Module):
         vertex: torch.Tensor,
         edges: torch.Tensor,
         verbose: bool = False,
+        hypergraph_classification: bool = False,
+        degEs: None | list = None,
+        degVs: None | list = None,
     ) -> torch.Tensor:
         """Performs 1/srqrt(di) * [sum_e 1/sqrt(d_e)Wh_e], ie x tilde i
 
@@ -244,6 +247,13 @@ class UniGCNConv(nn.Module):
                 and vertex 1 is in edge 1
             edges:
                 see above
+            hypergraph_classification:
+                wether we do node-level, within hg classification,
+                or hg-level-classification (new, in which case need to pass degEs, degVs, degE2s)
+            degEs:
+                the degree of edges
+            degVs:
+                the degree of vertices
 
         Returns:
             x tilde i from UniGCN.
@@ -252,17 +262,26 @@ class UniGCNConv(nn.Module):
             print(f"vertex is {vertex}")
             print(f"edges {edges}")
             print(f"X is \n {X}")
+        if hypergraph_classification is not None:
+            assert degEs is not None
+            assert degVs is not None
         N: int = X.shape[0]  # the number of nodes
         if verbose:
             print(f"N is {N}")
         # combined degree of Edges
-        degE = self.args.degE
+        if hypergraph_classification is None:
+            pass
+        else:
+            degE = self.args.degE
         if verbose:
             print(f"degE is {degE}")
         # degree of vertices
         # TODO: Modify this so that it is a dictionary (ie self.args.degV is a dictionary, with the
         # first hg having it's first degV saved, etc)
-        degV = self.args.degV
+        if hypergraph_classification is None:
+            pass
+        else:
+            degV = self.args.degV
         if verbose:
             print(f"degV is {degV}")
 
@@ -524,7 +543,10 @@ class UniGNN(nn.Module):
         return F.log_softmax(X, dim=1)
 
     def forward_hypergraph_classification(
-        self, list_hypergraphs: list
+        self,
+        list_hypergraphs: list,
+        degEs: list,
+        degVs: list,
     ) -> list[torch.Tensor | float]:
         """UniGCN for hypergraph classification.
 
@@ -533,26 +555,38 @@ class UniGNN(nn.Module):
         level.
 
         Args:
-            X:
-                the list of features the features.
-                Has shape number of nodes time size of features.
+            list_hypergraphs:
+                the list of dicts (that contains hg, features, labels etc)
+            degEs:
+                the list of the relevant degEs
+            degVs:
+                the list of the relevant degVs
+            What would be smarter would be to add degEs and degVs to
+            the dictionaries directly. Only need to compute it onnce, no need to pass it around:
+            TODO later.
 
         Returns:
             a tensor/vector that has gone
             through a softmax.
         """
         list_preds: list[float] = []
-        for dico in list_hypergraphs:
+        for idx, dico in enumerate(list_hypergraphs):
             X: torch.Tensor
-            Y: torch.Tensor
             G: dict
-            # get V TODO
-            # get E TODO
+            X = dico["features"]
+            G = dico["hypergraph"]
             V, E = calculate_V_E(X, G, self.args)
-            # TODO: DO I give V, E here. DO I compute before?
+            # Do I give V, E here. DO I compute before?
             X = self.input_drop(X)
             for conv in self.convs:  # note that we loop for as many layers as specified
-                X = conv(X, V, E)
+                X = conv(
+                    X=X,
+                    vertex=V,
+                    edges=E,
+                    hypergraph_classification=True,
+                    degEs=degEs,
+                    degVs=degVs,
+                )
                 X = self.act(X)
                 X = self.dropout(X)
 
