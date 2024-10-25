@@ -12,15 +12,14 @@ import path
 import torch
 import torch.nn.functional as F
 
-# load data
-# load data
-from encodings_hnns.data_handling import load
+from sklearn.model_selection import train_test_split
+
 from torch.optim import optimizer
 
 ### configure logger
 ### configure logger
 from uniGCN.logger import get_logger
-from uniGCN.prepare import accuracy, calculate_V_E
+from uniGCN.prepare import accuracy
 from uniGCN.prepare_hg import initialise_for_hypergraph_classification
 
 import config
@@ -72,7 +71,18 @@ datasets: dict[list[dict[dict, np.matrix, np.ndarray, int]]] = {
 }
 
 
+# pre-compute degEs, degVs, degE2s?
+# for dataset_name, dataset_dict in datasets.items():
+#     print(f"Processing dataset: {dataset_name}")
+
+#     for hg_dict in dataset_dict:
+#         hypergraph = hg_dict.get("hypergraph")
+#         features = hg_dict.get("features")
+#         calculate_V_E(features, hypergraph)
+
+
 # split the data
+# TODO: to fix
 def split_data(data, split) -> tuple:
     """Splits the data into train, val, test sets
 
@@ -101,36 +111,39 @@ def split_data(data, split) -> tuple:
     return data[train_idx], data[val_idx], data[test_idx]
 
 
+# TODO: or get inspired from previous function
+# now
 # Might have to do something more along these lines:
-# def get_split(Y, p: float = 0.2) -> tuple[list[int], list[int]]:
-#     """Splits Y into a test and val set.
+def get_split(Y, p: float = 0.2) -> tuple[list[int], list[int]]:
+    """Splits Y into a test and val set.
 
-#     Args:
-#         Y:
-#             the labels of nodes.
-#         p:
-#             the proportion of nodes in the val set
+    Args:
+        Y:
+            the labels of nodes.
+        p:
+            the proportion of nodes in the val set
 
-#     Returns:
-#         val_idx:
-#             the indices of nodes in the val set
-#         test_idx:
-#             the indices of nodes in the test set
+    Returns:
+        val_idx:
+            the indices of nodes in the val set
+        test_idx:
+            the indices of nodes in the test set
 
-#     """
-#     Y: list = Y.tolist()
-#     N: int = len(Y)  # number of nodes
-#     nclass: int = len(set(Y))  # number of different labels
-#     D: list = [[] for _ in range(nclass)]
-#     for i, y in enumerate(Y):
-#         D[y].append(i)
-#     k: int = int(N * p / nclass)
-#     val_idx: list[int] = torch.cat(
-#         [torch.LongTensor(sample(idxs, k)) for idxs in D]
-#     ).tolist()
-#     test_idx: list[int] = list(set(range(N)) - set(val_idx))
+    """
+    nclass: int = len(torch.unique(Y))  # number of different labels
+    Y: list = Y.tolist()
+    N: int = len(Y)  # number of nodes
+    D: list = [[] for _ in range(nclass)]
+    for i, y in enumerate(Y):
+        # print(f"i is {i} and y is {y}")
+        D[y].append(i)
+    k: int = int(N * p / nclass)
+    val_idx: list[int] = torch.cat(
+        [torch.LongTensor(sample(idxs, k)) for idxs in D]
+    ).tolist()
+    test_idx: list[int] = list(set(range(N)) - set(val_idx))
 
-#     return val_idx, test_idx
+    return val_idx, test_idx
 
 
 # Now same as previous file:
@@ -176,6 +189,13 @@ baselogger.info(args)
 
 resultlogger.info(args)
 
+# TODO: direty right now. TO fix
+# the labels
+Y: list[int]
+Y = []
+for hg in imdb:
+    Y.append(hg["labels"])
+
 
 # Keep track of the test accuracy for the best val accuracy
 overall_test_accuracies_best_val: list[float] = []
@@ -206,9 +226,19 @@ for seed in range(1, 9):
 
         # load data
         args.split = run
-        _, train_idx, test_idx = load(args)
+        # _, train_idx, test_idx = load(args)
+        # TODO: to clean up here
+        num_hypergraphs = len(imdb)
+        indices = list(range(num_hypergraphs))
+        train_idx, test_idx = train_test_split(indices, test_size=0.2, random_state=42)
+
+        print(train_idx)
+        print(test_idx)
         val_idx: list[int]
         test_idx: list[int]
+        Y = torch.tensor(Y)
+        Y = Y.view(-1)
+        # we split the test set because we have train, test, val
         val_idx, test_idx = get_split(Y[test_idx], 0.2)
         train_idx: torch.Tensor = torch.LongTensor(train_idx).to(device)
         val_idx: torch.Tensor = torch.LongTensor(val_idx).to(device)
@@ -241,9 +271,9 @@ for seed in range(1, 9):
             model.train()
 
             optimizer.zero_grad()
-            Z = model.forward_hypergraph_classification(
-                imdb, degEs, degVs
-            )  # this call forward.
+            Z = model.forward_hypergraph_classification(imdb)  # this call forward.
+            Z = torch.stack(Z).squeeze(1)
+            train_idx = train_idx.long()  # Convert to integer tensor
             loss = F.nll_loss(Z[train_idx], Y[train_idx])
 
             loss.backward()
@@ -254,9 +284,9 @@ for seed in range(1, 9):
             # eval
             model.eval()
             Z: torch.Tensor = model.forward_hypergraph_classification(
-                imdb, degEs, degVs
+                imdb,
             )  # this calls forward
-
+            Z = torch.stack(Z).squeeze(1)
             # gets the trains, test and val accuracy
             train_acc: float = accuracy(Z[train_idx], Y[train_idx])
             test_acc: float = accuracy(Z[test_idx], Y[test_idx])
@@ -274,7 +304,7 @@ for seed in range(1, 9):
                 bad_counter += 1
                 if bad_counter >= args.patience:
                     break
-            if epoch % 20 == 0:
+            if epoch % 20 == 0 and epoch > 0:
                 baselogger.info(
                     f"epoch:{epoch} | loss:{loss:.4f} | train acc:{train_acc:.2f} | val acc:{val_acc:.2f} | test_acc_best_val: {test_accs_for_best_val[-1]:.2f}  | best_test_acc: {best_test_acc:.2f} | test acc:{test_acc:.2f} | time:{train_time*1000:.1f}ms"
                 )
