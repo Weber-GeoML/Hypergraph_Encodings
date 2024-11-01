@@ -536,9 +536,12 @@ class UniGNN(nn.Module):
 
         X = self.input_drop(X)
         for conv in self.convs:  # note that we loop for as many layers as specified
+            # TODO: create a copy of the original X
             X = conv(X, V, E)
             X = self.act(X)
             X = self.dropout(X)
+            # TODO: transformer
+            # TODO: combine original X and transfomer(X)
 
         X = self.conv_out(X, V, E)
         return F.log_softmax(X, dim=1)
@@ -599,7 +602,7 @@ class UniGNN(nn.Module):
                 degE=degE,
                 degV=degV,
             )
-            # Aggregating using mean (you can also use sum or other methods)
+            # Aggregating using mean (you can also use sum or other methods) or sum
             X_aggregated = torch.mean(X, dim=0).unsqueeze(0)  # Shape (1, 2)
             output = F.log_softmax(X_aggregated, dim=1)
             # need to aggregate at hypergraph level TODO

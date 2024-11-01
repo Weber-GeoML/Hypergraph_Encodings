@@ -230,6 +230,8 @@ for seed in range(1, 9):
         # TODO: to clean up here
         num_hypergraphs = len(imdb)
         indices = list(range(num_hypergraphs))
+        # TODO: make sure that the radom state does not give a 'trivial' split
+        # as the first 500 hgs are labels 0 and the last 500 are label 1.
         train_idx, test_idx = train_test_split(indices, test_size=0.2, random_state=42)
 
         print(train_idx)
