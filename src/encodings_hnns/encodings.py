@@ -312,6 +312,7 @@ class HypergraphEncodings:
         rw_type: str = "EN",
         normalized: bool = True,
         dataset_name: str | None = None,
+        k: int = 20,
     ) -> dict:
         """Adds encodings based on Laplacians
 
@@ -331,6 +332,8 @@ class HypergraphEncodings:
                 when false, need to slight\ly modify the code
             dataset_name:
                 the name of the dataset. Used for savings the encodings
+            k:
+                Defines k (the number of eigenvectors to use)
 
         Returns:
             the hypergraph with the Laplacian encodings added to the featuress
@@ -427,6 +430,9 @@ class HypergraphEncodings:
                 features_augmented.shape[1] + eigenvectors[0].shape[0],
             )
 
+            # Ensure k does not exceed the number of eigenvectors available
+            k = min(k, eigenvectors.shape[1])
+
             # Creates a new array of zeros with the target shape
             padded_features = np.zeros(target_shape)
 
@@ -439,7 +445,13 @@ class HypergraphEncodings:
                 raise NotImplementedError
             i = 0
             for node in self.hyperedges.keys():
-                laplacian_vals = eigenvectors[:, i].reshape(1, -1)
+                first_try: bool = False
+                new_method: bool = True
+                if first_try:
+                    laplacian_vals = eigenvectors[:, i].reshape(1, -1)
+                elif new_method:
+                    # Extract the ith entry from the first k eigenvectors
+                    laplacian_vals = eigenvectors[i, :k].reshape(1, -1)
                 laplacian_vals = sign * laplacian_vals
                 if verbose:
                     print(
