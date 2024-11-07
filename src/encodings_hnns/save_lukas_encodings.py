@@ -114,7 +114,7 @@ class encodings_saver(object):
 
         # add the encodings
         try:
-            for random_walk_type in ["EE", "EN", "WE"]:
+            for random_walk_type in []:
                 hgencodings = HypergraphEncodings()
                 k_rw = 20
                 dataset_copy = dataset.copy()
@@ -142,7 +142,7 @@ class encodings_saver(object):
             list_hgs_rw_EN.append(dataset_copy)
 
         try:
-            for laplacian_type in ["Hodge", "Normalized"]:
+            for laplacian_type in []:
                 hgencodings = HypergraphEncodings()
                 dataset_copy = dataset.copy()
                 dataset_copy = hgencodings.add_laplacian_encodings(
@@ -162,7 +162,7 @@ class encodings_saver(object):
             list_hgs_lape_hodge.append(dataset_copy)
             list_hgs_lape_normalized.append(dataset_copy)
         try:
-            for curvature_type in ["FRC"]:
+            for curvature_type in ["ORC"]:
                 hgencodings = HypergraphEncodings()
                 dataset_copy = dataset.copy()
                 dataset_copy = hgencodings.add_curvature_encodings(
@@ -295,6 +295,9 @@ class encodings_saver(object):
             with open(os.path.join(self.d, combined_file), "wb") as handle:
                 pickle.dump(encoding_list, handle)
                 print(f"Saved combined encodings to {combined_file}")
+                print(
+                    f"Saved combined encodings to {combined_file} with {len(encoding_list)} elements"
+                )
 
         return (
             list_hgs_rw_EE,
@@ -356,9 +359,12 @@ class encodings_saver(object):
         """
 
         list_files: list[str] = [
-            "reddit_hypergraphs",
+            "proteins_hypergraphs",
+            "enzymes_hypergraphs",
+            "mutag_hypergraphs",
             "imdb_hypergraphs",
             "collab_hypergraphs",
+            "reddit_hypergraphs",
         ]
 
         all_results: dict = {}
