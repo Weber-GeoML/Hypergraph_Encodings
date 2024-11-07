@@ -248,44 +248,64 @@ class encodings_saver(object):
         list_hgs_frc: list[dict] = []
         list_hgs_ldp: list[dict] = []
 
-        # Accumulate lists for combined pickle files
-        accumulated_encodings = {
-            "rw_EE": [],
-            "rw_EN": [],
-            "rw_WE": [],
-            "lape_hodge": [],
-            "lape_normalized": [],
-            "orc": [],
-            "frc": [],
-            "ldp": [],
-        }
-
         with open(os.path.join(self.d, f"{lukas_file}.pickle"), "rb") as handle:
             # list of hypergraphs
             hypergraphs: list[dict] = pickle.load(handle)
             print(f"The file {lukas_file} contains {len(hypergraphs)} hypergraphs")
+            results = []
             with mp.Pool() as pool:
                 for count, hg in enumerate(hypergraphs):
-                    encoding_results = pool.apply_async(
+                    result = pool.apply_async(
                         self._process_hypergraph,
                         (hg, lukas_file, count),
                     )
-                    # Accumulate encoding results for combined file saving
-                    for encoding_type, result_list in zip(
-                        accumulated_encodings.keys(), encoding_results
-                    ):
-                        accumulated_encodings[encoding_type].extend(result_list)
+                    results.append(result)
                 pool.close()
                 pool.join()
 
-        # Saves each accumulated list as a combined pickle file
+        # Retrieve and accumulate results
+        for result in results:
+            (rw_EE, rw_EN, rw_WE, lape_hodge, lape_normalized, orc, frc, ldp) = (
+                result.get()
+            )
+
+            list_hgs_rw_EE.extend(rw_EE)
+            list_hgs_rw_EN.extend(rw_EN)
+            list_hgs_rw_WE.extend(rw_WE)
+            list_hgs_lape_hodge.extend(lape_hodge)
+            list_hgs_lape_normalized.extend(lape_normalized)
+            list_hgs_orc.extend(orc)
+            list_hgs_frc.extend(frc)
+            list_hgs_ldp.extend(ldp)
+
+        # Save each accumulated encoding list as a separate pickle file
+        accumulated_encodings = {
+            "rw_EE": list_hgs_rw_EE,
+            "rw_EN": list_hgs_rw_EN,
+            "rw_WE": list_hgs_rw_WE,
+            "lape_hodge": list_hgs_lape_hodge,
+            "lape_normalized": list_hgs_lape_normalized,
+            "orc": list_hgs_orc,
+            "frc": list_hgs_frc,
+            "ldp": list_hgs_ldp,
+        }
+
         for encoding_type, encoding_list in accumulated_encodings.items():
             combined_file = f"{lukas_file}_with_encodings_{encoding_type}.pickle"
             with open(os.path.join(self.d, combined_file), "wb") as handle:
                 pickle.dump(encoding_list, handle)
                 print(f"Saved combined encodings to {combined_file}")
 
-        return accumulated_encodings
+        return (
+            list_hgs_rw_EE,
+            list_hgs_rw_EN,
+            list_hgs_rw_WE,
+            list_hgs_lape_hodge,
+            list_hgs_lape_normalized,
+            list_hgs_orc,
+            list_hgs_frc,
+            list_hgs_ldp,
+        )
 
         # for result in results:
         #     list_hgs_rw_EE.extend(result[0])
