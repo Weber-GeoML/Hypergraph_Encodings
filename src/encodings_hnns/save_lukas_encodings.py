@@ -248,18 +248,44 @@ class encodings_saver(object):
         list_hgs_frc: list[dict] = []
         list_hgs_ldp: list[dict] = []
 
+        # Accumulate lists for combined pickle files
+        accumulated_encodings = {
+            "rw_EE": [],
+            "rw_EN": [],
+            "rw_WE": [],
+            "lape_hodge": [],
+            "lape_normalized": [],
+            "orc": [],
+            "frc": [],
+            "ldp": [],
+        }
+
         with open(os.path.join(self.d, f"{lukas_file}.pickle"), "rb") as handle:
             # list of hypergraphs
             hypergraphs: list[dict] = pickle.load(handle)
-            print(f"The file contains {len(hypergraphs)} hypergraphs")
+            print(f"The file {lukas_file} contains {len(hypergraphs)} hypergraphs")
             with mp.Pool() as pool:
                 for count, hg in enumerate(hypergraphs):
-                    pool.apply_async(
+                    encoding_results = pool.apply_async(
                         self._process_hypergraph,
                         (hg, lukas_file, count),
                     )
+                    # Accumulate encoding results for combined file saving
+                    for encoding_type, result_list in zip(
+                        accumulated_encodings.keys(), encoding_results
+                    ):
+                        accumulated_encodings[encoding_type].extend(result_list)
                 pool.close()
                 pool.join()
+
+        # Saves each accumulated list as a combined pickle file
+        for encoding_type, encoding_list in accumulated_encodings.items():
+            combined_file = f"{lukas_file}_with_encodings_{encoding_type}.pickle"
+            with open(os.path.join(self.d, combined_file), "wb") as handle:
+                pickle.dump(encoding_list, handle)
+                print(f"Saved combined encodings to {combined_file}")
+
+        return accumulated_encodings
 
         # for result in results:
         #     list_hgs_rw_EE.extend(result[0])
@@ -300,7 +326,6 @@ class encodings_saver(object):
         #     list_hgs_frc,
         #     list_hgs_ldp,
         # )
-        return None
 
     def _compute_encodings(self, verbose: bool = True) -> dict:
         """Computes the encodings on the data
