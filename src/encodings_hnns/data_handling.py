@@ -14,7 +14,7 @@ import scipy.sparse as sp
 warnings.simplefilter("ignore")
 
 
-# Used in train_val.
+# Not used yet?
 def load(args) -> tuple[dict[dict, np.matrix, np.ndarray, int], list, list]:
     """Parses the dataset
 
