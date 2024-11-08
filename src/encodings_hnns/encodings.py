@@ -427,7 +427,7 @@ class HypergraphEncodings:
             # Determines the target shape
             target_shape = (
                 features_augmented.shape[0],
-                features_augmented.shape[1] + eigenvectors[0].shape[0],
+                features_augmented.shape[1] + k,
             )
 
             # Ensure k does not exceed the number of eigenvectors available
