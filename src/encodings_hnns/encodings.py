@@ -424,14 +424,16 @@ class HypergraphEncodings:
             sign: int = random.choice([-1, 1])
 
             features_augmented = hypergraph["features"]
+
+
+            # Ensure k does not exceed the number of eigenvectors available
+            k = min(k, eigenvectors.shape[1])
+
             # Determines the target shape
             target_shape = (
                 features_augmented.shape[0],
                 features_augmented.shape[1] + k,
             )
-
-            # Ensure k does not exceed the number of eigenvectors available
-            k = min(k, eigenvectors.shape[1])
 
             # Creates a new array of zeros with the target shape
             padded_features = np.zeros(target_shape)
