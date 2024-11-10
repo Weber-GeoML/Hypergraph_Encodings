@@ -17,7 +17,13 @@ def calculate_V_E(X: torch.Tensor, G: dict, args) -> tuple:
             the graph
 
     Returns:
-        a tuple with model details (UniGNN, optimiser)
+        a tuple with V, E, degE, degV, degE2.
+            V: the row indices of the non-zero elements in H
+            E: the column indices of the non-zero elements in H
+            degE: the degree of each edge
+            degV: the degree of each vertex
+            degE2: the degree of each edge weighted by the degree of the vertices
+
     """
 
     G = G.copy()
@@ -109,7 +115,7 @@ def calculate_V_E(X: torch.Tensor, G: dict, args) -> tuple:
     # x_i= 1/√d_i sum 1/√d_e Wh_e,
     degE: torch.Tensor = degE.pow(-0.5)
     degV: torch.Tensor = degV.pow(-0.5)
-    degV[
-        degV.isinf()
-    ] = 1  # when not added self-loop, some nodes might not be connected with any edge
+    degV[degV.isinf()] = (
+        1  # when not added self-loop, some nodes might not be connected with any edge
+    )
     return V, E, degE, degV, degE2

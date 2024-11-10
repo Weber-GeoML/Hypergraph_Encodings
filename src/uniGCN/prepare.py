@@ -285,7 +285,16 @@ def initialise(
             arguments
         unseen:
             if not None, remove these nodes from hypergraphs
-            TODO: add more description.
+            This is typically used for:
+            Train/Test Split: When you want to evaluate how well your model generalizes to unseen nodes
+            Training: Use a subset of nodes
+            Testing: Use the remaining "unseen" nodes
+            Cross-Validation: When you want to validate your model on different subsets of nodes
+            Training: Use most nodes
+            Validation: Use some "unseen" nodes to tune hyperparameters
+            Inductive Learning: Testing the model's ability to handle new nodes that weren't present during training
+            Training: Learn patterns from known nodes
+            Testing: Apply learned patterns to completely new "unseen" nodes
 
     Returns:
         a tuple with model details (UniGNN, optimiser)
@@ -417,9 +426,9 @@ def initialise(
     # x_i= 1/√d_i sum 1/√d_e Wh_e,
     degE: torch.Tensor = degE.pow(-0.5)
     degV: torch.Tensor = degV.pow(-0.5)
-    degV[
-        degV.isinf()
-    ] = 1  # when not added self-loop, some nodes might not be connected with any edge
+    degV[degV.isinf()] = (
+        1  # when not added self-loop, some nodes might not be connected with any edge
+    )
 
     V, E = V.to(device), E.to(device)
     args.degV = degV.to(device)
