@@ -13,6 +13,11 @@ from uniGCN.UniGCN import UniGNN
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
+# The difference between this and prepare.py is that here we have multiple hypergraphs
+# and for the hypergraph classification we don't have the function fetch_data
+# because we pre-compute the encodings (using save_lukas_encodings.py)
+
+
 def initialise_for_hypergraph_classification(
     list_hg: list[dict[str, Union[dict, np.ndarray, int]]],
     args: argparse.Namespace,

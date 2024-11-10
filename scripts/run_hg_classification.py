@@ -14,6 +14,7 @@ import torch
 import torch.nn.functional as F
 from sklearn.model_selection import train_test_split
 from torch.optim import optimizer
+from tqdm import tqdm  # Add this import
 
 ### configure logger
 ### configure logger
@@ -143,15 +144,6 @@ def get_split(Y, p: float = 0.2) -> tuple[list[int], list[int]]:
     return val_idx, test_idx
 
 
-# Now same as previous file:
-# Check if CUDA is available and move tensors to GPU if possible
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-test_accs: list[float] = []
-best_val_accs: list[float] = []
-best_test_accs: list[float] = []
-
-
 args = config.parse()
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
@@ -199,7 +191,6 @@ overall_test_accuracies_best_val: list[float] = []
 
 seed: int
 for seed in range(1, 9):
-    seed += 1
     print(f"The seed is {seed}")
     # gpu, seed
     torch.manual_seed(seed)
@@ -217,7 +208,8 @@ for seed in range(1, 9):
         shutil.rmtree(out_dir)
     out_dir.makedirs_p()
 
-    for run in range(1, args.n_runs + 1):
+    for run in tqdm(range(1, args.n_runs + 1), desc="Training runs"):
+        baselogger.info(f"\n--- Starting run {run}/{args.n_runs} ---")
         run_dir = out_dir / f"{run}"
         run_dir.makedirs_p()
 
@@ -270,7 +262,7 @@ for seed in range(1, 9):
         test_accs_for_best_val = (
             []
         )  # List to store test accuracy for the best validation accuracy
-        for epoch in range(args.epochs):
+        for epoch in tqdm(range(args.epochs), desc=f"Epochs (Run {run})"):
             # train
             tic_epoch = time.time()
             model.train()
@@ -309,9 +301,15 @@ for seed in range(1, 9):
                 bad_counter += 1
                 if bad_counter >= args.patience:
                     break
-            if epoch % 20 == 0 and epoch > 0:
+            if epoch % 50 == 0:  # Changed from 20 to 50
                 baselogger.info(
-                    f"epoch:{epoch} | loss:{loss:.4f} | train acc:{train_acc:.2f} | val acc:{val_acc:.2f} | test_acc_best_val: {test_accs_for_best_val[-1]:.2f}  | best_test_acc: {best_test_acc:.2f} | test acc:{test_acc:.2f} | time:{train_time*1000:.1f}ms"
+                    f"Epoch {epoch:3d} | "
+                    f"Loss: {loss:.4f} | "
+                    f"Train: {train_acc:.2f}% | "
+                    f"Val: {val_acc:.2f}% | "
+                    f"Test: {test_acc:.2f}% | "
+                    f"Best Test: {best_test_acc:.2f}% | "
+                    f"Time: {train_time*1000:.1f}ms"
                 )
 
         resultlogger.info(
@@ -333,3 +331,27 @@ resultlogger.info(
 resultlogger.info(
     f"Average best test accuracy: {np.mean(best_test_accs)} ± {np.std(best_test_accs)}"
 )
+
+# Add dataset info logging
+for dataset_name, dataset in datasets.items():
+    baselogger.info(f"\nDataset: {dataset_name}")
+    baselogger.info(f"Number of hypergraphs: {len(dataset)}")
+
+    # Calculate average hypergraph size
+    avg_nodes = np.mean([hg["features"].shape[0] for hg in dataset])
+    avg_edges = np.mean([len(hg["hypergraph"]) for hg in dataset])
+
+    baselogger.info(f"Average nodes per hypergraph: {avg_nodes:.2f}")
+    baselogger.info(f"Average edges per hypergraph: {avg_edges:.2f}")
+
+# Improve split logging
+baselogger.info(f"\nData split sizes:")
+baselogger.info(f"Train set: {len(train_idx)} hypergraphs")
+baselogger.info(f"Val set: {len(val_idx)} hypergraphs")
+baselogger.info(f"Test set: {len(test_idx)} hypergraphs")
+
+# Add final summary statistics
+baselogger.info("\n=== Final Results ===")
+baselogger.info(f"Number of completed runs: {len(test_accs)}")
+baselogger.info(f"Best validation accuracy: {max(best_val_accs):.2f}%")
+baselogger.info(f"Best test accuracy: {max(best_test_accs):.2f}%")
