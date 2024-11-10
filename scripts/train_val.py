@@ -6,21 +6,20 @@ import shutil
 import time
 from random import sample
 
+import config
 import numpy as np
 import path
 import torch
 import torch.nn.functional as F
+from torch.optim import optimizer
 
 # load data
 from encodings_hnns.data_handling import load
-from torch.optim import optimizer
+from uniGCN.calculate_vertex_edges import calculate_V_E
 
 ### configure logger
 from uniGCN.logger import get_logger
 from uniGCN.prepare import accuracy, fetch_data, initialise
-from uniGCN.calculate_vertex_edges import calculate_V_E
-
-import config
 
 # File originally taken from UniGCN repo
 

@@ -7,13 +7,12 @@ import shutil
 import time
 from random import sample
 
+import config
 import numpy as np
 import path
 import torch
 import torch.nn.functional as F
-
 from sklearn.model_selection import train_test_split
-
 from torch.optim import optimizer
 
 ### configure logger
@@ -21,8 +20,6 @@ from torch.optim import optimizer
 from uniGCN.logger import get_logger
 from uniGCN.prepare import accuracy
 from uniGCN.prepare_hg import initialise_for_hypergraph_classification
-
-import config
 
 # File originally taken from UniGCN repo
 
@@ -247,8 +244,14 @@ for seed in range(1, 9):
         test_idx: torch.Tensor = torch.LongTensor(test_idx).to(device)
 
         # model
-        model, optimizer, degVs, degEs, degE2s = (
-            initialise_for_hypergraph_classification(imdb, args)
+        (
+            model,
+            optimizer,
+            degVs,
+            degEs,
+            degE2s,
+        ) = initialise_for_hypergraph_classification(
+            imdb, args
         )  # using imdb as an example for now
 
         baselogger.info(f"Run {run}/{args.n_runs}, Total Epochs: {args.epochs}")

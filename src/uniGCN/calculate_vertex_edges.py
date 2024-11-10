@@ -3,7 +3,6 @@ import torch
 import torch_sparse
 from torch_scatter import scatter
 
-
 # Check if CUDA is available and move tensors to GPU if possible
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -110,7 +109,7 @@ def calculate_V_E(X: torch.Tensor, G: dict, args) -> tuple:
     # x_i= 1/√d_i sum 1/√d_e Wh_e,
     degE: torch.Tensor = degE.pow(-0.5)
     degV: torch.Tensor = degV.pow(-0.5)
-    degV[degV.isinf()] = (
-        1  # when not added self-loop, some nodes might not be connected with any edge
-    )
+    degV[
+        degV.isinf()
+    ] = 1  # when not added self-loop, some nodes might not be connected with any edge
     return V, E, degE, degV, degE2
