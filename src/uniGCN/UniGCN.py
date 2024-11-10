@@ -48,7 +48,6 @@ def normalize_l2(X):
 
 # v1: X -> XW -> AXW -> norm
 class UniSAGEConv(nn.Module):
-
     def __init__(
         self,
         args,
@@ -116,7 +115,6 @@ class UniSAGEConv(nn.Module):
 
 # v1: X -> XW -> AXW -> norm
 class UniGINConv(nn.Module):
-
     def __init__(
         self, args, in_channels, out_channels, heads=8, dropout=0.0, negative_slope=0.2
     ):
@@ -173,7 +171,6 @@ class UniGINConv(nn.Module):
 
 # v1: X -> XW -> AXW -> norm
 class UniGCNConv(nn.Module):
-
     def __init__(
         self,
         args,
@@ -308,7 +305,6 @@ class UniGCNConv(nn.Module):
 
 # v2: X -> AX -> norm -> AXW
 class UniGCNConv2(nn.Module):
-
     def __init__(
         self, args, in_channels, out_channels, heads=8, dropout=0.0, negative_slope=0.2
     ):
@@ -357,7 +353,6 @@ class UniGCNConv2(nn.Module):
 
 
 class UniGATConv(nn.Module):
-
     def __init__(
         self,
         args,
@@ -536,28 +531,47 @@ class UniGNN(nn.Module):
         level.
 
         Args:
-            X:
-                the list of features the features.
-                Has shape number of nodes time size of features.
+            list_hypergraphs:
+                the list of dicts (that contains hg, features, labels etc)
+
+            TODO
+            What would be smarter would be to add degEs and degVs to
+            the dictionaries directly. Only need to compute it onnce, no need to pass it around:
+            TODO later.
+
 
         Returns:
             a tensor/vector that has gone
             through a softmax.
         """
         list_preds: list[float] = []
-        for X in list_hypergraphs:
-            # get V TODO
-            # get E TODO
+        for idx, dico in enumerate(list_hypergraphs):
+            X: torch.Tensor
+            G: dict
+            X = dico["features"]
+            G = dico["hypergraph"]
+            V, E, degE, degV, degE2 = calculate_V_E(X, G, self.args)
+            if not isinstance(X, torch.Tensor):
+                X = torch.tensor(X)
             X = self.input_drop(X)
             for conv in self.convs:  # note that we loop for as many layers as specified
                 X = conv(X, V, E)
                 X = self.act(X)
                 X = self.dropout(X)
 
-            X = self.conv_out(X, V, E)
-            output = F.log_softmax(X, dim=1)
-            # need to aggregate at hypergraph level TODO
-            # list_preds.append(modified_output)
+            X = self.conv_out(
+                X=X,
+                vertex=V,
+                edges=E,
+                hypergraph_classification=True,
+                degE=degE,
+                degV=degV,
+            )
+            # Aggregating using mean (you can also use sum or other methods)
+            X_aggregated = torch.mean(X, dim=0).unsqueeze(0)  # Shape (1, 2)
+            output = F.log_softmax(X_aggregated, dim=1)
+            list_preds.append(output)
+
         return list_preds
 
 

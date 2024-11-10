@@ -15,6 +15,13 @@ def parse():
         help="whether to add encodings to the features",
     )
     p.add_argument(
+        "--dataset-hypergraph-classification",
+        type=str,
+        default="imdb",
+        choices=["imdb", "collab", "reddit", "proteins", "mutag", "enzymes"],
+        help="Dataset to use for training",
+    )
+    p.add_argument(
         "--encodings",
         type=str,
         default="RW",

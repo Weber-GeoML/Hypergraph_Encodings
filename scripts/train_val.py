@@ -17,10 +17,12 @@ from torch.optim import optimizer
 
 # load data
 from encodings_hnns.data_handling import load
+from uniGCN.calculate_vertex_edges import calculate_V_E
 
 ### configure logger
 from uniGCN.logger import get_logger
-from uniGCN.prepare import fetch_data, initialise, accuracy
+from uniGCN.prepare import accuracy, fetch_data, initialise
+
 
 # File originally taken from UniGCN repo
 
@@ -145,6 +147,7 @@ for seed in range(1, 9):
         val_idx: list[int]
         test_idx: list[int]
         val_idx, test_idx = get_split(Y[test_idx], 0.2)
+        # I believe train is fixed across all runs.
         train_idx: torch.Tensor = torch.LongTensor(train_idx).to(device)
         val_idx: torch.Tensor = torch.LongTensor(val_idx).to(device)
         test_idx: torch.Tensor = torch.LongTensor(test_idx).to(device)
