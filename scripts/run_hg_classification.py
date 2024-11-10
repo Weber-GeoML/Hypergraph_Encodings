@@ -47,26 +47,50 @@ dirname = f"{datetime.datetime.now()}".replace(" ", "_").replace(":", ".")
 data_split: list[float] = [0.5, 0.25, 0.25]
 
 
-# load the data from data\hypergraph_classification_datasets/imdb_hypergraphs.pickle
-with open("data/hypergraph_classification_datasets/imdb_hypergraphs.pickle", "rb") as f:
-    imdb = pickle.load(f)
+# load the dataset specified in args
+dataset_name = args.dataset_hypergraph_classification
+dataset_path = (
+    f"data/hypergraph_classification_datasets/{dataset_name}_hypergraphs.pickle"
+)
 
-with open(
-    "data/hypergraph_classification_datasets/collab_hypergraphs.pickle", "rb"
-) as f:
-    collab = pickle.load(f)
+print("\n=== Dataset Information ===")
+print(f"Loading dataset: {dataset_name}")
+print(f"From path: {dataset_path}")
 
-with open(
-    "data/hypergraph_classification_datasets/reddit_hypergraphs.pickle", "rb"
-) as f:
-    reddit = pickle.load(f)
+with open(dataset_path, "rb") as f:
+    current_dataset = pickle.load(f)
 
-# each dataset is a list of dicts that contrains the hypergraph, the features, the labels and the number of nodes
-datasets: dict[list[dict[dict, np.matrix, np.ndarray, int]]] = {
-    "imdb": imdb,
-    "collab": collab,
-    "reddit": reddit,
-}
+# Add dataset statistics
+num_hypergraphs = len(current_dataset)
+feature_shape = current_dataset[0]["features"].shape
+num_features = feature_shape[1]
+
+# Modified to handle numpy arrays
+unique_labels = set()
+for hg in current_dataset:
+    label = hg["labels"]
+    # Convert numpy array to a hashable type (tuple or scalar)
+    if isinstance(label, np.ndarray):
+        label = tuple(label.flatten())
+    unique_labels.add(label)
+
+print(f"\nDataset Statistics:")
+print(f"Number of hypergraphs: {num_hypergraphs}")
+print(f"Feature dimensions: {feature_shape}")
+print(f"Number of features per node: {num_features}")
+print(f"Number of unique labels: {len(unique_labels)}")
+print(f"Unique labels: {sorted(unique_labels)}")
+
+# Calculate average nodes and edges
+avg_nodes = sum(hg["features"].shape[0] for hg in current_dataset) / num_hypergraphs
+avg_edges = sum(len(hg["hypergraph"]) for hg in current_dataset) / num_hypergraphs
+
+print(f"\nHypergraph Statistics:")
+print(f"Average nodes per hypergraph: {avg_nodes:.2f}")
+print(f"Average edges per hypergraph: {avg_edges:.2f}")
+
+# Replace the individual dataset loads with a single dictionary
+datasets: dict[str, list[dict]] = {dataset_name: current_dataset}
 
 
 # pre-compute degEs, degVs, degE2s?
@@ -165,7 +189,7 @@ dirname = f"{datetime.datetime.now()}".replace(" ", "_").replace(":", ".")
 X: torch.Tensor  # the features
 Y: torch.Tensor  # the labels
 G: dict  # the whole hypergraph
-features_shape = imdb[0]["features"].shape
+features_shape = current_dataset[0]["features"].shape
 
 
 out_dir: str = path.Path(f"./{args.out_dir}/{model_name}_{nlayer}_hg_classification/")
@@ -182,9 +206,21 @@ resultlogger.info(args)
 # the labels
 Y: list[int]
 Y = []
-for hg in imdb:
-    Y.append(hg["labels"])
+for hg in current_dataset:
+    # Convert numpy array label to integer
+    label = hg["labels"]
+    if isinstance(label, np.ndarray):
+        label = label.item()  # Convert single-element array to scalar
+    Y.append(label)
 
+# Convert to tensor
+Y = torch.tensor(Y, dtype=torch.long)
+Y = Y.view(-1)  # Ensure it's 1D
+
+print("\nLabel Information:")
+print(f"Number of labels: {len(Y)}")
+print(f"Label type: {Y.dtype}")
+print(f"Unique labels: {torch.unique(Y).tolist()}")
 
 # Keep track of the test accuracy for the best val accuracy
 overall_test_accuracies_best_val: list[float] = []
@@ -217,7 +253,7 @@ for seed in range(1, 9):
         args.split = run
         # _, train_idx, test_idx = load(args)
         # TODO: to clean up here
-        num_hypergraphs = len(imdb)
+        num_hypergraphs = len(current_dataset)
         indices = list(range(num_hypergraphs))
         # TODO: make sure that the radom state does not give a 'trivial' split
         # as the first 500 hgs are labels 0 and the last 500 are label 1.
@@ -235,6 +271,11 @@ for seed in range(1, 9):
         val_idx: torch.Tensor = torch.LongTensor(val_idx).to(device)
         test_idx: torch.Tensor = torch.LongTensor(test_idx).to(device)
 
+        print(f"\nSplit Statistics:")
+        print(f"Training set size: {len(train_idx)} hypergraphs")
+        print(f"Validation set size: {len(val_idx)} hypergraphs")
+        print(f"Test set size: {len(test_idx)} hypergraphs")
+
         # model
         (
             model,
@@ -242,9 +283,14 @@ for seed in range(1, 9):
             degVs,
             degEs,
             degE2s,
-        ) = initialise_for_hypergraph_classification(
-            imdb, args
-        )  # using imdb as an example for now
+        ) = initialise_for_hypergraph_classification(current_dataset, args)
+
+        print("\n=== Training Information ===")
+        print(f"Model: {model_name}")
+        print(f"Number of layers: {nlayer}")
+        print(f"Number of runs: {args.n_runs}")
+        print(f"Number of epochs: {args.epochs}")
+        print(f"Device: {device}")
 
         baselogger.info(f"Run {run}/{args.n_runs}, Total Epochs: {args.epochs}")
         baselogger.info(model)
@@ -268,7 +314,9 @@ for seed in range(1, 9):
             model.train()
 
             optimizer.zero_grad()
-            Z = model.forward_hypergraph_classification(imdb)  # this call forward.
+            Z = model.forward_hypergraph_classification(
+                current_dataset
+            )  # this call forward.
             Z = torch.stack(Z).squeeze(1)
             train_idx = train_idx.long()  # Convert to integer tensor
             loss = F.nll_loss(Z[train_idx], Y[train_idx])
@@ -281,7 +329,7 @@ for seed in range(1, 9):
             # eval
             model.eval()
             Z: torch.Tensor = model.forward_hypergraph_classification(
-                imdb,
+                current_dataset,
             )  # this calls forward
             Z = torch.stack(Z).squeeze(1)
             # gets the trains, test and val accuracy
