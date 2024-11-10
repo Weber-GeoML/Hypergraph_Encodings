@@ -114,7 +114,7 @@ class encodings_saver(object):
 
         # add the encodings
         try:
-            for random_walk_type in []:
+            for random_walk_type in ["EE", "EN", "WE"]:
                 hgencodings = HypergraphEncodings()
                 k_rw = 20
                 dataset_copy = dataset.copy()
@@ -142,7 +142,7 @@ class encodings_saver(object):
             list_hgs_rw_EN.append(dataset_copy)
 
         try:
-            for laplacian_type in []:
+            for laplacian_type in ["Hodge", "Normalized"]:
                 hgencodings = HypergraphEncodings()
                 dataset_copy = dataset.copy()
                 dataset_copy = hgencodings.add_laplacian_encodings(
@@ -162,7 +162,7 @@ class encodings_saver(object):
             list_hgs_lape_hodge.append(dataset_copy)
             list_hgs_lape_normalized.append(dataset_copy)
         try:
-            for curvature_type in ["ORC"]:
+            for curvature_type in ["ORC", "FRC"]:
                 hgencodings = HypergraphEncodings()
                 dataset_copy = dataset.copy()
                 dataset_copy = hgencodings.add_curvature_encodings(
