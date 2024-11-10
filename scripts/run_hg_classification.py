@@ -21,30 +21,46 @@ from tqdm import tqdm  # Add this import
 from uniGCN.logger import get_logger
 from uniGCN.prepare import accuracy
 from uniGCN.prepare_hg import initialise_for_hypergraph_classification
+from split_data_for_hypergraph_classification import get_split
 
 # File originally taken from UniGCN repo
 
 # Check if CUDA is available and move tensors to GPU if possible
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+# Init lists to store accuracy results
 test_accs: list[float] = []
 best_val_accs: list[float] = []
 best_test_accs: list[float] = []
+# Keep track of the test accuracy for the best val accuracy
+overall_test_accuracies_best_val: list[float] = []
 
-
+# Parse the arguments from config.py
 args = config.parse()
 
+# Set CUDA environment variables
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
 use_norm: str = "use-norm" if args.use_norm else "no-norm"
 add_self_loop: str = "add-self-loop" if args.add_self_loop else "no-self-loop"
-
 model_name: str = args.model_name
 nlayer: int = args.nlayer
 dirname = f"{datetime.datetime.now()}".replace(" ", "_").replace(":", ".")
 
+# Define the data split for train, val, test
 data_split: list[float] = [0.5, 0.25, 0.25]
+
+out_dir: str = path.Path(f"./{args.out_dir}/{model_name}_{nlayer}_hg_classification/")
+if out_dir.exists():
+    shutil.rmtree(out_dir)
+out_dir.makedirs_p()
+
+# Configure loggers
+baselogger = get_logger("base logger", f"{out_dir}/logging.log", not args.nostdout)
+resultlogger = get_logger("result logger", f"{out_dir}/result.log", not args.nostdout)
+baselogger.info(args)
+resultlogger.info(args)
 
 
 # load the dataset specified in args
@@ -92,7 +108,8 @@ print(f"Average edges per hypergraph: {avg_edges:.2f}")
 # Replace the individual dataset loads with a single dictionary
 datasets: dict[str, list[dict]] = {dataset_name: current_dataset}
 
-
+# TODO later
+# so then we don't need to do that in UniGCN/
 # pre-compute degEs, degVs, degE2s?
 # for dataset_name, dataset_dict in datasets.items():
 #     print(f"Processing dataset: {dataset_name}")
@@ -103,88 +120,6 @@ datasets: dict[str, list[dict]] = {dataset_name: current_dataset}
 #         calculate_V_E(features, hypergraph)
 
 
-# split the data
-# TODO: to fix
-def split_data(data, split) -> tuple:
-    """Splits the data into train, val, test sets
-
-    Here the data are list of hypergraphs
-
-    Args:
-        data:
-            one of the list of hypergraphs
-        split:
-            TODO
-    Returns:
-        the train indices
-        the val indices
-        the test indices
-
-        correspondin to a classification of each hypergraph in the least to be in the
-        train, test or val.
-
-
-    """
-    n: int = len(data)
-    indices = np.random.permutation(n)
-    train_idx = indices[: int(split[0] * n)]
-    val_idx = indices[int(split[0] * n) : int((split[0] + split[1]) * n)]
-    test_idx = indices[int((split[0] + split[1]) * n) :]
-    return data[train_idx], data[val_idx], data[test_idx]
-
-
-# TODO: or get inspired from previous function
-# now
-# Might have to do something more along these lines:
-def get_split(Y, p: float = 0.2) -> tuple[list[int], list[int]]:
-    """Splits Y into a test and val set.
-
-    Args:
-        Y:
-            the labels of nodes.
-        p:
-            the proportion of nodes in the val set
-
-    Returns:
-        val_idx:
-            the indices of nodes in the val set
-        test_idx:
-            the indices of nodes in the test set
-
-    """
-    nclass: int = len(torch.unique(Y))  # number of different labels
-    Y: list = Y.tolist()
-    N: int = len(Y)  # number of nodes
-    D: list = [[] for _ in range(nclass)]
-    for i, y in enumerate(Y):
-        # print(f"i is {i} and y is {y}")
-        D[y].append(i)
-    k: int = int(N * p / nclass)
-    val_idx: list[int] = torch.cat(
-        [torch.LongTensor(sample(idxs, k)) for idxs in D]
-    ).tolist()
-    test_idx: list[int] = list(set(range(N)) - set(val_idx))
-
-    return val_idx, test_idx
-
-
-args = config.parse()
-
-os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
-
-use_norm: str = "use-norm" if args.use_norm else "no-norm"
-add_self_loop: str = "add-self-loop" if args.add_self_loop else "no-self-loop"
-
-# dataname: str = f"{args.data}_{args.dataset}" TODO: to clean up for ability in condig/args
-
-# model name (eg UniCGN)
-model_name: str = args.model_name
-# depth of the neural networks
-nlayer: int = args.nlayer
-dirname = f"{datetime.datetime.now()}".replace(" ", "_").replace(":", ".")
-
-
 # darta already loaded. Assume the features + encodings are already present on the loaded file
 X: torch.Tensor  # the features
 Y: torch.Tensor  # the labels
@@ -192,38 +127,35 @@ G: dict  # the whole hypergraph
 features_shape = current_dataset[0]["features"].shape
 
 
-out_dir: str = path.Path(f"./{args.out_dir}/{model_name}_{nlayer}_hg_classification/")
-if out_dir.exists():
-    shutil.rmtree(out_dir)
-out_dir.makedirs_p()
-baselogger = get_logger("base logger", f"{out_dir}/logging.log", not args.nostdout)
-resultlogger = get_logger("result logger", f"{out_dir}/result.log", not args.nostdout)
-baselogger.info(args)
-
-resultlogger.info(args)
-
 # TODO: direty right now. TO fix
 # the labels
 Y: list[int]
 Y = []
 for hg in current_dataset:
-    # Convert numpy array label to integer
-    label = hg["labels"]
-    if isinstance(label, np.ndarray):
-        label = label.item()  # Convert single-element array to scalar
-    Y.append(label)
+    # No need to convert to item() if we want to keep as numpy array
+    Y.append(hg["labels"])
 
-# Convert to tensor
-Y = torch.tensor(Y, dtype=torch.long)
-Y = Y.view(-1)  # Ensure it's 1D
+# Convert list of numpy arrays to a single tensor
+Y = torch.from_numpy(np.stack(Y))  # This preserves the array structure
+if len(Y.shape) > 1:
+    Y = Y.squeeze()  # Remove extra dimensions
+Y = Y.long()  # Convert to long dtype
+print(f"Y shape: {Y.shape}")  # Should be 1D now
+print(f"Y type: {Y.dtype}")
+print(f"Y: \n {Y}")
 
-print("\nLabel Information:")
-print(f"Number of labels: {len(Y)}")
-print(f"Label type: {Y.dtype}")
-print(f"Unique labels: {torch.unique(Y).tolist()}")
+# When calculating number of classes
+nclass = len(np.unique(np.concatenate([hg["labels"] for hg in current_dataset])))
+print(f"Number of unique classes: {nclass}")
 
-# Keep track of the test accuracy for the best val accuracy
-overall_test_accuracies_best_val: list[float] = []
+# _, train_idx, test_idx = load(args)
+# TODO: to clean up here
+num_hypergraphs = len(current_dataset)
+indices = list(range(num_hypergraphs))
+# TODO: make sure that the radom state does not give a 'trivial' split
+# as the first 500 hgs are labels 0 and the last 500 are label 1.
+train_idx, temp_idx = train_test_split(indices, test_size=0.3, random_state=2)
+
 
 seed: int
 for seed in range(1, 9):
@@ -252,29 +184,26 @@ for seed in range(1, 9):
         # load data
         args.split = run
         # _, train_idx, test_idx = load(args)
-        # TODO: to clean up here
-        num_hypergraphs = len(current_dataset)
-        indices = list(range(num_hypergraphs))
-        # TODO: make sure that the radom state does not give a 'trivial' split
-        # as the first 500 hgs are labels 0 and the last 500 are label 1.
-        train_idx, test_idx = train_test_split(indices, test_size=0.2, random_state=42)
 
-        print(train_idx)
-        print(test_idx)
-        val_idx: list[int]
-        test_idx: list[int]
-        Y = torch.tensor(Y)
-        Y = Y.view(-1)
-        # we split the test set because we have train, test, val
-        val_idx, test_idx = get_split(Y[test_idx], 0.2)
-        train_idx: torch.Tensor = torch.LongTensor(train_idx).to(device)
-        val_idx: torch.Tensor = torch.LongTensor(val_idx).to(device)
-        test_idx: torch.Tensor = torch.LongTensor(test_idx).to(device)
+        # Then split temp into val and test
+        val_idx, test_idx = train_test_split(
+            temp_idx, test_size=0.8, random_state=2
+        )  # 0.8 of 0.3 = 0.24 for test set
 
         print(f"\nSplit Statistics:")
         print(f"Training set size: {len(train_idx)} hypergraphs")
         print(f"Validation set size: {len(val_idx)} hypergraphs")
         print(f"Test set size: {len(test_idx)} hypergraphs")
+
+        # Check for overlap
+        train_set = set(train_idx)
+        val_set = set(val_idx)
+        test_set = set(test_idx)
+
+        print("\nChecking for overlaps:")
+        print(f"Train-Val overlap: {len(train_set & val_set)} indices")
+        print(f"Train-Test overlap: {len(train_set & test_set)} indices")
+        print(f"Val-Test overlap: {len(val_set & test_set)} indices")
 
         # model
         (
@@ -318,7 +247,12 @@ for seed in range(1, 9):
                 current_dataset
             )  # this call forward.
             Z = torch.stack(Z).squeeze(1)
-            train_idx = train_idx.long()  # Convert to integer tensor
+            # Convert indices to tensors
+            train_idx = torch.tensor(
+                train_idx
+            ).long()  # Convert list to tensor and then to long dtype
+            val_idx = torch.tensor(val_idx).long()
+            test_idx = torch.tensor(test_idx).long()
             loss = F.nll_loss(Z[train_idx], Y[train_idx])
 
             loss.backward()
@@ -403,3 +337,23 @@ baselogger.info("\n=== Final Results ===")
 baselogger.info(f"Number of completed runs: {len(test_accs)}")
 baselogger.info(f"Best validation accuracy: {max(best_val_accs):.2f}%")
 baselogger.info(f"Best test accuracy: {max(best_test_accs):.2f}%")
+
+print(f"\nSplit Information:")
+print(f"Train set size: {len(train_idx)}")
+print(f"Test set size: {len(test_idx)}")
+
+# Check for overlap
+train_set = set(train_idx.tolist())
+test_set = set(test_idx.tolist())
+overlap = train_set.intersection(test_set)
+
+print(f"Overlap between train and test: {len(overlap)} indices")
+if len(overlap) > 0:
+    print(f"Overlapping indices: {overlap}")
+
+# Debug label shapes
+print("\nLabel debug:")
+print(f"Original Y shape: {np.stack([hg['labels'] for hg in current_dataset]).shape}")
+Y = torch.from_numpy(np.stack([hg["labels"] for hg in current_dataset]))
+print(f"Tensor Y shape before squeeze: {Y.shape}")
+print(f"Tensor Y shape after squeeze: {Y.squeeze().shape}")
