@@ -23,6 +23,7 @@ from uniGCN.calculate_vertex_edges import calculate_V_E
 from uniGCN.logger import get_logger
 from uniGCN.prepare import accuracy, fetch_data, initialise
 
+
 # File originally taken from UniGCN repo
 
 # Check if CUDA is available and move tensors to GPU if possible
@@ -69,7 +70,6 @@ print(f"X are the features \n {X} \n with shape {X.shape}")
 features_shape = X.shape[0]
 print(f"Y are the labels \n {Y}")
 print(f"G is the hg")
-V, E, degE, degV, degE2 = calculate_V_E(X, G, args)
 
 
 def get_split(Y, p: float = 0.2) -> tuple[list[int], list[int]]:
@@ -93,7 +93,6 @@ def get_split(Y, p: float = 0.2) -> tuple[list[int], list[int]]:
     nclass: int = len(set(Y))  # number of different labels
     D: list = [[] for _ in range(nclass)]
     for i, y in enumerate(Y):
-        # print(f"i is {i} and y is {y}")
         D[y].append(i)
     k: int = int(N * p / nclass)
     val_idx: list[int] = torch.cat(
@@ -147,9 +146,6 @@ for seed in range(1, 9):
         _, train_idx, test_idx = load(args)
         val_idx: list[int]
         test_idx: list[int]
-        # print(f"Y is \ {Y}")
-        # print(f"With type {type(Y)}")
-        # print(f"test_idx is {test_idx}")
         val_idx, test_idx = get_split(Y[test_idx], 0.2)
         # I believe train is fixed across all runs.
         train_idx: torch.Tensor = torch.LongTensor(train_idx).to(device)
@@ -181,7 +177,7 @@ for seed in range(1, 9):
             model.train()
 
             optimizer.zero_grad()
-            Z = model(X, V, E)  # this call forward.
+            Z = model(X)  # this call forward.
             loss = F.nll_loss(Z[train_idx], Y[train_idx])
 
             loss.backward()
@@ -191,7 +187,7 @@ for seed in range(1, 9):
 
             # eval
             model.eval()
-            Z: torch.Tensor = model(X, V, E)  # this calls forward
+            Z: torch.Tensor = model(X)  # this calls forward
 
             # gets the trains, test and val accuracy
             train_acc: float = accuracy(Z[train_idx], Y[train_idx])

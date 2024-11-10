@@ -1,11 +1,7 @@
-""" Equivalent of train_val.py, but for hypergraph classification"""
-
 import datetime
 import os
-import pickle
-import shutil
-import time
 from random import sample
+import pickle
 
 import config
 import numpy as np
@@ -22,6 +18,7 @@ from uniGCN.logger import get_logger
 from uniGCN.prepare import accuracy
 from uniGCN.prepare_hg import initialise_for_hypergraph_classification
 from split_data_for_hypergraph_classification import get_split
+
 
 # File originally taken from UniGCN repo
 
