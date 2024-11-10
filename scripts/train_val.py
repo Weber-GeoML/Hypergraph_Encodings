@@ -149,6 +149,7 @@ for seed in range(1, 9):
         # print(f"With type {type(Y)}")
         # print(f"test_idx is {test_idx}")
         val_idx, test_idx = get_split(Y[test_idx], 0.2)
+        # I believe train is fixed across all runs.
         train_idx: torch.Tensor = torch.LongTensor(train_idx).to(device)
         val_idx: torch.Tensor = torch.LongTensor(val_idx).to(device)
         test_idx: torch.Tensor = torch.LongTensor(test_idx).to(device)

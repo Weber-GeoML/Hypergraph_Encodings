@@ -21,6 +21,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def initialise_for_hypergraph_classification(
     list_hg: list[dict[str, Union[dict, np.ndarray, int]]],
     args: argparse.Namespace,
+    verbose: bool = False,
 ) -> tuple[torch.nn.Module, torch.optim.Optimizer, dict, dict, dict]:
     """Initializes model and optimizer for hypergraph classification.
 
@@ -56,9 +57,9 @@ def initialise_for_hypergraph_classification(
             missing = required_keys - set(hg.keys())
             raise ValueError(f"Hypergraph {idx} missing required keys: {missing}")
 
-        if not isinstance(hg["labels"], (int, np.integer)):
+        if not isinstance(hg["labels"], (int, np.ndarray)):
             raise ValueError(
-                f"Hypergraph {idx} label must be integer, got {type(hg['labels'])}"
+                f"Hypergraph {idx} label must be a np.ndarray, got {type(hg['labels'])}"
             )
 
     # Verify all hypergraphs have same feature dimension
@@ -122,7 +123,8 @@ def initialise_for_hypergraph_classification(
         H = sp.csc_matrix(
             (data, indices, indptr), shape=(N, M), dtype=int
         ).tocsr()  # V x E
-        print(f"H is \n {H}")
+        if verbose:
+            print(f"H is \n {H}")
         degV: torch.Tensor = (
             torch.from_numpy(H.sum(1)).view(-1, 1).float()
         )  # the degree of each vertices
@@ -177,7 +179,9 @@ def initialise_for_hypergraph_classification(
     nclass: int
     nfeat: int = X.shape[1]
     Y_tensor = torch.tensor(Y)
-    nclass = len(Y_tensor.unique())
+    Y_arrays = [hg["labels"] for hg in list_hg]
+    Y_concat = np.concatenate(Y_arrays)
+    nclass = len(np.unique(Y_concat))
     nlayer: int = args.nlayer
     nhid: int = args.nhid
     nhead: int = args.nhead
