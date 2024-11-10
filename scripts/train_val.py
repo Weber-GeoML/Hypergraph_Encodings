@@ -1,4 +1,6 @@
-""" File taken from UniGCN"""
+""" File taken from UniGCN
+This is the file for node level classifications
+"""
 
 import datetime
 import os

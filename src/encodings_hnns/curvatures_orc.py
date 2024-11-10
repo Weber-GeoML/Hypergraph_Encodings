@@ -147,11 +147,12 @@ class ORC:
             os.path.join(script_dir, "../../src/orchid/orchid_interface.jl")
         )
         input_file: str = os.path.abspath(
-            os.path.join(script_dir, "hypergraph_edges.tsv")
+            os.path.join(script_dir, f"hypergraph_edges_pid-{os.getpid()}.tsv")
         )
         result_file: str = os.path.abspath(
             os.path.join(
-                script_dir, f"results.alpha-{alpha}.dispersion-{dispersion}.orc.json"
+                script_dir,
+                f"results.alpha-{alpha}.dispersion-{dispersion}_pid-{os.getpid()}.orc.json",
             )
         )
 

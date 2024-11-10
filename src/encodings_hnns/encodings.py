@@ -416,14 +416,16 @@ class HypergraphEncodings:
             sign: int = random.choice([-1, 1])
 
             features_augmented = hypergraph["features"]
-            # Determines the target shape
-            target_shape = (
-                features_augmented.shape[0],
-                features_augmented.shape[1] + eigenvectors[0].shape[0],
-            )
+
 
             # Ensure k does not exceed the number of eigenvectors available
             k = min(k, eigenvectors.shape[1])
+
+            # Determines the target shape
+            target_shape = (
+                features_augmented.shape[0],
+                features_augmented.shape[1] + k,
+            )
 
             # Creates a new array of zeros with the target shape
             padded_features = np.zeros(target_shape)
@@ -437,9 +439,10 @@ class HypergraphEncodings:
                 raise NotImplementedError
             i = 0
             for node in self.hyperedges.keys():
-                first_try: bool = False
+                first_try: bool = False  # this was when we used the whole eigenvectors
                 new_method: bool = True
                 if first_try:
+                    # use the ith eigenvector
                     laplacian_vals = eigenvectors[:, i].reshape(1, -1)
                 elif new_method:
                     # Extract the ith entry from the first k eigenvectors
