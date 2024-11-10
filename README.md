@@ -25,6 +25,10 @@ We follow the interface from UniGCN:
 python scripts/train_val.py --data=coauthorship --dataset=dblp --model-name=UniSAGE 
 ```
 
+will run the node level classification on the dblp dataset with the UniSAGE model.
+
+We have the following optional arguments that are in the script/config.py file:
+
 ```
 optional arguments:
   -h, --help                          show this help message and exit
@@ -59,6 +63,16 @@ optional arguments:
   --split SPLIT                       choose which train/test split to use (default: 1)
   --out-dir OUT_DIR                   output dir (default: runs/test)
 ```
+
+To run the hypergraph classification, we use the following script:
+
+```
+python scripts/run_hg_classification.py --data=coauthorship --dataset=dblp --model-name=UniSAGE 
+```
+
+## Adding encodings
+
+This is done in the src/encodings_hnns/save_lukas_encodings.py file. (to be moved to scripts)
 
 
 ## Data
