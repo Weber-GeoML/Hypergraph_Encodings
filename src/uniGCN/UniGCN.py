@@ -559,10 +559,8 @@ class UniGNN(nn.Module):
         Args:
             list_hypergraphs:
                 the list of dicts (that contains hg, features, labels etc)
-            degEs:
-                the list of the relevant degEs
-            degVs:
-                the list of the relevant degVs
+
+            TODO
             What would be smarter would be to add degEs and degVs to
             the dictionaries directly. Only need to compute it onnce, no need to pass it around:
             TODO later.
@@ -578,7 +576,6 @@ class UniGNN(nn.Module):
             X = dico["features"]
             G = dico["hypergraph"]
             V, E, degE, degV, degE2 = calculate_V_E(X, G, self.args)
-            # Do I give V, E here. DO I compute before?
             if not isinstance(X, torch.Tensor):
                 X = torch.tensor(X)
             X = self.input_drop(X)
@@ -602,10 +599,9 @@ class UniGNN(nn.Module):
                 degE=degE,
                 degV=degV,
             )
-            # Aggregating using mean (you can also use sum or other methods) or sum
+            # Aggregating using mean (you can also use sum or other methods)
             X_aggregated = torch.mean(X, dim=0).unsqueeze(0)  # Shape (1, 2)
             output = F.log_softmax(X_aggregated, dim=1)
-            # need to aggregate at hypergraph level TODO
             list_preds.append(output)
 
         return list_preds
