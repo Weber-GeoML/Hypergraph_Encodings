@@ -1,17 +1,17 @@
 #!/bin/bash
 
-add_encodings=(True)
-models=("UniSAGE" "UniGCNII")
-data_types=("cocitation")
+add_encodings=(False True)
+models=("UniGCN" "UniSAGE" "UniGCNII")
+data_types=("cocitation" "coauthorship")
 coauthorship_datasets=("cora" "dblp")
 cocitation_datasets=("cora" "citeseer" "pubmed")
 encodings=("LDP")
-rw_types=("EE" "EN")
+rw_types=("EE" "EN" "WE")
 curvature_types=("FRC")
 laplacian_types=("Hodge" "Normalized")
 
 # Create a directory to store logs
-log_dir="logs_loops_general_1"
+log_dir="logs_loops_general_CHECKS"
 mkdir -p "$log_dir"
 
 # Loop over all combinations of models, data types, datasets, and encodings
