@@ -78,7 +78,7 @@ def parse():
     p.add_argument(
         "--model-name",
         type=str,
-        default="UniSAGE",
+        default="UniGCN",
         help="UniGNN Model(UniGCN, UniGAT, UniGIN, UniSAGE...)",
     )
     p.add_argument(
