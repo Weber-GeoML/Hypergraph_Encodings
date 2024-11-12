@@ -474,7 +474,7 @@ def initialise(
         # print(type(args))
         # print(f"V \n {V}")
         # print(type(V))
-        model = UniGNN(args, nfeat, nhid, nclass, nlayer, nhead, V, E)
+        model = UniGNN(args, nfeat, nhid, nclass, nlayer, nhead)
         optimiser = optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
 
     model.to(device)
