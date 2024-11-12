@@ -15,6 +15,12 @@ def parse():
         help="whether to add encodings to the features",
     )
     p.add_argument(
+        "--add-encodings-hg-classification",
+        type=bool,
+        default=True,
+        help="whether to add encodings to the features for hypergraph classification",
+    )
+    p.add_argument(
         "--dataset-hypergraph-classification",
         type=str,
         default="imdb",
@@ -24,8 +30,8 @@ def parse():
     p.add_argument(
         "--encodings",
         type=str,
-        default="RW",
-        help="what encodings to add",
+        default="LCP",
+        help="what encodings to add. RW, ",
     )
     p.add_argument(
         "--random-walk-type",
@@ -36,7 +42,7 @@ def parse():
     p.add_argument(
         "--curvature-type",
         type=str,
-        default="FRC",
+        default="ORC",
         help="what curvature to use. ORC or FRC",
     )
     p.add_argument(

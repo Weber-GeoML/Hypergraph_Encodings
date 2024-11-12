@@ -2,6 +2,9 @@ import datetime
 import os
 from random import sample
 import pickle
+import shutil
+import time
+
 
 import config
 import numpy as np
@@ -60,18 +63,51 @@ baselogger.info(args)
 resultlogger.info(args)
 
 
-# load the dataset specified in args
+# Determine which dataset file to load based on config
 dataset_name = args.dataset_hypergraph_classification
-dataset_path = (
-    f"data/hypergraph_classification_datasets/{dataset_name}_hypergraphs.pickle"
-)
+base_path = "data/hypergraph_classification_datasets"
 
-print("\n=== Dataset Information ===")
-print(f"Loading dataset: {dataset_name}")
-print(f"From path: {dataset_path}")
+if args.add_encodings_hg_classification:
+    # Construct encoding suffix based on config
+    encoding_type = args.encodings.lower()  # e.g., ("RW" "LCP" "Laplacian" "LDP"
 
-with open(dataset_path, "rb") as f:
-    current_dataset = pickle.load(f)
+    if encoding_type == "rw":
+        encoding_suffix = f"with_encodings_{encoding_type}_{args.random_walk_type}"
+    elif encoding_type == "lcp":
+        encoding_suffix = f"with_encodings_{args.curvature_type}"
+    elif encoding_type == "laplacian":
+        encoding_suffix = f"with_encodings_lape_{args.laplacian_type}"
+    else:  # for ldp
+        encoding_suffix = f"with_encodings_{encoding_type}"
+
+    dataset_path = f"{base_path}/{dataset_name}_hypergraphs_{encoding_suffix}.pickle"
+else:
+    dataset_path = f"{base_path}/{dataset_name}_hypergraphs.pickle"
+
+print("\n=== Dataset Loading ===")
+print(f"Dataset name: {dataset_name}")
+print(f"Using encodings: {args.add_encodings_hg_classification}")
+if args.add_encodings_hg_classification:
+    print(f"Encoding type: {args.encodings}")
+    if args.encodings.lower() == "rw":
+        print(f"Random walk type: {args.random_walk_type}")
+    elif args.encodings.lower() == "curvature":
+        print(f"Curvature type: {args.curvature_type}")
+    elif args.encodings.lower() == "laplacian":
+        print(f"Laplacian type: {args.laplacian_type}")
+print(f"Loading from: {dataset_path}")
+
+try:
+    with open(dataset_path, "rb") as f:
+        current_dataset = pickle.load(f)
+    print(
+        f"Dataset loaded successfully! It contains {len(current_dataset)} hypergraphs"
+    )
+except FileNotFoundError:
+    raise FileNotFoundError(
+        f"Dataset file not found: {dataset_path}\n"
+        f"Make sure the dataset with the specified encodings exists."
+    )
 
 # Add dataset statistics
 num_hypergraphs = len(current_dataset)

@@ -8,6 +8,8 @@ import torch.nn.functional as F
 from torch_geometric.utils import softmax
 from torch_scatter import scatter
 
+from uniGCN.calculate_vertex_edges import calculate_V_E
+
 # code from UniGCN paper
 # https://github.com/RaphaelPellegrin/UniGNN/tree/master
 
@@ -48,6 +50,7 @@ def normalize_l2(X):
 
 # v1: X -> XW -> AXW -> norm
 class UniSAGEConv(nn.Module):
+
     def __init__(
         self,
         args,
@@ -115,6 +118,7 @@ class UniSAGEConv(nn.Module):
 
 # v1: X -> XW -> AXW -> norm
 class UniGINConv(nn.Module):
+
     def __init__(
         self, args, in_channels, out_channels, heads=8, dropout=0.0, negative_slope=0.2
     ):
@@ -171,6 +175,7 @@ class UniGINConv(nn.Module):
 
 # v1: X -> XW -> AXW -> norm
 class UniGCNConv(nn.Module):
+
     def __init__(
         self,
         args,
@@ -220,6 +225,9 @@ class UniGCNConv(nn.Module):
         vertex: torch.Tensor,
         edges: torch.Tensor,
         verbose: bool = False,
+        hypergraph_classification: bool = False,
+        degE: None | list = None,
+        degV: None | list = None,
     ) -> torch.Tensor:
         """Performs 1/srqrt(di) * [sum_e 1/sqrt(d_e)Wh_e], ie x tilde i
 
@@ -239,23 +247,42 @@ class UniGCNConv(nn.Module):
                 and vertex 1 is in edge 1
             edges:
                 see above
+            hypergraph_classification:
+                wether we do node-level, within hg classification,
+                or hg-level-classification (new, in which case need to pass degEs, degVs, degE2s)
+            degEs:
+                the degree of edges
+            degVs:
+                the degree of vertices
 
         Returns:
             x tilde i from UniGCN.
         """
+        # print(f"hypergraph_classification is {hypergraph_classification}")
         if verbose:
             print(f"vertex is {vertex}")
             print(f"edges {edges}")
             print(f"X is \n {X}")
+        if hypergraph_classification:
+            assert degE is not None
+            assert degV is not None
         N: int = X.shape[0]  # the number of nodes
         if verbose:
             print(f"N is {N}")
         # combined degree of Edges
-        degE = self.args.degE
+        if hypergraph_classification:
+            pass
+        else:
+            degE = self.args.degE
         if verbose:
             print(f"degE is {degE}")
         # degree of vertices
-        degV = self.args.degV
+        # TODO: Modify this so that it is a dictionary (ie self.args.degV is a dictionary, with the
+        # first hg having it's first degV saved, etc)
+        if hypergraph_classification:
+            pass
+        else:
+            degV = self.args.degV
         if verbose:
             print(f"degV is {degV}")
 
@@ -305,6 +332,7 @@ class UniGCNConv(nn.Module):
 
 # v2: X -> AX -> norm -> AXW
 class UniGCNConv2(nn.Module):
+
     def __init__(
         self, args, in_channels, out_channels, heads=8, dropout=0.0, negative_slope=0.2
     ):
@@ -353,6 +381,7 @@ class UniGCNConv2(nn.Module):
 
 
 class UniGATConv(nn.Module):
+
     def __init__(
         self,
         args,
@@ -451,8 +480,6 @@ class UniGNN(nn.Module):
         nclass: int,  # number of classes
         nlayer: int,  # depth of the neural network.
         nhead: int,  # number of heads
-        V: torch.long,
-        E: torch.long,
     ) -> None:
         """UniGNN
 
@@ -469,11 +496,6 @@ class UniGNN(nn.Module):
                 number of hidden layers
             nhead:
                 number of conv heads.
-
-            V:
-                V is the row index for the sparse incident matrix H, |V| x |E|
-            E:
-                E is the col index for the sparse incident matrix H, |V| x |E|
         """
         super().__init__()
         Conv = __all_convs__[args.model_name]  # this is just UniGCNConv
@@ -487,16 +509,18 @@ class UniGNN(nn.Module):
                 for _ in range(nlayer - 2)
             ]
         )
-        self.V = V
-        # print(f"V is \n {self.V}")
-        self.E = E
-        # print(f"E is {self.E}")
         act = {"relu": nn.ReLU(), "prelu": nn.PReLU()}
         self.act = act[args.activation]
         self.input_drop = nn.Dropout(args.input_drop)
         self.dropout = nn.Dropout(args.dropout)
+        self.args = args
 
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self,
+        X: torch.Tensor,
+        V: torch.Tensor,
+        E: torch.Tensor,
+    ) -> torch.Tensor:
         """TODO:
 
         Args:
@@ -508,23 +532,24 @@ class UniGNN(nn.Module):
             a tensor/vector that has gone
             through a softmax.
         """
-        V, E = self.V, self.E
 
         X = self.input_drop(X)
         for conv in self.convs:  # note that we loop for as many layers as specified
+            # TODO: create a copy of the original X
             X = conv(X, V, E)
             X = self.act(X)
             X = self.dropout(X)
+            # TODO: transformer
+            # TODO: combine original X and transfomer(X)
 
         X = self.conv_out(X, V, E)
         return F.log_softmax(X, dim=1)
 
     def forward_hypergraph_classification(
-        self, list_hypergraphs: list[torch.Tensor]
+        self,
+        list_hypergraphs: list,
     ) -> list[torch.Tensor | float]:
         """UniGCN for hypergraph classification.
-
-        TODO: to finish
 
         Performs the same as regular UniGCN, but then aggregates
         all outputs (node level) to have just one prediction at the hypergraph
@@ -533,12 +558,13 @@ class UniGNN(nn.Module):
         Args:
             list_hypergraphs:
                 the list of dicts (that contains hg, features, labels etc)
-
-            TODO
+            degEs:
+                the list of the relevant degEs
+            degVs:
+                the list of the relevant degVs
             What would be smarter would be to add degEs and degVs to
             the dictionaries directly. Only need to compute it onnce, no need to pass it around:
             TODO later.
-
 
         Returns:
             a tensor/vector that has gone
@@ -551,11 +577,19 @@ class UniGNN(nn.Module):
             X = dico["features"]
             G = dico["hypergraph"]
             V, E, degE, degV, degE2 = calculate_V_E(X, G, self.args)
+            # Do I give V, E here. DO I compute before?
             if not isinstance(X, torch.Tensor):
                 X = torch.tensor(X)
             X = self.input_drop(X)
             for conv in self.convs:  # note that we loop for as many layers as specified
-                X = conv(X, V, E)
+                X = conv(
+                    X=X,
+                    vertex=V,
+                    edges=E,
+                    hypergraph_classification=True,
+                    degE=degE,
+                    degV=degV,
+                )
                 X = self.act(X)
                 X = self.dropout(X)
 
@@ -646,8 +680,8 @@ class UniGCNII(nn.Module):
         nclass: int,
         nlayer: int,
         nhead: int,
-        V: torch.long,
-        E: torch.long,
+        V: torch.LongTensor,
+        E: torch.LongTensor,
     ) -> None:
         """UniGNNII
 
