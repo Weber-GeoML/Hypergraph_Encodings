@@ -1,3 +1,5 @@
+""" Equivalent of train_val.py, but for hypergraph classification"""
+
 import datetime
 import os
 from random import sample

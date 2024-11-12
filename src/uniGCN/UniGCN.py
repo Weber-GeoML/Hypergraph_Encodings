@@ -601,7 +601,7 @@ class UniGNN(nn.Module):
                 degE=degE,
                 degV=degV,
             )
-            # Aggregating using mean (you can also use sum or other methods)
+            # Aggregating using mean (you can also use sum or other methods) or sum
             X_aggregated = torch.mean(X, dim=0).unsqueeze(0)  # Shape (1, 2)
             output = F.log_softmax(X_aggregated, dim=1)
             list_preds.append(output)
