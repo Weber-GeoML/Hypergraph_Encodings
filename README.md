@@ -113,6 +113,24 @@ scripts/train_val.py
 
 and use the build in debugger. You can add breakpoints etc.
 
+To run the script with multiple parameters, there is the bash script:
+
+```
+run_all_general.sh
+```
+
+and there is a similar bash script for hypergraph classification.
+
+```
+run_all_hg_classification.sh
+```
+
+We can aggregate the results using the script:
+
+```
+python scripts/create_results_table.py
+```
+
 ## Tests
 
 We have a test suite that runs using pytest.
