@@ -49,8 +49,8 @@ def parse():
     p.add_argument(
         "--encodings",
         type=str,
-        default="LCP",
-        help="what encodings to add. RW, ",
+        default="LDP",
+        help="what encodings to add. RW, LDP, LCP, Laplacian",
     )
     p.add_argument(
         "--random-walk-type",

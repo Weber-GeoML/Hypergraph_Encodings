@@ -550,6 +550,7 @@ class UniGNN(nn.Module):
         X: torch.Tensor,
         V: torch.Tensor,
         E: torch.Tensor,
+        verbose: bool = False,
     ) -> torch.Tensor:
         """TODO:
 
@@ -581,8 +582,9 @@ class UniGNN(nn.Module):
 
                     # Handle dimension mismatch with projection if needed
                     if X_orig.shape[-1] != feature_dim:
-                        print(f"feature_dim is {feature_dim}")
-                        print(f"X_orig.shape is {X_orig.shape}")
+                        if verbose:
+                            print(f"feature_dim is {feature_dim}")
+                            print(f"X_orig.shape is {X_orig.shape}")
                         projection = nn.Linear(
                             X_orig.shape[-1], feature_dim, device=X.device
                         )
@@ -638,8 +640,9 @@ class UniGNN(nn.Module):
 
                     # Handle dimension mismatch with projection if needed
                     if X_orig.shape[-1] != feature_dim:
-                        print(f"feature_dim is {feature_dim}")
-                        print(f"X_orig.shape[-1] is {X_orig.shape}")
+                        if verbose:
+                            print(f"feature_dim is {feature_dim}")
+                            print(f"X_orig.shape[-1] is {X_orig.shape}")
                         projection = nn.Linear(
                             X_orig.shape[-1], feature_dim, device=X.device
                         )
