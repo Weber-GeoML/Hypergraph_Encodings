@@ -432,7 +432,7 @@ for seed in range(1, 9):
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model = model.to(device)
 
-        # Modify the data loading section to move features to device
+        # Modify the data loading section to move all tensors to device
         for i, hg in enumerate(current_dataset):
             current_dataset[i]["features"] = torch.tensor(
                 hg["features"], dtype=torch.float32, device=device
