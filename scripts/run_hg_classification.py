@@ -171,79 +171,99 @@ resultlogger.info(args)
 
 
 # Determine which dataset file to load based on config
-dataset_name = args.dataset_hypergraph_classification
+dataset_name = args.dataset_hypergraph_classification.lower()  # Convert to lowercase
 base_path = "data/hypergraph_classification_datasets"
 
 if args.add_encodings_hg_classification:
     # Construct encoding suffix based on config
-    encoding_type = args.encodings.lower()  # e.g., ("RW" "LCP" "Laplacian" "LDP"
+    encoding_type = args.encodings.lower()  # e.g., ("rw" "lcp" "laplacian" "ldp"
 
     if encoding_type == "rw":
-        encoding_suffix = f"with_encodings_{encoding_type}_{args.random_walk_type}"
+        encoding_suffix = f"with_encodings_{encoding_type}_{args.random_walk_type.upper()}"  # EE, EN, or WE
+        dataset_paths = [
+            f"{base_path}/{dataset_name}_hypergraphs_{encoding_suffix}.pickle"
+        ]
     elif encoding_type == "lcp":
-        encoding_suffix = f"with_encodings_{args.curvature_type}"
+        # Convert FRC or ORC to lowercase
+        encoding_suffix = f"with_encodings_{args.curvature_type.lower()}"
+        dataset_paths = [
+            f"{base_path}/{dataset_name}_hypergraphs_{encoding_suffix}.pickle"
+        ]
     elif encoding_type == "laplacian":
-        encoding_suffix = f"with_encodings_lape_{args.laplacian_type}"
+        # Run both new and regular versions
+        laplacian_type = args.laplacian_type.lower()
+        dataset_paths = [
+            f"{base_path}/{dataset_name}_hypergraphs_with_encodings_lape_{laplacian_type}.pickle",
+            f"{base_path}/{dataset_name}_hypergraphs_with_encodings_lape_{laplacian_type}_new_version.pickle",
+        ]
     else:  # for ldp
-        encoding_suffix = f"with_encodings_{encoding_type}"
-
-    dataset_path = f"{base_path}/{dataset_name}_hypergraphs_{encoding_suffix}.pickle"
+        if args.ldp_new_version:
+            encoding_suffix = f"with_encodings_{encoding_type}_new_version"
+        else:
+            encoding_suffix = f"with_encodings_{encoding_type}"
+        dataset_paths = [
+            f"{base_path}/{dataset_name}_hypergraphs_{encoding_suffix}.pickle"
+        ]
 else:
-    dataset_path = f"{base_path}/{dataset_name}_hypergraphs.pickle"
+    dataset_paths = [f"{base_path}/{dataset_name}_hypergraphs.pickle"]
 
-print("\n=== Dataset Loading ===")
-print(f"Dataset name: {dataset_name}")
-print(f"Using encodings: {args.add_encodings_hg_classification}")
-if args.add_encodings_hg_classification:
-    print(f"Encoding type: {args.encodings}")
-    if args.encodings.lower() == "rw":
-        print(f"Random walk type: {args.random_walk_type}")
-    elif args.encodings.lower() == "lcp":
-        print(f"Curvature type: {args.curvature_type}")
-    elif args.encodings.lower() == "laplacian":
-        print(f"Laplacian type: {args.laplacian_type}")
-print(f"Loading from: {dataset_path}")
-
-try:
-    with open(dataset_path, "rb") as f:
-        current_dataset = pickle.load(f)
-
-    if not current_dataset:  # Check if dataset is empty
-        raise ValueError(f"Dataset loaded but is empty: {dataset_path}")
-
-    print(
-        f"Dataset loaded successfully! It contains {len(current_dataset)} hypergraphs"
-    )
-
-    # Add dataset validation
-    if not isinstance(current_dataset, list):
-        raise TypeError(f"Dataset should be a list, got {type(current_dataset)}")
-
-    if not current_dataset[0].get("features") is not None:
-        raise ValueError("First hypergraph missing 'features' key")
-
-    # Now safe to access features
-    feature_shape = current_dataset[0]["features"].shape
-    num_features = feature_shape[1]
-
-except FileNotFoundError:
-    raise FileNotFoundError(
-        f"Dataset file not found: {dataset_path}\n"
-        f"Make sure the dataset with the specified encodings exists."
-    )
-except Exception as e:
-    print("\n=== Dataset Loading Error ===")
-    print(f"Error type: {type(e).__name__}")
-    print(f"Error message: {str(e)}")
-    print(f"Dataset path: {dataset_path}")
+# Try loading each dataset version
+for dataset_path in dataset_paths:
+    print(f"\n=== Attempting to load dataset: {dataset_path} ===")
     print(f"Dataset name: {dataset_name}")
-    print(f"Encoding settings:")
-    print(f"  Using encodings: {args.add_encodings_hg_classification}")
+    print(f"Using encodings: {args.add_encodings_hg_classification}")
     if args.add_encodings_hg_classification:
-        print(f"  Encoding type: {args.encodings}")
-        if args.encodings.lower() == "lcp":
-            print(f"  Curvature type: {args.curvature_type}")
-    raise
+        print(f"Encoding type: {args.encodings}")
+        if args.encodings.lower() == "rw":
+            print(f"Random walk type: {args.random_walk_type}")
+        elif args.encodings.lower() == "lcp":
+            print(f"Curvature type: {args.curvature_type}")
+        elif args.encodings.lower() == "laplacian":
+            print(f"Laplacian type: {args.laplacian_type}")
+
+    try:
+        with open(dataset_path, "rb") as f:
+            current_dataset = pickle.load(f)
+
+        if not current_dataset:  # Check if dataset is empty
+            print(f"Warning: Dataset loaded but is empty: {dataset_path}")
+            continue
+
+        print(
+            f"Dataset loaded successfully! It contains {len(current_dataset)} hypergraphs"
+        )
+
+        # Add dataset validation
+        if not isinstance(current_dataset, list):
+            print(f"Warning: Dataset should be a list, got {type(current_dataset)}")
+            continue
+
+        if not current_dataset[0].get("features") is not None:
+            print("Warning: First hypergraph missing 'features' key")
+            continue
+
+        # Now safe to access features
+        feature_shape = current_dataset[0]["features"].shape
+        num_features = feature_shape[1]
+
+        print(f"Successfully loaded and validated dataset: {dataset_path}")
+        print(f"Feature shape: {feature_shape}")
+        break  # Successfully loaded a dataset, exit the loop
+
+    except FileNotFoundError:
+        print(f"Warning: Dataset file not found: {dataset_path}")
+        continue
+    except Exception as e:
+        print(f"\n=== Error loading dataset: {dataset_path} ===")
+        print(f"Error type: {type(e).__name__}")
+        print(f"Error message: {str(e)}")
+        continue
+
+# Check if any dataset was successfully loaded
+if not current_dataset:
+    raise ValueError(
+        "No valid dataset could be loaded with the specified configuration"
+    )
 
 # Add dataset statistics
 num_hypergraphs = len(current_dataset)
