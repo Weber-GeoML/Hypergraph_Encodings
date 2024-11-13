@@ -197,10 +197,7 @@ if args.add_encodings_hg_classification:
             f"{base_path}/{dataset_name}_hypergraphs_with_encodings_lape_{laplacian_type}_new_version.pickle",
         ]
     else:  # for ldp
-        if args.ldp_new_version:
-            encoding_suffix = f"with_encodings_{encoding_type}_new_version"
-        else:
-            encoding_suffix = f"with_encodings_{encoding_type}"
+        encoding_suffix = f"with_encodings_{encoding_type}"
         dataset_paths = [
             f"{base_path}/{dataset_name}_hypergraphs_{encoding_suffix}.pickle"
         ]
