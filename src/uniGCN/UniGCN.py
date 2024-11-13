@@ -555,12 +555,25 @@ class UniGNN(nn.Module):
 
         X = self.input_drop(X)
         for conv in self.convs:  # note that we loop for as many layers as specified
-            # TODO: create a copy of the original X
+            X_orig = X.clone()  # Create copy of original X
             X = conv(X, V, E)
             X = self.act(X)
             X = self.dropout(X)
-            # TODO: transformer
-            # TODO: combine original X and transfomer(X)
+
+            if self.args.do_transformer:
+                # Apply transformer to original X
+                # Assuming standard transformer with multi-head attention
+                # First reshape to (batch_size=1, seq_len=N, features)
+                X_transformer = X_orig.unsqueeze(0)
+                # Apply self-attention
+                X_transformer = F.scaled_dot_product_attention(
+                    X_transformer,  # query
+                    X_transformer,  # key
+                    X_transformer,  # value
+                    dropout_p=self.dropout.p if self.training else 0.0,
+                )
+                # Remove batch dimension and combine with conv output
+                X = X + X_transformer.squeeze(0)
 
         X = self.conv_out(X, V, E)
         return F.log_softmax(X, dim=1)
@@ -578,28 +591,37 @@ class UniGNN(nn.Module):
         Args:
             list_hypergraphs:
                 the list of dicts (that contains hg, features, labels etc)
-            degEs:
-                the list of the relevant degEs
-            degVs:
-                the list of the relevant degVs
             What would be smarter would be to add degEs and degVs to
             the dictionaries directly. Only need to compute it onnce, no need to pass it around:
             TODO later.
 
         Returns:
-            a tensor/vector that has gone
-            through a softmax.
+            List of prediction tensors (one per hypergraph)
         """
-        list_preds: list[float] = []
-        for idx, dico in enumerate(list_hypergraphs):
-            X: torch.Tensor
-            G: dict
-            X = dico["features"]
+        list_preds: list[torch.Tensor] = []
+
+        for dico in list_hypergraphs:
+            # Get features and ensure they're float32
+            X = torch.tensor(dico["features"], dtype=torch.float32)
             G = dico["hypergraph"]
-            V, E, degE, degV, degE2 = calculate_V_E(X, G, self.args)
-            # Do I give V, E here. DO I compute before?
-            if not isinstance(X, torch.Tensor):
-                X = torch.tensor(X)
+
+            # Get or calculate degrees
+            if "degE" in dico and "degV" in dico:
+                degE = torch.tensor(dico["degE"], dtype=torch.float32)
+                degV = torch.tensor(dico["degV"], dtype=torch.float32)
+                # Convert vertex/edge indices from G
+                V, E = [], []
+                for edge_idx, (_, nodes) in enumerate(G.items()):
+                    V.extend(nodes)
+                    E.extend([edge_idx] * len(nodes))
+                V = torch.tensor(V, dtype=torch.long)
+                E = torch.tensor(E, dtype=torch.long)
+            else:
+                V, E, degE, degV, _ = calculate_V_E(X, G, self.args)
+                degE = degE.float()
+                degV = degV.float()
+
+            # Forward pass through the network
             X = self.input_drop(X)
             for conv in self.convs:  # note that we loop for as many layers as specified
                 X = conv(
@@ -613,6 +635,7 @@ class UniGNN(nn.Module):
                 X = self.act(X)
                 X = self.dropout(X)
 
+            # Output layer
             X = self.conv_out(
                 X=X,
                 vertex=V,
@@ -621,9 +644,10 @@ class UniGNN(nn.Module):
                 degE=degE,
                 degV=degV,
             )
-            # Aggregating using mean (you can also use sum or other methods) or sum
-            X_aggregated = torch.mean(X, dim=0).unsqueeze(0)  # Shape (1, 2)
-            output = F.log_softmax(X_aggregated, dim=1)
+
+            # Global pooling and prediction
+            X_pooled = torch.mean(X, dim=0, keepdim=True)
+            output = F.log_softmax(X_pooled, dim=1)
             list_preds.append(output)
 
         return list_preds
@@ -700,8 +724,6 @@ class UniGCNII(nn.Module):
         nclass: int,
         nlayer: int,
         nhead: int,
-        V: torch.LongTensor,
-        E: torch.LongTensor,
     ) -> None:
         """UniGNNII
 
@@ -711,21 +733,15 @@ class UniGCNII(nn.Module):
             nfeat:
                 dimension of features
             nhid:
-                dimension of hidden features, note that actually it\'s #nhid x #nhead
+                dimension of hidden features, note that actually it's #nhid x #nhead
             nclass:
                 number of classes
             nlayer:
                 number of hidden layers
             nhead:
                 number of conv heads
-            V:
-                V is the row index for the sparse incident matrix H, |V| x |E|
-            E:
-                E is the col index for the sparse incident matrix H, |V| x |E|
         """
         super().__init__()
-        self.V = V
-        self.E = E
         nhid = nhid * nhead
         act = {"relu": nn.ReLU(), "prelu": nn.PReLU()}
         self.act = act[args.activation]
@@ -743,14 +759,16 @@ class UniGCNII(nn.Module):
         )
         self.dropout = nn.Dropout(args.dropout)
 
-    def forward(self, x):
-        """TODO
+    def forward(
+        self, x: torch.Tensor, V: torch.Tensor, E: torch.Tensor
+    ) -> torch.Tensor:
+        """Forward pass of UniGCNII
 
         Args:
-            x:
-                TODO
+            x: Input features
+            V:
+            E:
         """
-        V, E = self.V, self.E
         lamda, alpha = 0.5, 0.1
         x = self.dropout(x)
         x = F.relu(self.convs[0](x))
@@ -762,3 +780,65 @@ class UniGCNII(nn.Module):
         x = self.dropout(x)
         x = self.convs[-1](x)
         return F.log_softmax(x, dim=1)
+
+    def forward_hypergraph_classification(
+        self,
+        list_hypergraphs: list,
+    ) -> list[torch.Tensor]:
+        """UniGCNII for hypergraph classification.
+
+        Args:
+            list_hypergraphs: List of dictionaries containing hypergraph data
+                Each dict must have:
+                    - 'features': node features tensor
+                    - 'hypergraph': dictionary of edge lists
+                    - Optional: 'degE', 'degV' (pre-computed degrees)
+
+        Returns:
+            List of prediction tensors (one per hypergraph)
+        """
+        list_preds: list[torch.Tensor] = []
+        lamda, alpha = 0.5, 0.1  # Same hyperparameters as in forward()
+
+        for dico in list_hypergraphs:
+            # Get features and ensure they're float32
+            X = torch.tensor(dico["features"], dtype=torch.float32)
+            G = dico["hypergraph"]
+
+            # Get or calculate degrees and indices
+            if "degE" in dico and "degV" in dico:
+                degE = torch.tensor(dico["degE"], dtype=torch.float32)
+                degV = torch.tensor(dico["degV"], dtype=torch.float32)
+                # Convert vertex/edge indices from G
+                V, E = [], []
+                for edge_idx, (_, nodes) in enumerate(G.items()):
+                    V.extend(nodes)
+                    E.extend([edge_idx] * len(nodes))
+                V = torch.tensor(V, dtype=torch.long)
+                E = torch.tensor(E, dtype=torch.long)
+            else:
+                V, E, degE, degV, _ = calculate_V_E(X, G, self.args)
+                degE = degE.float()
+                degV = degV.float()
+
+            # Initial transformation
+            X = self.dropout(X)
+            X = F.relu(self.convs[0](X))
+            X0 = X  # Store for skip connections
+
+            # Convolution layers
+            for i, conv in enumerate(self.convs[1:-1]):
+                X = self.dropout(X)
+                beta = math.log(lamda / (i + 1) + 1)
+                X = F.relu(conv(X, V, E, alpha, beta, X0))
+
+            # Final layer
+            X = self.dropout(X)
+            X = self.convs[-1](X)
+
+            # Global pooling and prediction
+            X_pooled = torch.mean(X, dim=0, keepdim=True)
+            output = F.log_softmax(X_pooled, dim=1)
+            list_preds.append(output)
+
+        return list_preds
