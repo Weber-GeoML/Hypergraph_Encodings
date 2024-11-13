@@ -309,91 +309,91 @@ resultlogger.info(
 )
 
 
-def create_summary_plots(all_results, out_dir):
-    """Create summary plots from all runs."""
-    plt.figure(figsize=(15, 10))
+# def create_summary_plots(all_results, out_dir):
+#     """Create summary plots from all runs."""
+#     plt.figure(figsize=(15, 10))
 
-    # Plot 1: Box plot of final accuracies
-    plt.subplot(2, 2, 1)
-    final_trains = [
-        params["final_train_acc"] for params in all_results["params"].values()
-    ]
-    final_vals = [params["final_val_acc"] for params in all_results["params"].values()]
-    final_tests = [
-        params["final_test_acc"] for params in all_results["params"].values()
-    ]
+#     # Plot 1: Box plot of final accuracies
+#     plt.subplot(2, 2, 1)
+#     final_trains = [
+#         params["final_train_acc"] for params in all_results["params"].values()
+#     ]
+#     final_vals = [params["final_val_acc"] for params in all_results["params"].values()]
+#     final_tests = [
+#         params["final_test_acc"] for params in all_results["params"].values()
+#     ]
 
-    plt.boxplot(
-        [final_trains, final_vals, final_tests], labels=["Train", "Validation", "Test"]
-    )
-    plt.title("Distribution of Final Accuracies")
-    plt.ylabel("Accuracy (%)")
+#     plt.boxplot(
+#         [final_trains, final_vals, final_tests], labels=["Train", "Validation", "Test"]
+#     )
+#     plt.title("Distribution of Final Accuracies")
+#     plt.ylabel("Accuracy (%)")
 
-    # Plot 2: Learning curves with confidence intervals
-    plt.subplot(2, 2, 2)
+#     # Plot 2: Learning curves with confidence intervals
+#     plt.subplot(2, 2, 2)
 
-    # Calculate max epochs correctly
-    max_epochs = max(len(accs) for accs in all_results["train_accs"].values())
-    # Create epochs array starting from 0 to max_epochs-1
-    epochs = range(max_epochs)  # Changed from range(1, max_epochs + 1)
+#     # Calculate max epochs correctly
+#     max_epochs = max(len(accs) for accs in all_results["train_accs"].values())
+#     # Create epochs array starting from 0 to max_epochs-1
+#     epochs = range(max_epochs)  # Changed from range(1, max_epochs + 1)
 
-    # Helper function to pad and calculate statistics
-    def get_stats(accs_dict):
-        # Pad sequences to the same length
-        padded_accs = np.array(
-            [
-                accs + [accs[-1]] * (max_epochs - len(accs))
-                for accs in accs_dict.values()
-            ]
-        )
-        return np.mean(padded_accs, axis=0), np.std(padded_accs, axis=0)
+#     # Helper function to pad and calculate statistics
+#     def get_stats(accs_dict):
+#         # Pad sequences to the same length
+#         padded_accs = np.array(
+#             [
+#                 accs + [accs[-1]] * (max_epochs - len(accs))
+#                 for accs in accs_dict.values()
+#             ]
+#         )
+#         return np.mean(padded_accs, axis=0), np.std(padded_accs, axis=0)
 
-    # Calculate statistics
-    train_mean, train_std = get_stats(all_results["train_accs"])
-    val_mean, val_std = get_stats(all_results["val_accs"])
-    test_mean, test_std = get_stats(all_results["test_accs"])
+#     # Calculate statistics
+#     train_mean, train_std = get_stats(all_results["train_accs"])
+#     val_mean, val_std = get_stats(all_results["val_accs"])
+#     test_mean, test_std = get_stats(all_results["test_accs"])
 
-    # Verify shapes before plotting
-    assert len(epochs) == len(
-        train_mean
-    ), f"Epochs length: {len(epochs)}, Train mean length: {len(train_mean)}"
-    assert len(epochs) == len(
-        val_mean
-    ), f"Epochs length: {len(epochs)}, Val mean length: {len(val_mean)}"
-    assert len(epochs) == len(
-        test_mean
-    ), f"Epochs length: {len(epochs)}, Test mean length: {len(test_mean)}"
+#     # Verify shapes before plotting
+#     assert len(epochs) == len(
+#         train_mean
+#     ), f"Epochs length: {len(epochs)}, Train mean length: {len(train_mean)}"
+#     assert len(epochs) == len(
+#         val_mean
+#     ), f"Epochs length: {len(epochs)}, Val mean length: {len(val_mean)}"
+#     assert len(epochs) == len(
+#         test_mean
+#     ), f"Epochs length: {len(epochs)}, Test mean length: {len(test_mean)}"
 
-    # Plot with confidence intervals
-    plt.plot(epochs, train_mean, "b-", label="Train")
-    plt.fill_between(epochs, train_mean - train_std, train_mean + train_std, alpha=0.2)
-    plt.plot(epochs, val_mean, "g-", label="Validation")
-    plt.fill_between(epochs, val_mean - val_std, val_mean + val_std, alpha=0.2)
-    plt.plot(epochs, test_mean, "r-", label="Test")
-    plt.fill_between(epochs, test_mean - test_std, test_mean + test_std, alpha=0.2)
+#     # Plot with confidence intervals
+#     plt.plot(epochs, train_mean, "b-", label="Train")
+#     plt.fill_between(epochs, train_mean - train_std, train_mean + train_std, alpha=0.2)
+#     plt.plot(epochs, val_mean, "g-", label="Validation")
+#     plt.fill_between(epochs, val_mean - val_std, val_mean + val_std, alpha=0.2)
+#     plt.plot(epochs, test_mean, "r-", label="Test")
+#     plt.fill_between(epochs, test_mean - test_std, test_mean + test_std, alpha=0.2)
 
-    plt.title("Average Learning Curves (with std)")
-    plt.xlabel("Epoch")
-    plt.ylabel("Accuracy (%)")
-    plt.legend()
+#     plt.title("Average Learning Curves (with std)")
+#     plt.xlabel("Epoch")
+#     plt.ylabel("Accuracy (%)")
+#     plt.legend()
 
-    # Save results and plot
-    results_dir = out_dir / "results"
-    results_dir.makedirs_p()
+#     # Save results and plot
+#     results_dir = out_dir / "results"
+#     results_dir.makedirs_p()
 
-    # Save numerical results
-    with open(results_dir / "all_results.pkl", "wb") as f:
-        pickle.dump(all_results, f)
+#     # Save numerical results
+#     with open(results_dir / "all_results.pkl", "wb") as f:
+#         pickle.dump(all_results, f)
 
-    # Save plot
-    plt.tight_layout()
-    plt.savefig(results_dir / "summary_plots.png", dpi=300, bbox_inches="tight")
-    plt.close()
+#     # Save plot
+#     plt.tight_layout()
+#     plt.savefig(results_dir / "summary_plots.png", dpi=300, bbox_inches="tight")
+#     plt.close()
 
-    print("\n=== Results Saved ===")
-    print(f"All results saved to: {results_dir / 'all_results.pkl'}")
-    print(f"Summary plots saved to: {results_dir / 'summary_plots.png'}")
+#     print("\n=== Results Saved ===")
+#     print(f"All results saved to: {results_dir / 'all_results.pkl'}")
+#     print(f"Summary plots saved to: {results_dir / 'summary_plots.png'}")
 
 
 # Call the plotting function at the end
-create_summary_plots(all_results, out_dir)
+# create_summary_plots(all_results, out_dir)

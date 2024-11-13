@@ -76,21 +76,16 @@ class UniSAGEConv(nn.Module):
             self.__class__.__name__, self.in_channels, self.out_channels, self.heads
         )
 
-    def forward(self, X, vertex, edges):
-        """TODO
-
-        Args:
-            X:
-                TODO
-            vertex:
-                TODO
-            edges:
-                TODO
-
-        Returns:
-            TODO
-
-        """
+    def forward(
+        self,
+        X: torch.Tensor,
+        vertex: torch.Tensor,
+        edges: torch.Tensor,
+        verbose: bool = False,
+        hypergraph_classification: bool = False,
+        degE: None | list = None,
+        degV: None | list = None,
+    ) -> torch.Tensor:
         device = X.device
         vertex = vertex.to(device)
         edges = edges.to(device)
@@ -142,18 +137,16 @@ class UniGINConv(nn.Module):
             self.__class__.__name__, self.in_channels, self.out_channels, self.heads
         )
 
-    def forward(self, X, vertex, edges):
-        """TODO
-
-        Args:
-            X:
-                TODO
-            vertex:
-                TODO
-            edges:
-                TODO
-
-        """
+    def forward(
+        self,
+        X: torch.Tensor,
+        vertex: torch.Tensor,
+        edges: torch.Tensor,
+        verbose: bool = False,
+        hypergraph_classification: bool = False,
+        degE: None | list = None,
+        degV: None | list = None,
+    ) -> torch.Tensor:
         N = X.shape[0]
         # X0 = X # NOTE: reserved for skip connection
 
@@ -445,17 +438,16 @@ class UniGATConv(nn.Module):
         glorot(self.att_v)
         glorot(self.att_e)
 
-    def forward(self, X, vertex, edges):
-        """TODO
-
-        Args:
-            X:
-                TODO
-            vertex:
-                TODO
-            edges:
-                TODO
-        """
+    def forward(
+        self,
+        X: torch.Tensor,
+        vertex: torch.Tensor,
+        edges: torch.Tensor,
+        verbose: bool = False,
+        hypergraph_classification: bool = False,
+        degE: None | list = None,
+        degV: None | list = None,
+    ) -> torch.Tensor:
         H, C, N = self.heads, self.out_channels, X.shape[0]
 
         # X0 = X # NOTE: reserved for skip connection
