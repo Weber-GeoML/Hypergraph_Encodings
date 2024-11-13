@@ -535,6 +535,19 @@ class UniGNN(nn.Module):
         self.dropout = nn.Dropout(args.dropout)
         self.args = args
 
+        # Add transformer components for v2
+        self.transformer_layers = nn.TransformerEncoderLayer(
+            d_model=nhid * nhead,  # Input dimension
+            nhead=nhead,  # Number of attention heads
+            dim_feedforward=4 * nhid * nhead,  # FF dimension (typically 4x input dim)
+            dropout=args.dropout,
+            batch_first=True,
+        )
+        self.transformer = nn.TransformerEncoder(
+            self.transformer_layers,
+            num_layers=args.transformer_depth,  # Control depth here
+        )
+
     def forward(
         self,
         X: torch.Tensor,
@@ -565,15 +578,29 @@ class UniGNN(nn.Module):
                 # Assuming standard transformer with multi-head attention
                 # First reshape to (batch_size=1, seq_len=N, features)
                 X_transformer = X_orig.unsqueeze(0)
-                # Apply self-attention
-                X_transformer = F.scaled_dot_product_attention(
-                    X_transformer,  # query
-                    X_transformer,  # key
-                    X_transformer,  # value
-                    dropout_p=self.dropout.p if self.training else 0.0,
-                )
-                # Remove batch dimension and combine with conv output
-                X = X + X_transformer.squeeze(0)
+
+                if self.args.transformer_version == "v1":
+                    # V1: Simple single-layer transformer
+                    # Reshape for transformer: [N, features] -> [1, N, features]
+                    X_transformer = X_transformer
+                    # Apply self-attention
+                    X_transformer = F.scaled_dot_product_attention(
+                        X_transformer,  # query
+                        X_transformer,  # key
+                        X_transformer,  # value
+                        dropout_p=self.dropout.p if self.training else 0.0,
+                    )
+                    # Remove batch dimension and add to original
+                    X = X + X_transformer.squeeze(0)
+
+                elif self.args.transformer_version == "v2":
+                    # V2: Full transformer with configurable depth
+                    # Reshape for transformer: [N, features] -> [1, N, features]
+                    X_transformer = X_transformer
+                    # Apply full transformer
+                    X_transformer = self.transformer(X_transformer)
+                    # Remove batch dimension and add to original
+                    X = X + X_transformer.squeeze(0)
 
         X = self.conv_out(X, V, E)
         return F.log_softmax(X, dim=1)

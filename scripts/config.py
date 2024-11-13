@@ -15,6 +15,19 @@ def parse():
         help="Whether to use transformer layer after convolutions",
     )
     p.add_argument(
+        "--transformer-version",
+        type=str,
+        default="v2",
+        choices=["v1", "v2"],
+        help="Version of transformer to use (v1: simple single-layer, v2: full transformer)",
+    )
+    p.add_argument(
+        "--transformer-depth",
+        type=int,
+        default=10,
+        help="Number of transformer layers (only used in v2)",
+    )
+    p.add_argument(
         "--add-encodings",
         type=bool,
         default=True,
