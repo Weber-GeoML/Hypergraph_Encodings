@@ -558,7 +558,7 @@ for seed in range(1, 9):
         }
 
 # Call the plotting function at the end
-create_summary_plots(all_results, out_dir)
+# create_summary_plots(all_results, out_dir)
 
 resultlogger.info(f"We had {len(test_accs)} runs")
 resultlogger.info(

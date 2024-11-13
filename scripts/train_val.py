@@ -331,20 +331,40 @@ def create_summary_plots(all_results, out_dir):
 
     # Plot 2: Learning curves with confidence intervals
     plt.subplot(2, 2, 2)
-    max_epochs = max(len(accs) for accs in all_results["train_accs"].values())
-    epochs = range(1, max_epochs + 1)
 
-    # Calculate mean and std for each metric
+    # Calculate max epochs correctly
+    max_epochs = max(len(accs) for accs in all_results["train_accs"].values())
+    # Create epochs array starting from 0 to max_epochs-1
+    epochs = range(max_epochs)  # Changed from range(1, max_epochs + 1)
+
+    # Helper function to pad and calculate statistics
     def get_stats(accs_dict):
-        padded_accs = [
-            accs + [accs[-1]] * (max_epochs - len(accs)) for accs in accs_dict.values()
-        ]
+        # Pad sequences to the same length
+        padded_accs = np.array(
+            [
+                accs + [accs[-1]] * (max_epochs - len(accs))
+                for accs in accs_dict.values()
+            ]
+        )
         return np.mean(padded_accs, axis=0), np.std(padded_accs, axis=0)
 
+    # Calculate statistics
     train_mean, train_std = get_stats(all_results["train_accs"])
     val_mean, val_std = get_stats(all_results["val_accs"])
     test_mean, test_std = get_stats(all_results["test_accs"])
 
+    # Verify shapes before plotting
+    assert len(epochs) == len(
+        train_mean
+    ), f"Epochs length: {len(epochs)}, Train mean length: {len(train_mean)}"
+    assert len(epochs) == len(
+        val_mean
+    ), f"Epochs length: {len(epochs)}, Val mean length: {len(val_mean)}"
+    assert len(epochs) == len(
+        test_mean
+    ), f"Epochs length: {len(epochs)}, Test mean length: {len(test_mean)}"
+
+    # Plot with confidence intervals
     plt.plot(epochs, train_mean, "b-", label="Train")
     plt.fill_between(epochs, train_mean - train_std, train_mean + train_std, alpha=0.2)
     plt.plot(epochs, val_mean, "g-", label="Validation")
