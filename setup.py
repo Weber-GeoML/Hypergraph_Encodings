@@ -16,6 +16,7 @@ setup(
         "torch-scatter",
         "torch-sparse",
         "path",
+        "tabulate",
     ],
     extra_requires={
         "dev": [
