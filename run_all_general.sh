@@ -1,5 +1,21 @@
 #!/bin/bash
 
+
+#SBATCH --job-name=hg_class    # Job name
+#SBATCH --output=batch_%j.out  # Standard output and error log
+#SBATCH --error=batch_%j.err   # Error log
+#SBATCH --time=24:00:00        # Time limit hrs:min:sec
+#SBATCH --nodes=1              # Number of nodes
+#SBATCH --ntasks=1             # Number of tasks
+#SBATCH --cpus-per-task=4      # Number of CPU cores
+#SBATCH --mem=16GB             # Memory limit
+#SBATCH --gres=gpu:1           # Request 1 GPU
+
+# Load required modules (adjust based on your cluster setup)
+module purge
+module load cuda/11.7
+module load python/3.11
+
 add_encodings=(False True)
 models=("UniGCN" "UniSAGE" "UniGCNII")
 data_types=("cocitation" "coauthorship")
