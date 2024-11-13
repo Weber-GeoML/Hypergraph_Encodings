@@ -9,6 +9,12 @@ def parse():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     p.add_argument(
+        "--do-transformer",
+        type=bool,
+        default=True,
+        help="Whether to use transformer layer after convolutions",
+    )
+    p.add_argument(
         "--add-encodings",
         type=bool,
         default=True,
@@ -84,7 +90,7 @@ def parse():
     p.add_argument(
         "--model-name",
         type=str,
-        default="UniSAGE",
+        default="UniGCN",
         help="UniGNN Model(UniGCN, UniGAT, UniGIN, UniSAGE...)",
     )
     p.add_argument(
