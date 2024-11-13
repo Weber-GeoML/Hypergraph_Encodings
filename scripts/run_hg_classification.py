@@ -329,6 +329,7 @@ Y = torch.from_numpy(np.stack(Y))  # This preserves the array structure
 if len(Y.shape) > 1:
     Y = Y.squeeze()  # Remove extra dimensions
 Y = Y.long()  # Convert to long dtype
+Y = Y.to(device)
 print(f"Y shape: {Y.shape}")  # Should be 1D now
 print(f"Y type: {Y.dtype}")
 print(f"Y: \n {Y}")

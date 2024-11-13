@@ -187,7 +187,7 @@ def initialise_for_hypergraph_classification(
     nhead: int = args.nhead
 
     # Model initialization
-    supported_models = {"UniGCN", "UniGAT", "UniGIN", "UniSAGE"}
+    supported_models = {"UniGCN", "UniGAT", "UniGIN", "UniSAGE", "UniGCNII"}
     if args.model_name not in supported_models:
         raise ValueError(
             f"Model {args.model_name} not supported. Must be one of: {supported_models}"

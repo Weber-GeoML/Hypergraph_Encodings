@@ -438,6 +438,9 @@ class UniGATConv(nn.Module):
         glorot(self.att_v)
         glorot(self.att_e)
 
+    # what would be smarter here, instead of passing unused arguments
+    # would be to have a if model_name == "UniGCN" or "UniGAT" etc
+    # and then have the arguments not passed! TODO later.
     def forward(
         self,
         X: torch.Tensor,
