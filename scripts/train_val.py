@@ -14,6 +14,8 @@ import path
 import torch
 import torch.nn.functional as F
 from torch.optim import optimizer
+import matplotlib.pyplot as plt
+import pickle
 
 # load data
 from encodings_hnns.data_handling import load
@@ -174,6 +176,9 @@ for seed in range(1, 9):
         test_accs_for_best_val = (
             []
         )  # List to store test accuracy for the best validation accuracy
+        train_accs = []
+        val_accs = []
+        test_accs = []
         for epoch in range(args.epochs):
             # train
             tic_epoch = time.time()
@@ -197,6 +202,11 @@ for seed in range(1, 9):
             test_acc: float = accuracy(Z[test_idx], Y[test_idx])
             val_acc: float = accuracy(Z[val_idx], Y[val_idx])
 
+            # Store accuracies
+            train_accs.append(train_acc)
+            val_accs.append(val_acc)
+            test_accs.append(test_acc)
+
             # log acc
             if best_val_acc < val_acc:
                 best_val_acc: float = val_acc
@@ -213,6 +223,26 @@ for seed in range(1, 9):
                 baselogger.info(
                     f"epoch:{epoch} | loss:{loss:.4f} | train acc:{train_acc:.2f} | val acc:{val_acc:.2f} | test_acc_best_val: {test_accs_for_best_val[-1]:.2f}  | best_test_acc: {best_test_acc:.2f} | test acc:{test_acc:.2f} | time:{train_time*1000:.1f}ms"
                 )
+
+        # Store accuracies with unique key
+        run_key = f"seed_{seed}_run_{run}"
+        all_results["train_accs"][run_key] = train_accs
+        all_results["val_accs"][run_key] = val_accs
+        all_results["test_accs"][run_key] = test_accs
+        all_results["params"][run_key] = {
+            "model": model_name,
+            "nlayer": nlayer,
+            "dataset": dataname,
+            "encodings": args.encodings if args.add_encodings else "none",
+            "transformer": args.do_transformer,
+            "final_train_acc": train_accs[-1],
+            "final_val_acc": val_accs[-1],
+            "final_test_acc": test_accs[-1],
+            "best_val_acc": best_val_acc,
+            "best_test_acc": best_test_acc,
+        }
+
+        resultlogger.info(f"Accuracy plot saved to {plot_path}")
 
         resultlogger.info(
             f"Run {run}/{args.n_runs}, best test accuracy: {best_test_acc:.2f}, acc(last): {test_acc:.2f}, total time: {time.time()-tic_run:.2f}s"
@@ -233,3 +263,73 @@ resultlogger.info(
 resultlogger.info(
     f"Average best test accuracy: {np.mean(best_test_accs)} ± {np.std(best_test_accs)}"
 )
+
+
+def create_summary_plots(all_results, out_dir):
+    """Create summary plots from all runs."""
+    plt.figure(figsize=(15, 10))
+
+    # Plot 1: Box plot of final accuracies
+    plt.subplot(2, 2, 1)
+    final_trains = [
+        params["final_train_acc"] for params in all_results["params"].values()
+    ]
+    final_vals = [params["final_val_acc"] for params in all_results["params"].values()]
+    final_tests = [
+        params["final_test_acc"] for params in all_results["params"].values()
+    ]
+
+    plt.boxplot(
+        [final_trains, final_vals, final_tests], labels=["Train", "Validation", "Test"]
+    )
+    plt.title("Distribution of Final Accuracies")
+    plt.ylabel("Accuracy (%)")
+
+    # Plot 2: Learning curves with confidence intervals
+    plt.subplot(2, 2, 2)
+    max_epochs = max(len(accs) for accs in all_results["train_accs"].values())
+    epochs = range(1, max_epochs + 1)
+
+    # Calculate mean and std for each metric
+    def get_stats(accs_dict):
+        padded_accs = [
+            accs + [accs[-1]] * (max_epochs - len(accs)) for accs in accs_dict.values()
+        ]
+        return np.mean(padded_accs, axis=0), np.std(padded_accs, axis=0)
+
+    train_mean, train_std = get_stats(all_results["train_accs"])
+    val_mean, val_std = get_stats(all_results["val_accs"])
+    test_mean, test_std = get_stats(all_results["test_accs"])
+
+    plt.plot(epochs, train_mean, "b-", label="Train")
+    plt.fill_between(epochs, train_mean - train_std, train_mean + train_std, alpha=0.2)
+    plt.plot(epochs, val_mean, "g-", label="Validation")
+    plt.fill_between(epochs, val_mean - val_std, val_mean + val_std, alpha=0.2)
+    plt.plot(epochs, test_mean, "r-", label="Test")
+    plt.fill_between(epochs, test_mean - test_std, test_mean + test_std, alpha=0.2)
+
+    plt.title("Average Learning Curves (with std)")
+    plt.xlabel("Epoch")
+    plt.ylabel("Accuracy (%)")
+    plt.legend()
+
+    # Save results and plot
+    results_dir = out_dir / "results"
+    results_dir.makedirs_p()
+
+    # Save numerical results
+    with open(results_dir / "all_results.pkl", "wb") as f:
+        pickle.dump(all_results, f)
+
+    # Save plot
+    plt.tight_layout()
+    plt.savefig(results_dir / "summary_plots.png", dpi=300, bbox_inches="tight")
+    plt.close()
+
+    print("\n=== Results Saved ===")
+    print(f"All results saved to: {results_dir / 'all_results.pkl'}")
+    print(f"Summary plots saved to: {results_dir / 'summary_plots.png'}")
+
+
+# Call the plotting function at the end
+create_summary_plots(all_results, out_dir)
