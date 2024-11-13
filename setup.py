@@ -18,6 +18,7 @@ setup(
         "path",
         "tabulate",
         "matplotlib",
+        "path",
     ],
     extra_requires={
         "dev": [

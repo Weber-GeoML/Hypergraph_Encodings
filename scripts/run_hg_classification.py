@@ -16,6 +16,7 @@ import torch.nn.functional as F
 from sklearn.model_selection import train_test_split
 from torch.optim import optimizer
 from tqdm import tqdm  # Add this import
+import sys
 
 ### configure logger
 ### configure logger
@@ -35,7 +36,7 @@ print("=" * 80)
 print("\nContents of config.py:")
 print("=" * 80)
 try:
-    with open("config.py", "r") as f:
+    with open("scripts/config.py", "r") as f:
         print(f.read())
 except Exception as e:
     print(f"Error reading config.py: {e}")
@@ -45,7 +46,7 @@ print("=" * 80)
 print("\nDefault arguments from config.parse():")
 print("=" * 80)
 try:
-    default_args = config.parse([])  # Parse with empty args list to get defaults
+    default_args = config.parse()  # Call parse() without arguments
     print("Default values:")
     for arg, value in vars(default_args).items():
         print(f"{arg}: {value}")
@@ -407,7 +408,7 @@ for seed in range(1, 9):
         train_accs_history = []
         val_accs_history = []
         test_accs_history = []
-        for epoch in tqdm(range(args.epochs), desc=f"Epochs (Run {run})"):
+        for epoch in range(args.epochs):
             # train
             tic_epoch = time.time()
             model.train()

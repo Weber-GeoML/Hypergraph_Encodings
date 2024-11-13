@@ -30,7 +30,7 @@ curvature_types=("FRC")
 laplacian_types=("Hodge" "Normalized")
 
 # Create a directory to store logs
-log_dir="logs_loops_general_CHECKS"
+log_dir="logs_loops_general_new"
 mkdir -p "$log_dir"
 
 # Loop over all combinations

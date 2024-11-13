@@ -16,6 +16,8 @@ import torch.nn.functional as F
 from torch.optim import optimizer
 import matplotlib.pyplot as plt
 import pickle
+import sys
+import path
 
 # load data
 from encodings_hnns.data_handling import load
@@ -39,7 +41,7 @@ print("=" * 80)
 print("\nContents of config.py:")
 print("=" * 80)
 try:
-    with open("config.py", "r") as f:
+    with open("scripts/config.py", "r") as f:
         print(f.read())
 except Exception as e:
     print(f"Error reading config.py: {e}")
@@ -49,7 +51,7 @@ print("=" * 80)
 print("\nDefault arguments from config.parse():")
 print("=" * 80)
 try:
-    default_args = config.parse([])  # Parse with empty args list to get defaults
+    default_args = config.parse()  # Parse with empty args list to get defaults
     print("Default values:")
     for arg, value in vars(default_args).items():
         print(f"{arg}: {value}")
