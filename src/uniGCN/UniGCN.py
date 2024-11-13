@@ -273,6 +273,20 @@ class UniGCNConv(nn.Module):
         if hypergraph_classification:
             pass
         else:
+            if not hasattr(self.args, "degE"):
+                available_attrs = [
+                    attr for attr in dir(self.args) if not attr.startswith("_")
+                ]
+                raise AttributeError(
+                    f"args must have degE attribute for non-hypergraph classification.\n"
+                    f"Available attributes are: {available_attrs}"
+                )
+            if self.args.degE is None:
+                raise ValueError(
+                    f"args.degE cannot be None for non-hypergraph classification.\n"
+                    f"args.degE type: {type(self.args.degE)}\n"
+                    f"args.degE value: {self.args.degE}"
+                )
             degE = self.args.degE
         if verbose:
             print(f"degE is {degE}")
@@ -282,6 +296,12 @@ class UniGCNConv(nn.Module):
         if hypergraph_classification:
             pass
         else:
+            assert hasattr(
+                self.args, "degV"
+            ), "args must have degV attribute for non-hypergraph classification"
+            assert (
+                self.args.degV is not None
+            ), "args.degV cannot be None for non-hypergraph classification"
             degV = self.args.degV
         if verbose:
             print(f"degV is {degV}")
