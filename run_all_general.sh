@@ -12,9 +12,8 @@
 #SBATCH --gres=gpu:1           # Request 1 GPU
 
 # Load required modules (adjust based on your cluster setup)
-module purge
-module load cuda/11.7
-module load python/3.11
+# Load Conda (if needed)
+module load anaconda/2023.07  # Example, depending on your system
 
 add_encodings=(False True)
 do_transformer=(True False)
