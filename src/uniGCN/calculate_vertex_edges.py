@@ -29,15 +29,27 @@ def calculate_V_E(X: torch.Tensor, G: dict, args) -> tuple:
     G = G.copy()
 
     if args.add_self_loop:
+        # Create a set of all node indices from 0 to number_of_nodes-1
+        # This set will track which nodes still need self-loops
         Vs = set(range(X.shape[0]))
 
-        # only add self-loop to those are orginally un-self-looped
-        # TODO:maybe we should remove some repeated self-loops?
+        # Iterate through all edges in the hypergraph
         for edge, nodes in G.items():
+            # Check if this edge is already a self-loop:
+            # - It contains exactly one node (len(nodes) == 1)
+            # - That node is in our tracking set (nodes[0] in Vs)
             if len(nodes) == 1 and nodes[0] in Vs:
+                # If we find an existing self-loop for a node,
+                # remove that node from our tracking set
+                # because it doesn't need another self-loop
                 Vs.remove(nodes[0])
 
+        # After checking existing edges, Vs now contains only
+        # the nodes that don't have any self-loops yet
+        # Add a new self-loop edge for each of these nodes
         for v in Vs:
+            # Create a new edge named "self-loop-{node_index}"
+            # containing only that node
             G[f"self-loop-{v}"] = [v]
 
     N: int  # number of nodes, number of rows
