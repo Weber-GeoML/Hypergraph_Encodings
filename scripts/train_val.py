@@ -200,6 +200,11 @@ for seed in range(1, 9):
 
         # model
         model, optimizer = initialise(X, Y, G, args)
+        model = model.to(device)
+        X = X.to(device)
+        V = V.to(device)
+        E = E.to(device)
+        Y = Y.to(device)
 
         baselogger.info(f"Run {run}/{args.n_runs}, Total Epochs: {args.epochs}")
         baselogger.info(model)

@@ -262,6 +262,9 @@ class UniGCNConv(nn.Module):
         Returns:
             x tilde i from UniGCN.
         """
+        device = X.device
+        vertex = vertex.to(device)
+        edges = edges.to(device)
         # print(f"hypergraph_classification is {hypergraph_classification}")
         if verbose:
             print(f"vertex is {vertex}")
@@ -270,6 +273,8 @@ class UniGCNConv(nn.Module):
         if hypergraph_classification:
             assert degE is not None
             assert degV is not None
+            degE = torch.tensor(degE, dtype=torch.float32, device=device)
+            degV = torch.tensor(degV, dtype=torch.float32, device=device)
         N: int = X.shape[0]  # the number of nodes
         if verbose:
             print(f"N is {N}")
@@ -291,7 +296,8 @@ class UniGCNConv(nn.Module):
                     f"args.degE type: {type(self.args.degE)}\n"
                     f"args.degE value: {self.args.degE}"
                 )
-            degE = self.args.degE
+            degE = torch.tensor(self.args.degE, device=device)
+            degV = torch.tensor(self.args.degV, device=device)
         if verbose:
             print(f"degE is {degE}")
         # degree of vertices
@@ -566,59 +572,87 @@ class UniGNN(nn.Module):
 
             if self.args.do_transformer:
                 if self.args.transformer_version == "v1":
-                    # Get feature dimension
+                    # VERSION 1: Simple self-attention mechanism
+                    # Uses a single scaled dot-product attention layer without positional encoding
+                    # Advantages: Lightweight, faster training
+                    # Disadvantages: Less expressive than full transformer
+
                     feature_dim = X.shape[-1]
 
-                    # Project X_orig to match X's dimensions if needed
+                    # Handle dimension mismatch with projection if needed
                     if X_orig.shape[-1] != feature_dim:
+                        print(f"feature_dim is {feature_dim}")
+                        print(f"X_orig.shape is {X_orig.shape}")
                         projection = nn.Linear(
                             X_orig.shape[-1], feature_dim, device=X.device
                         )
                         X_orig = projection(X_orig)
 
-                    # Reshape for transformer
+                    # Add batch dimension for attention computation
                     X_transformer = X_orig.unsqueeze(0)  # [1, N, features]
 
-                    # Apply self-attention
+                    # Apply basic self-attention using PyTorch's built-in function
+                    # This is equivalent to a single attention head without the feed-forward network
                     X_transformer = F.scaled_dot_product_attention(
                         query=X_transformer,
                         key=X_transformer,
                         value=X_transformer,
                         dropout_p=self.dropout.p if self.training else 0.0,
                     )
-                    X = X + X_transformer.squeeze(0)  # [N, features]
+
+                    # Add residual connection
+                    X = X + X_transformer.squeeze(0)
 
                 elif self.args.transformer_version == "v2":
-                    # Get feature dimension
+                    # VERSION 2: Full Transformer Encoder Architecture
+                    # Uses complete transformer blocks with:
+                    # - Multi-head attention
+                    # - Feed-forward neural networks
+                    # - Layer normalization
+                    # - Residual connections
+                    # Advantages: More expressive, better at capturing complex relationships
+                    # Disadvantages: More parameters, slower training
+
                     feature_dim = X.shape[-1]
 
-                    # Create or update transformer layers if dimensions change
-                    if (
-                        not hasattr(self, "transformer")
-                        or self.transformer_layers.d_model != feature_dim
-                    ):
+                    # Create or update full transformer architecture
+                    if not hasattr(self, "transformer"):
+                        # Create transformer encoder layer with:
+                        # - Multi-head attention (nhead heads)
+                        # - 4x larger feed-forward network
+                        # - Dropout for regularization
                         self.transformer_layers = nn.TransformerEncoderLayer(
                             d_model=feature_dim,
                             nhead=self.args.nhead,
-                            dim_feedforward=4 * feature_dim,
+                            dim_feedforward=4
+                            * feature_dim,  # Standard transformer uses 4x
                             dropout=self.args.dropout,
                             batch_first=True,
                         )
+
+                        # Stack multiple transformer layers
                         self.transformer = nn.TransformerEncoder(
                             self.transformer_layers,
                             num_layers=self.args.transformer_depth,
                         )
 
-                    # Project X_orig to match X's dimensions if needed
+                    # Handle dimension mismatch with projection if needed
                     if X_orig.shape[-1] != feature_dim:
+                        print(f"feature_dim is {feature_dim}")
+                        print(f"X_orig.shape[-1] is {X_orig.shape}")
                         projection = nn.Linear(
                             X_orig.shape[-1], feature_dim, device=X.device
                         )
                         X_orig = projection(X_orig)
 
+                    # Add batch dimension for transformer
                     X_transformer = X_orig.unsqueeze(0)  # [1, N, features]
+
+                    # Apply full transformer encoding
                     X_transformer = self.transformer(X_transformer)
-                    X = X + X_transformer.squeeze(0)  # [N, features]
+
+                    # Add residual connection
+                    X = X + X_transformer.squeeze(0)
 
         X = self.conv_out(X, V, E)
         return F.log_softmax(X, dim=1)
@@ -683,59 +717,83 @@ class UniGNN(nn.Module):
 
                 if self.args.do_transformer:
                     if self.args.transformer_version == "v1":
-                        # Get feature dimension
+                        # VERSION 1: Simple self-attention mechanism
+                        # Uses a single scaled dot-product attention layer without positional encoding
+                        # Advantages: Lightweight, faster training
+                        # Disadvantages: Less expressive than full transformer
+
                         feature_dim = X.shape[-1]
 
-                        # Project X_orig to match X's dimensions if needed
+                        # Handle dimension mismatch with projection if needed
                         if X_orig.shape[-1] != feature_dim:
                             projection = nn.Linear(
                                 X_orig.shape[-1], feature_dim, device=X.device
                             )
                             X_orig = projection(X_orig)
 
-                        # Reshape for transformer
+                        # Add batch dimension for attention computation
                         X_transformer = X_orig.unsqueeze(0)  # [1, N, features]
 
-                        # Apply self-attention
+                        # Apply basic self-attention using PyTorch's built-in function
+                        # This is equivalent to a single attention head without the feed-forward network
                         X_transformer = F.scaled_dot_product_attention(
                             query=X_transformer,
                             key=X_transformer,
                             value=X_transformer,
                             dropout_p=self.dropout.p if self.training else 0.0,
                         )
-                        X = X + X_transformer.squeeze(0)  # [N, features]
+
+                        # Add residual connection
+                        X = X + X_transformer.squeeze(0)
 
                     elif self.args.transformer_version == "v2":
-                        # Get feature dimension
+                        # VERSION 2: Full Transformer Encoder Architecture
+                        # Uses complete transformer blocks with:
+                        # - Multi-head attention
+                        # - Feed-forward neural networks
+                        # - Layer normalization
+                        # - Residual connections
+                        # Advantages: More expressive, better at capturing complex relationships
+                        # Disadvantages: More parameters, slower training
+
                         feature_dim = X.shape[-1]
 
-                        # Create or update transformer layers if dimensions change
-                        if (
-                            not hasattr(self, "transformer")
-                            or self.transformer_layers.d_model != feature_dim
-                        ):
+                        # Create or update full transformer architecture
+                        if not hasattr(self, "transformer"):
+                            # Create transformer encoder layer with:
+                            # - Multi-head attention (nhead heads)
+                            # - 4x larger feed-forward network
+                            # - Dropout for regularization
                             self.transformer_layers = nn.TransformerEncoderLayer(
                                 d_model=feature_dim,
                                 nhead=self.args.nhead,
-                                dim_feedforward=4 * feature_dim,
+                                dim_feedforward=4
+                                * feature_dim,  # Standard transformer uses 4x
                                 dropout=self.args.dropout,
                                 batch_first=True,
                             )
+
+                            # Stack multiple transformer layers
                             self.transformer = nn.TransformerEncoder(
                                 self.transformer_layers,
                                 num_layers=self.args.transformer_depth,
                             )
 
-                        # Project X_orig to match X's dimensions if needed
+                        # Handle dimension mismatch with projection if needed
                         if X_orig.shape[-1] != feature_dim:
                             projection = nn.Linear(
                                 X_orig.shape[-1], feature_dim, device=X.device
                             )
                             X_orig = projection(X_orig)
 
+                        # Add batch dimension for transformer
                         X_transformer = X_orig.unsqueeze(0)  # [1, N, features]
+
+                        # Apply full transformer encoding
                         X_transformer = self.transformer(X_transformer)
-                        X = X + X_transformer.squeeze(0)  # [N, features]
+
+                        # Add residual connection
+                        X = X + X_transformer.squeeze(0)
 
             # Output layer
             X = self.conv_out(

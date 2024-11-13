@@ -25,6 +25,9 @@ from uniGCN.prepare import accuracy
 from uniGCN.prepare_hg import initialise_for_hypergraph_classification
 from split_data_for_hypergraph_classification import get_split
 
+# Initialize current_dataset as None before the loading attempts
+current_dataset = None
+
 # Print command line arguments
 print("\nCommand Line Arguments:")
 print("=" * 80)
@@ -476,10 +479,10 @@ for seed in range(1, 9):
             Z = torch.stack(Z).squeeze(1)
             # Convert indices to tensors
             train_idx = torch.tensor(
-                train_idx
+                train_idx, device=device
             ).long()  # Convert list to tensor and then to long dtype
-            val_idx = torch.tensor(val_idx).long()
-            test_idx = torch.tensor(test_idx).long()
+            val_idx = torch.tensor(val_idx, device=device).long()
+            test_idx = torch.tensor(test_idx, device=device).long()
             loss = F.nll_loss(Z[train_idx], Y[train_idx])
 
             loss.backward()
