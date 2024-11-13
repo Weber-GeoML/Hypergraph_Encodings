@@ -161,7 +161,38 @@ dirname = f"{datetime.datetime.now()}".replace(" ", "_").replace(":", ".")
 # Define the data split for train, val, test
 data_split: list[float] = [0.5, 0.25, 0.25]
 
-out_dir: str = path.Path(f"./{args.out_dir}/{model_name}_{nlayer}_hg_classification/")
+# Create a more detailed output directory name
+out_dir_components = [
+    args.out_dir,
+    f"model_{model_name}",
+    f"nlayer_{nlayer}",
+    f"dataset_{args.dataset_hypergraph_classification}",
+]
+
+# Add transformer details if enabled
+if args.do_transformer:
+    out_dir_components.extend(
+        [f"transformer_{args.transformer_version}", f"depth_{args.transformer_depth}"]
+    )
+
+# Add encoding details if enabled
+if args.add_encodings_hg_classification:
+    out_dir_components.append(f"encoding_{args.encodings}")
+    if args.encodings == "RW":
+        out_dir_components.append(f"rwtype_{args.random_walk_type}")
+    elif args.encodings == "LCP":
+        out_dir_components.append(f"curvature_{args.curvature_type}")
+    elif args.encodings == "Laplacian":
+        out_dir_components.append(f"laptype_{args.laplacian_type}")
+
+# Add timestamp for uniqueness
+timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+out_dir_components.append(f"time_{timestamp}")
+
+# Construct the path
+out_dir = path.Path("_".join(out_dir_components))
+
+# Create directory
 if out_dir.exists():
     shutil.rmtree(out_dir)
 out_dir.makedirs_p()
@@ -196,7 +227,6 @@ if args.add_encodings_hg_classification:
         # Run both new and regular versions
         laplacian_type = args.laplacian_type.lower()
         dataset_paths = [
-            f"{base_path}/{dataset_name}_hypergraphs_with_encodings_lape_{laplacian_type}.pickle",
             f"{base_path}/{dataset_name}_hypergraphs_with_encodings_lape_{laplacian_type}_new_version.pickle",
         ]
     else:  # for ldp

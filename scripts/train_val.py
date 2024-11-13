@@ -149,7 +149,39 @@ def get_split(Y, p: float = 0.2) -> tuple[list[int], list[int]]:
     return val_idx, test_idx
 
 
-out_dir: str = path.Path(f"./{args.out_dir}/{model_name}_{nlayer}_{dataname}/")
+# Create a more detailed output directory name
+out_dir_components = [
+    args.out_dir,
+    f"model_{model_name}",
+    f"nlayer_{nlayer}",
+    f"data_{args.data}",
+    f"dataset_{args.dataset}",
+]
+
+# Add transformer details if enabled
+if args.do_transformer:
+    out_dir_components.extend(
+        [f"transformer_{args.transformer_version}", f"depth_{args.transformer_depth}"]
+    )
+
+# Add encoding details if enabled
+if args.add_encodings:
+    out_dir_components.append(f"encoding_{args.encodings}")
+    if args.encodings == "RW":
+        out_dir_components.append(f"rwtype_{args.random_walk_type}")
+    elif args.encodings == "LCP":
+        out_dir_components.append(f"curvature_{args.curvature_type}")
+    elif args.encodings == "Laplacian":
+        out_dir_components.append(f"laptype_{args.laplacian_type}")
+
+# Add timestamp for uniqueness
+timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+out_dir_components.append(f"time_{timestamp}")
+
+# Construct the path
+out_dir = path.Path("_".join(out_dir_components))
+
+# Create directory
 if out_dir.exists():
     shutil.rmtree(out_dir)
 out_dir.makedirs_p()

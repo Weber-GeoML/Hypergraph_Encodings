@@ -49,7 +49,7 @@ def parse():
     p.add_argument(
         "--encodings",
         type=str,
-        default="LDP",
+        default="LCP",
         help="what encodings to add. RW, LDP, LCP, Laplacian",
     )
     p.add_argument(
