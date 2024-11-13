@@ -1,5 +1,4 @@
 #!/bin/bash
-#!/bin/bash
 #SBATCH --job-name=ablationII       # Job name
 #SBATCH --ntasks=1              # Number of tasks
 #SBATCH --time=168:00:00         # Time limit (hh:mm:ss)
