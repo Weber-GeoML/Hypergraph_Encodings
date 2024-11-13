@@ -1,19 +1,19 @@
 #!/bin/bash
-
-
-#SBATCH --job-name=hg_class    # Job name
-#SBATCH --output=batch_%j.out  # Standard output and error log
-#SBATCH --error=batch_%j.err   # Error log
-#SBATCH --time=24:00:00        # Time limit hrs:min:sec
-#SBATCH --nodes=1              # Number of nodes
-#SBATCH --ntasks=1             # Number of tasks
-#SBATCH --cpus-per-task=4      # Number of CPU cores
-#SBATCH --mem=16GB             # Memory limit
-#SBATCH --gres=gpu:1           # Request 1 GPU
+#!/bin/bash
+#SBATCH --job-name=ablationII       # Job name
+#SBATCH --ntasks=1              # Number of tasks
+#SBATCH --time=168:00:00         # Time limit (hh:mm:ss)
+#SBATCH --mem=16GB               # Memory required
+#SBATCH --output=outputIIablation_%j.log  # Standard output and error log (with job ID)
+#SBATCH --partition=mweber_gpu     # Specify the partition
+#SBATCH --gpus=4                   # Request 1 GPU
 
 # Load required modules (adjust based on your cluster setup)
 # Load Conda (if needed)
 module load anaconda/2023.07  # Example, depending on your system
+
+# Activate the Conda environment
+source activate hgencodings_gpu_weber
 
 add_encodings=(False True)
 do_transformer=(True False)
