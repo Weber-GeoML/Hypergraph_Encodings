@@ -24,6 +24,43 @@ from uniGCN.prepare import accuracy
 from uniGCN.prepare_hg import initialise_for_hypergraph_classification
 from split_data_for_hypergraph_classification import get_split
 
+# Print command line arguments
+print("\nCommand Line Arguments:")
+print("=" * 80)
+print(f"Script name: {sys.argv[0]}")
+print(f"Arguments passed: {sys.argv[1:]}")
+print("=" * 80)
+
+# Print config.py contents
+print("\nContents of config.py:")
+print("=" * 80)
+try:
+    with open("config.py", "r") as f:
+        print(f.read())
+except Exception as e:
+    print(f"Error reading config.py: {e}")
+print("=" * 80)
+
+# Print default arguments and any overrides from command line
+print("\nDefault arguments from config.parse():")
+print("=" * 80)
+try:
+    default_args = config.parse([])  # Parse with empty args list to get defaults
+    print("Default values:")
+    for arg, value in vars(default_args).items():
+        print(f"{arg}: {value}")
+
+    print("\nParsed command line arguments:")
+    actual_args = config.parse()  # Parse with actual command line args
+    for arg, value in vars(actual_args).items():
+        if getattr(default_args, arg) != value:
+            print(
+                f"{arg}: {value} (overridden from default: {getattr(default_args, arg)})"
+            )
+except Exception as e:
+    print(f"Error getting arguments: {e}")
+print("=" * 80)
+
 
 # At the end of the file, create summary plots
 def create_summary_plots(all_results, out_dir):
