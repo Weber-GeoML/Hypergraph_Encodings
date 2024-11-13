@@ -91,6 +91,10 @@ class UniSAGEConv(nn.Module):
             TODO
 
         """
+        device = X.device
+        vertex = vertex.to(device)
+        edges = edges.to(device)
+
         N = X.shape[0]
 
         # X0 = X # NOTE: reserved for skip connection

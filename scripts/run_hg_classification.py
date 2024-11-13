@@ -428,6 +428,16 @@ for seed in range(1, 9):
             degE2s,
         ) = initialise_for_hypergraph_classification(current_dataset, args)
 
+        # Add right after model creation
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model = model.to(device)
+
+        # Modify the data loading section to move features to device
+        for i, hg in enumerate(current_dataset):
+            current_dataset[i]["features"] = torch.tensor(
+                hg["features"], dtype=torch.float32, device=device
+            )
+
         print("\n=== Training Information ===")
         print(f"Model: {model_name}")
         print(f"Number of layers: {nlayer}")
