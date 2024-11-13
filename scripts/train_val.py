@@ -29,6 +29,8 @@ from uniGCN.logger import get_logger
 from uniGCN.prepare import accuracy, fetch_data, initialise
 import config
 
+# Initialize results dictionary before the training loops
+all_results = {"train_accs": {}, "val_accs": {}, "test_accs": {}, "params": {}}
 
 # Print command line arguments
 print("\nCommand Line Arguments:")
@@ -280,8 +282,6 @@ for seed in range(1, 9):
             "best_val_acc": best_val_acc,
             "best_test_acc": best_test_acc,
         }
-
-        resultlogger.info(f"Accuracy plot saved to {plot_path}")
 
         resultlogger.info(
             f"Run {run}/{args.n_runs}, best test accuracy: {best_test_acc:.2f}, acc(last): {test_acc:.2f}, total time: {time.time()-tic_run:.2f}s"

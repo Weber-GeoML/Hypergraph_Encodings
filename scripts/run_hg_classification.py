@@ -198,7 +198,7 @@ if args.add_encodings_hg_classification:
     print(f"Encoding type: {args.encodings}")
     if args.encodings.lower() == "rw":
         print(f"Random walk type: {args.random_walk_type}")
-    elif args.encodings.lower() == "curvature":
+    elif args.encodings.lower() == "lcp":
         print(f"Curvature type: {args.curvature_type}")
     elif args.encodings.lower() == "laplacian":
         print(f"Laplacian type: {args.laplacian_type}")
@@ -207,14 +207,43 @@ print(f"Loading from: {dataset_path}")
 try:
     with open(dataset_path, "rb") as f:
         current_dataset = pickle.load(f)
+
+    if not current_dataset:  # Check if dataset is empty
+        raise ValueError(f"Dataset loaded but is empty: {dataset_path}")
+
     print(
         f"Dataset loaded successfully! It contains {len(current_dataset)} hypergraphs"
     )
+
+    # Add dataset validation
+    if not isinstance(current_dataset, list):
+        raise TypeError(f"Dataset should be a list, got {type(current_dataset)}")
+
+    if not current_dataset[0].get("features") is not None:
+        raise ValueError("First hypergraph missing 'features' key")
+
+    # Now safe to access features
+    feature_shape = current_dataset[0]["features"].shape
+    num_features = feature_shape[1]
+
 except FileNotFoundError:
     raise FileNotFoundError(
         f"Dataset file not found: {dataset_path}\n"
         f"Make sure the dataset with the specified encodings exists."
     )
+except Exception as e:
+    print("\n=== Dataset Loading Error ===")
+    print(f"Error type: {type(e).__name__}")
+    print(f"Error message: {str(e)}")
+    print(f"Dataset path: {dataset_path}")
+    print(f"Dataset name: {dataset_name}")
+    print(f"Encoding settings:")
+    print(f"  Using encodings: {args.add_encodings_hg_classification}")
+    if args.add_encodings_hg_classification:
+        print(f"  Encoding type: {args.encodings}")
+        if args.encodings.lower() == "lcp":
+            print(f"  Curvature type: {args.curvature_type}")
+    raise
 
 # Add dataset statistics
 num_hypergraphs = len(current_dataset)
