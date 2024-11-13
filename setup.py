@@ -17,6 +17,7 @@ setup(
         "torch-sparse",
         "path",
         "tabulate",
+        "matplotlib",
     ],
     extra_requires={
         "dev": [
