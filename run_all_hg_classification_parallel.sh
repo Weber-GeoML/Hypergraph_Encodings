@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH --job-name=ablationII       
+#SBATCH --job-name=hg_classification       
 #SBATCH --array=0-999%50           # Run 1000 jobs, max 50 concurrent
 #SBATCH --time=168:00:00         
 #SBATCH --mem=16GB               
-#SBATCH --output=outputIIablation_%A_%a.log  # %A is job ID, %a is array index
+#SBATCH --output=hg/hg_classification_%A_%a.log  # %A is job ID, %a is array index
 #SBATCH --partition=mweber_gpu     
 #SBATCH --gpus=1                   # One GPU per task
 

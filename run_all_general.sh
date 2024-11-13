@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH --job-name=ablationII       # Job name
+#SBATCH --job-name=ablation       # Job name
 #SBATCH --ntasks=1              # Number of tasks
 #SBATCH --time=168:00:00         # Time limit (hh:mm:ss)
 #SBATCH --mem=16GB               # Memory required
-#SBATCH --output=outputIIablation_%j.log  # Standard output and error log (with job ID)
+#SBATCH --output=ablation/ablation_%j.log  # Standard output and error log (with job ID)
 #SBATCH --partition=mweber_gpu     # Specify the partition
 #SBATCH --gpus=4                   # Request 1 GPU
 
