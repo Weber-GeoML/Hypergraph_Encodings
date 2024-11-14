@@ -103,7 +103,10 @@ dirname = f"{datetime.datetime.now()}".replace(" ", "_").replace(":", ".")
 X: torch.Tensor  # the features
 Y: torch.Tensor  # the labels
 G: dict  # the whole hypergraph
-print(f"We are adding the {args.encodings} encodings")
+if args.add_encodings:
+    print(f"We are adding the {args.encodings} encodings")
+else:
+    print("We are not adding any encodings")
 X, Y, G = fetch_data(
     args,
     add_encodings=args.add_encodings,

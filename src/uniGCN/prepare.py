@@ -93,6 +93,8 @@ def fetch_data(
     if not normalize_features:
         normalize_encodings = False
         # added by RP!
+        if not add_encodings:
+            print("We are not adding any encodings")
         if add_encodings:
             print("We are adding encodings!")
             hgencodings = HypergraphEncodings()
