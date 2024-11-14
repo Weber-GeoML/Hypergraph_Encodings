@@ -3,7 +3,7 @@
 #SBATCH --array=0-999%5           # Run 1000 jobs, max 5 concurrent
 #SBATCH --time=168:00:00         
 #SBATCH --mem=16GB               
-#SBATCH --output=hg_classification_%A_%a.log  # %A is job ID, %a is array index
+#SBATCH --output=sbatch_logs/hg_classification_%A_%a.log  # %A is job ID, %a is array index
 #SBATCH --partition=mweber_gpu     
 #SBATCH --gpus=1                   # One GPU per task
 
