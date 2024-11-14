@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=hg_classification       
-#SBATCH --array=0-999%50           # Run 1000 jobs, max 50 concurrent
+#SBATCH --array=0-999%5           # Run 1000 jobs, max 5 concurrent
 #SBATCH --time=168:00:00         
 #SBATCH --mem=16GB               
 #SBATCH --output=hg_classification_%A_%a.log  # %A is job ID, %a is array index
