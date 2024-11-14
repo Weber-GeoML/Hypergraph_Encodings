@@ -22,19 +22,35 @@ def parse_log_file(file_path):
 
         # Add encoding info if present
         if len(parts) > 3:
-            if parts[3] == "noencodings":
+            if parts[3] == "no_encodings":
                 config_dict["add_encodings"] = False
             else:
                 config_dict["add_encodings"] = True
                 config_dict["encodings"] = parts[3]
                 # Add additional encoding parameters if present
-                if len(parts) > 4:
+                current_idx = 4
+                if len(parts) > current_idx:
                     if parts[3] == "RW":
-                        config_dict["random_walk_type"] = parts[4]
+                        config_dict["random_walk_type"] = parts[current_idx]
+                        current_idx += 1
                     elif parts[3] == "LCP":
-                        config_dict["curvature_type"] = parts[4]
+                        config_dict["curvature_type"] = parts[current_idx]
+                        current_idx += 1
                     elif parts[3] == "Laplacian":
-                        config_dict["laplacian_type"] = parts[4]
+                        config_dict["laplacian_type"] = parts[current_idx]
+                        current_idx += 1
+
+                # Add transformer info if present
+                if len(parts) > current_idx and "transformer" in parts[current_idx]:
+                    config_dict["do_transformer"] = True
+                    current_idx += 1  # Skip 'transformerTrue'
+                    if len(parts) > current_idx:
+                        config_dict["transformer_version"] = parts[current_idx]
+                        current_idx += 1
+                    if len(parts) > current_idx and "depth" in parts[current_idx]:
+                        config_dict["transformer_depth"] = parts[current_idx].replace(
+                            "depth", ""
+                        )
 
         # Extract accuracy from last line
         with open(file_path, "r") as f:
@@ -154,7 +170,24 @@ def create_results_table(log_dir):
     rows = []
     for (model, encoding), data in sorted(results.items()):
         row = []
-        model_name = f"{model} ({encoding})" if encoding != "No Encoding" else model
+        # Get transformer info from config if available
+        run_key = next(iter(data.keys()))  # Get any dataset key to access config
+        config = full_results["config_args"].get(
+            f"{model}_{data_type}_{run_key}_{encoding}", {}
+        )
+
+        # Build model name with transformer info if present
+        if config.get("do_transformer", False):
+            transformer_info = (
+                f" (T{config['transformer_version']}d{config['transformer_depth']})"
+            )
+        else:
+            transformer_info = ""
+
+        model_name = f"{model}{transformer_info}"
+        if encoding != "No Encoding":
+            model_name += f" ({encoding})"
+
         row.append(model_name)
         for dataset in datasets:
             if dataset in data:
