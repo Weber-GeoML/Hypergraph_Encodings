@@ -52,17 +52,15 @@ print("=" * 80)
 # Print default arguments and any overrides from command line
 print("=" * 80)
 try:
-    # Get default arguments
-    args = config.parse([])  # Start with defaults
+    # Parse command line arguments, starting with defaults
+    args = config.parse()
 
-    # Get command line arguments
-    cmd_args = config.parse()  # Get command line arguments
-
-    # Override defaults with any command line arguments that were specified
-    for arg, value in vars(cmd_args).items():
-        if value != getattr(args, arg):  # If this argument was changed from default
-            print(f"Overriding {arg}: {getattr(args, arg)} -> {value}")
-            setattr(args, arg, value)  # Update the value
+    # Override default values in config with command line arguments
+    for arg, value in vars(args).items():
+        default_value = getattr(config, arg, None)
+        if default_value is not None and value != default_value:
+            print(f"Overriding {arg}: {default_value} -> {value}")
+            setattr(config, arg, value)  # Update the config attribute
 
 except Exception as e:
     print(f"Error handling arguments: {e}")
