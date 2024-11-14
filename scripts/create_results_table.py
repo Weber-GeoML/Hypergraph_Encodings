@@ -68,6 +68,7 @@ def parse_log_file(file_path):
                 print(f"Could not find accuracy pattern in file: {file_path}")
                 print("Last few lines of file:")
                 print("\n".join(lines[-5:]))  # Print last 5 lines
+                print("--------------------------------" * 2)
                 return None, None, None
 
             acc = float(acc_match.group(1))
@@ -107,6 +108,7 @@ def create_results_table(log_dir):
 
     # Process all log files
     processed_files = 0
+    failed_files = []  # List to store failed file names
     for filename in log_files:
         try:
             # Parse filename components
@@ -155,11 +157,17 @@ def create_results_table(log_dir):
                 processed_files += 1
             else:
                 print(f"Warning: Could not extract results from {filename}")
+                failed_files.append(filename)  # Add to failed files list
 
         except Exception as e:
             print(f"Error processing file {filename}: {str(e)}")
+            failed_files.append(filename)  # Add to failed files list
 
     print(f"Successfully processed {processed_files} out of {len(log_files)} files")
+    if failed_files:
+        print("Failed files:")
+        for failed_file in failed_files:
+            print(f" - {failed_file}")
 
     if not results:
         print("Error: No valid results were extracted from the log files")

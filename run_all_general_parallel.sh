@@ -59,7 +59,11 @@ for transformer in "${do_transformer[@]}"; do
                                             for laplacian_type in "${laplacian_types[@]}"; do
                                                 combinations+=("$model $data_type $dataset $encoding $laplacian_type $transformer $transformer_version $transformer_depth $add_encoding")
                                             done
+                                        elif [ "$encoding" == "LDP" ]; then
+                                            # Handle LDP encoding without additional parameters
+                                            combinations+=("$model $data_type $dataset $encoding none $transformer $transformer_version $transformer_depth $add_encoding")
                                         else
+                                            # Handle any other encodings without additional parameters
                                             combinations+=("$model $data_type $dataset $encoding none $transformer $transformer_version $transformer_depth $add_encoding")
                                         fi
                                     done
@@ -150,6 +154,7 @@ python scripts/train_val.py \
     --model="$model" \
     --data="$data_type" \
     --dataset="$dataset" \
+    --encodings="$encoding" \
     $([ "$add_encoding" == "True" ] && echo "--add-encodings") \
     $([ "$add_encoding" == "False" ] && echo "--no-add-encodings") \
     $([ "$encoding" == "RW" ] && echo "--random-walk-type=$encoding_type") \
