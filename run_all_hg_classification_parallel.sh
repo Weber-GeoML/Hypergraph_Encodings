@@ -141,9 +141,11 @@ python scripts/run_hg_classification.py \
     $([ "$encoding" == "RW" ] && echo "--random-walk-type=$encoding_type") \
     $([ "$encoding" == "LCP" ] && echo "--curvature-type=$encoding_type") \
     $([ "$encoding" == "Laplacian" ] && echo "--laplacian-type=$encoding_type") \
-    --do-transformer="$transformer" \
+    $([ "$transformer" == "True" ] && echo "--do-transformer") \
+    $([ "$transformer" == "False" ] && echo "--no-transformer") \
     $([ "$transformer" == "True" ] && echo "--transformer-version=$transformer_version") \
     $([ "$transformer" == "True" ] && echo "--transformer-depth=$transformer_depth") \
-    --add-encodings-hg-classification="$add_encoding" \
+    $([ "$add_encoding" == "True" ] && echo "--add-encodings-hg-classification") \
+    $([ "$add_encoding" == "False" ] && echo "--no-add-encodings-hg-classification") \
     --nlayer="$nlayer" \
     --epochs=1000 > "$log_file" 2>&1

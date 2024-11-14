@@ -10,9 +10,14 @@ def parse():
     )
     p.add_argument(
         "--do-transformer",
-        type=bool,
-        default=True,
+        action="store_true",
         help="Whether to use transformer layer after convolutions",
+    )
+    p.add_argument(
+        "--no-transformer",
+        action="store_false",
+        dest="do_transformer",
+        help="Do not use transformer layer after convolutions",
     )
     p.add_argument(
         "--transformer-version",
@@ -29,15 +34,25 @@ def parse():
     )
     p.add_argument(
         "--add-encodings",
-        type=bool,
-        default=True,
+        action="store_true",
         help="whether to add encodings to the features",
     )
     p.add_argument(
+        "--no-add-encodings",
+        action="store_false",
+        dest="add_encodings",
+        help="do not add encodings to the features",
+    )
+    p.add_argument(
         "--add-encodings-hg-classification",
-        type=bool,
-        default=True,
+        action="store_true",
         help="whether to add encodings to the features for hypergraph classification",
+    )
+    p.add_argument(
+        "--no-add-encodings-hg-classification",
+        action="store_false",
+        dest="add_encodings_hg_classification",
+        help="do not add encodings to the features for hypergraph classification",
     )
     p.add_argument(
         "--dataset-hypergraph-classification",
@@ -66,15 +81,25 @@ def parse():
     )
     p.add_argument(
         "--normalize-features",
-        type=bool,
-        default=True,
+        action="store_true",
         help="whether to normalize features",
     )
     p.add_argument(
+        "--no-normalize-features",
+        action="store_false",
+        dest="normalize_features",
+        help="do not normalize features",
+    )
+    p.add_argument(
         "--normalize-encodings",
-        type=bool,
-        default=True,
+        action="store_true",
         help="whether to normalize encodings",
+    )
+    p.add_argument(
+        "--no-normalize-encodings",
+        action="store_false",
+        dest="normalize_encodings",
+        help="do not normalize encodings",
     )
     p.add_argument(
         "--laplacian-type",

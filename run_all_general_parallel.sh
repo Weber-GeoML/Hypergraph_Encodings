@@ -150,11 +150,12 @@ python scripts/train_val.py \
     --model="$model" \
     --data="$data_type" \
     --dataset="$dataset" \
-    $([ "$add_encoding" == "True" ] && echo "--encodings=$encoding") \
+    $([ "$add_encoding" == "True" ] && echo "--add-encodings") \
+    $([ "$add_encoding" == "False" ] && echo "--no-add-encodings") \
     $([ "$encoding" == "RW" ] && echo "--random-walk-type=$encoding_type") \
     $([ "$encoding" == "LCP" ] && echo "--curvature-type=$encoding_type") \
     $([ "$encoding" == "Laplacian" ] && echo "--laplacian-type=$encoding_type") \
-    $([ "$add_encoding" == "False" ] && echo "--add-encodings=False") \
-    --do-transformer="$transformer" \
+    $([ "$transformer" == "True" ] && echo "--do-transformer") \
+    $([ "$transformer" == "False" ] && echo "--no-transformer") \
     $([ "$transformer" == "True" ] && echo "--transformer-version=$transformer_version") \
     $([ "$transformer" == "True" ] && echo "--transformer-depth=$transformer_depth") > "$log_file" 2>&1

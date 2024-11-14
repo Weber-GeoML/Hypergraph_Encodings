@@ -54,10 +54,12 @@ for transformer in "${do_transformer[@]}"; do
                                                 --dataset-hypergraph-classification="$dataset" \
                                                 --encodings="$encoding" \
                                                 --random-walk-type="$rw_type" \
-                                                --do-transformer="$transformer" \
-                                                --transformer-version="$transformer_version" \
-                                                --transformer-depth="$transformer_depth" \
-                                                --add-encodings-hg-classification="$add_encoding" \
+                                                $([ "$transformer" == "True" ] && echo "--do-transformer") \
+                                                $([ "$transformer" == "False" ] && echo "--no-transformer") \
+                                                $([ "$transformer" == "True" ] && echo "--transformer-version=$transformer_version") \
+                                                $([ "$transformer" == "True" ] && echo "--transformer-depth=$transformer_depth") \
+                                                $([ "$add_encoding" == "True" ] && echo "--add-encodings-hg-classification") \
+                                                $([ "$add_encoding" == "False" ] && echo "--no-add-encodings-hg-classification") \
                                                 --nlayer="$nlayer" \
                                                 --epochs=1000 > "$log_file" 2>&1
                                         done
@@ -70,10 +72,12 @@ for transformer in "${do_transformer[@]}"; do
                                                 --dataset-hypergraph-classification="$dataset" \
                                                 --encodings="$encoding" \
                                                 --curvature-type="$curvature_type" \
-                                                --do-transformer="$transformer" \
-                                                --transformer-version="$transformer_version" \
-                                                --transformer-depth="$transformer_depth" \
-                                                --add-encodings-hg-classification="$add_encoding" \
+                                                $([ "$transformer" == "True" ] && echo "--do-transformer") \
+                                                $([ "$transformer" == "False" ] && echo "--no-transformer") \
+                                                $([ "$transformer" == "True" ] && echo "--transformer-version=$transformer_version") \
+                                                $([ "$transformer" == "True" ] && echo "--transformer-depth=$transformer_depth") \
+                                                $([ "$add_encoding" == "True" ] && echo "--add-encodings-hg-classification") \
+                                                $([ "$add_encoding" == "False" ] && echo "--no-add-encodings-hg-classification") \
                                                 --nlayer="$nlayer" \
                                                 --epochs=1000 > "$log_file" 2>&1
                                         done
@@ -86,10 +90,12 @@ for transformer in "${do_transformer[@]}"; do
                                                 --dataset-hypergraph-classification="$dataset" \
                                                 --encodings="$encoding" \
                                                 --laplacian-type="$laplacian_type" \
-                                                --do-transformer="$transformer" \
-                                                --transformer-version="$transformer_version" \
-                                                --transformer-depth="$transformer_depth" \
-                                                --add-encodings-hg-classification="$add_encoding" \
+                                                $([ "$transformer" == "True" ] && echo "--do-transformer") \
+                                                $([ "$transformer" == "False" ] && echo "--no-transformer") \
+                                                $([ "$transformer" == "True" ] && echo "--transformer-version=$transformer_version") \
+                                                $([ "$transformer" == "True" ] && echo "--transformer-depth=$transformer_depth") \
+                                                $([ "$add_encoding" == "True" ] && echo "--add-encodings-hg-classification") \
+                                                $([ "$add_encoding" == "False" ] && echo "--no-add-encodings-hg-classification") \
                                                 --nlayer="$nlayer" \
                                                 --epochs=1000 > "$log_file" 2>&1
                                         done
@@ -100,10 +106,12 @@ for transformer in "${do_transformer[@]}"; do
                                             --model="$model" \
                                             --dataset-hypergraph-classification="$dataset" \
                                             --encodings="$encoding" \
-                                            --do-transformer="$transformer" \
-                                            --transformer-version="$transformer_version" \
-                                            --transformer-depth="$transformer_depth" \
-                                            --add-encodings-hg-classification="$add_encoding" \
+                                            $([ "$transformer" == "True" ] && echo "--do-transformer") \
+                                            $([ "$transformer" == "False" ] && echo "--no-transformer") \
+                                            $([ "$transformer" == "True" ] && echo "--transformer-version=$transformer_version") \
+                                            $([ "$transformer" == "True" ] && echo "--transformer-depth=$transformer_depth") \
+                                            $([ "$add_encoding" == "True" ] && echo "--add-encodings-hg-classification") \
+                                            $([ "$add_encoding" == "False" ] && echo "--no-add-encodings-hg-classification") \
                                             --nlayer="$nlayer" \
                                             --epochs=1000 > "$log_file" 2>&1
                                     fi
@@ -114,10 +122,12 @@ for transformer in "${do_transformer[@]}"; do
                                 python scripts/run_hg_classification.py \
                                     --model="$model" \
                                     --dataset-hypergraph-classification="$dataset" \
-                                    --add-encodings-hg-classification="$add_encoding" \
-                                    --do-transformer="$transformer" \
-                                    --transformer-version="$transformer_version" \
-                                    --transformer-depth="$transformer_depth" \
+                                    $([ "$transformer" == "True" ] && echo "--do-transformer") \
+                                    $([ "$transformer" == "False" ] && echo "--no-transformer") \
+                                    $([ "$transformer" == "True" ] && echo "--transformer-version=$transformer_version") \
+                                    $([ "$transformer" == "True" ] && echo "--transformer-depth=$transformer_depth") \
+                                    $([ "$add_encoding" == "True" ] && echo "--add-encodings-hg-classification") \
+                                    $([ "$add_encoding" == "False" ] && echo "--no-add-encodings-hg-classification") \
                                     --nlayer="$nlayer" \
                                     --epochs=1000 > "$log_file" 2>&1
                             fi
