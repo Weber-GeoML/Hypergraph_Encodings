@@ -50,23 +50,29 @@ except Exception as e:
 print("=" * 80)
 
 # Print default arguments and any overrides from command line
-print("\nDefault arguments from config.parse():")
 print("=" * 80)
 try:
-    default_args = config.parse()  # Parse with empty args list to get defaults
-    print("Default values:")
-    for arg, value in vars(default_args).items():
-        print(f"{arg}: {value}")
+    # Get default arguments
+    args = config.parse([])  # Start with defaults
 
-    print("\nParsed command line arguments:")
-    actual_args = config.parse()  # Parse with actual command line args
-    for arg, value in vars(actual_args).items():
-        if getattr(default_args, arg) != value:
-            print(
-                f"{arg}: {value} (overridden from default: {getattr(default_args, arg)})"
-            )
+    # Get command line arguments
+    cmd_args = config.parse()  # Get command line arguments
+
+    # Override defaults with any command line arguments that were specified
+    for arg, value in vars(cmd_args).items():
+        if value != getattr(args, arg):  # If this argument was changed from default
+            print(f"Overriding {arg}: {getattr(args, arg)} -> {value}")
+            setattr(args, arg, value)  # Update the value
+
 except Exception as e:
-    print(f"Error getting arguments: {e}")
+    print(f"Error handling arguments: {e}")
+    raise e
+
+# Print final configuration
+print("\nFinal configuration:")
+print("=" * 80)
+for arg, value in vars(args).items():
+    print(f"{arg}: {value}")
 print("=" * 80)
 
 # File originally taken from UniGCN repo
@@ -79,7 +85,7 @@ best_val_accs: list[float] = []
 best_test_accs: list[float] = []
 
 
-args = config.parse()
+# args = config.parse()
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
