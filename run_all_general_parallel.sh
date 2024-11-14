@@ -134,6 +134,8 @@ if [ "$encoding" != "none" ]; then
     if [ "$encoding_type" != "none" ]; then
         log_file="${log_file}_${encoding_type}"
     fi
+else
+    log_file="${log_file}_no_encodings"
 fi
 # Only add transformer details to filename if transformer is enabled
 if [ "$transformer" == "True" ]; then

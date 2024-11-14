@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=hg_classification       
-#SBATCH --array=0-999%5           # Run 1000 jobs, max 5 concurrent
+#SBATCH --array=0-999%10           # Run 1000 jobs, max 5 concurrent
 #SBATCH --time=168:00:00         
 #SBATCH --mem=16GB               
 #SBATCH --output=sbatch_logs/hg_classification_%A_%a.log  # %A is job ID, %a is array index
@@ -123,12 +123,14 @@ if [ "$encoding" != "none" ]; then
     if [ "$encoding_type" != "none" ]; then
         log_file="${log_file}_${encoding_type}"
     fi
+else
+    log_file="${log_file}_no_encodings"
 fi
 # Only add transformer details to filename if transformer is enabled
 if [ "$transformer" == "True" ]; then
-    log_file="${log_file}_transformer_${transformer}_${transformer_version}_depth_${transformer_depth}"
+    log_file="${log_file}_transformer${transformer}_${transformer_version}_depth${transformer_depth}"
 fi
-log_file="${log_file}_layer_${nlayer}.log"
+log_file="${log_file}_layer${nlayer}.log"
 
 # Run the specific combination
 echo "Running combination $SLURM_ARRAY_TASK_ID: $model $dataset $encoding $encoding_type $transformer $transformer_version $transformer_depth $nlayer $add_encoding"
