@@ -577,6 +577,8 @@ class UniGNN(nn.Module):
             X = conv(X, V, E)
             X = self.act(X)
             X = self.dropout(X)
+            X = X.to(device)
+            X_orig = X_orig.to(device)
 
             if self.args.do_transformer:
                 if self.args.transformer_version == "v1":
@@ -609,6 +611,7 @@ class UniGNN(nn.Module):
                         value=X_transformer,
                         dropout_p=self.dropout.p if self.training else 0.0,
                     )
+                    X_transformer = X_transformer.to(device)
 
                     # Add residual connection
                     # TODO: remove MP: X = X_transformer
