@@ -13,12 +13,12 @@ source activate hgencodings_gpu_weber
 
 # Define parameters
 add_encodings=(False True)
-do_transformer=(True False)
+do_transformer=(False True)
 transformer_versions=("v1" "v2")
-transformer_depths=(1 2 4 8)
+transformer_depths=(1 2)
 models=("UniGCN" "UniSAGE" "UniGCNII" "UniGAT" "UniGIN")
 data_types=("cocitation" "coauthorship")
-coauthorship_datasets=("cora" "dblp")
+coauthorship_datasets=("cora")
 cocitation_datasets=("cora" "citeseer" "pubmed")
 encodings=("LDP" "Laplacian" "RW" "LCP")
 rw_types=("EE" "EN" "WE")
