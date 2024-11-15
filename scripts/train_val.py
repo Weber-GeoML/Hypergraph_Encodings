@@ -215,16 +215,8 @@ for seed in range(1, 9):
 
     #### configure output directory
 
-    out_dir: str = path.Path(
-        f"./{args.out_dir}/{model_name}_{nlayer}_{dataname}/seed_{seed}"
-    )
-
-    if out_dir.exists():
-        shutil.rmtree(out_dir)
-    out_dir.makedirs_p()
-
     for run in range(1, args.n_runs + 1):
-        run_dir = out_dir / f"{run}"
+        run_dir = out_dir / f"{seed}_{run}"
         run_dir.makedirs_p()
 
         # load data
