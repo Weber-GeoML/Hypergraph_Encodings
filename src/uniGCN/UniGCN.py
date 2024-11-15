@@ -576,6 +576,7 @@ class UniGNN(nn.Module):
                     feature_dim = X.shape[-1]
 
                     # Handle dimension mismatch with projection if needed
+                    # TODO: if we remove MP, could do X_without_encoding.shape[-1] and project there
                     if X_orig.shape[-1] != feature_dim:
                         if verbose:
                             print(f"feature_dim is {feature_dim}")
@@ -598,6 +599,7 @@ class UniGNN(nn.Module):
                     )
 
                     # Add residual connection
+                    # TODO: remove MP: X = X_transformer
                     X = X + X_transformer.squeeze(0)
 
                 elif self.args.transformer_version == "v2":

@@ -61,8 +61,15 @@ try:
             print(
                 f"{arg}: {value} (overridden from default: {getattr(default_args, arg)})"
             )
+            setattr(config, arg, value)  # Update the config attribute
 except Exception as e:
     print(f"Error getting arguments: {e}")
+print("=" * 80)
+
+print("\nFinal configuration:")
+print("=" * 80)
+for arg, value in vars(args).items():
+    print(f"{arg}: {value}")
 print("=" * 80)
 
 
@@ -374,7 +381,6 @@ num_hypergraphs = len(current_dataset)
 indices = list(range(num_hypergraphs))
 # TODO: make sure that the radom state does not give a 'trivial' split
 # as the first 500 hgs are labels 0 and the last 500 are label 1.
-train_idx, temp_idx = train_test_split(indices, test_size=0.3, random_state=2)
 
 
 # At the start of the file, after imports
@@ -401,6 +407,7 @@ for seed in range(1, 9):
     out_dir.makedirs_p()
 
     for run in tqdm(range(1, args.n_runs + 1), desc="Training runs"):
+        train_idx, temp_idx = train_test_split(indices, test_size=0.3, random_state=2)
         baselogger.info(f"\n--- Starting run {run}/{args.n_runs} ---")
         run_dir = out_dir / f"{run}"
         run_dir.makedirs_p()

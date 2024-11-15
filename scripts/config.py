@@ -12,13 +12,13 @@ def parse():
         "--do-transformer",
         action="store_true",
         help="Whether to use transformer layer after convolutions",
-    )
+    )  # In addition, store_true creates default values of False
     p.add_argument(
         "--no-transformer",
         action="store_false",
         dest="do_transformer",
         help="Do not use transformer layer after convolutions",
-    )
+    )  # In addition creates default values of True
     p.add_argument(
         "--transformer-version",
         type=str,
@@ -36,13 +36,13 @@ def parse():
         "--add-encodings",
         action="store_true",
         help="whether to add encodings to the features",
-    )
+    )  # In addition, store_true creates default values of False
     p.add_argument(
         "--no-add-encodings",
         action="store_false",
         dest="add_encodings",
         help="do not add encodings to the features",
-    )
+    )  # In addition creates default values of True
     p.add_argument(
         "--add-encodings-hg-classification",
         action="store_true",
@@ -53,7 +53,7 @@ def parse():
         action="store_false",
         dest="add_encodings_hg_classification",
         help="do not add encodings to the features for hypergraph classification",
-    )
+    )  # In addition creates default values of True
     p.add_argument(
         "--dataset-hypergraph-classification",
         type=str,
