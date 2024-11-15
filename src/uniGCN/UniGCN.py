@@ -16,6 +16,9 @@ from uniGCN.calculate_vertex_edges import calculate_V_E
 
 # NOTE: can not tell which implementation is better statistically
 
+# Check if CUDA is available and move tensors to GPU if possible
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 def glorot(tensor):
     """TODO
@@ -148,6 +151,9 @@ class UniGINConv(nn.Module):
         degV: None | list = None,
     ) -> torch.Tensor:
         N = X.shape[0]
+        X = X.to(device)
+        vertex = vertex.to(device)
+        edges = edges.to(device)
         # X0 = X # NOTE: reserved for skip connection
 
         # v1: X -> XW -> AXW -> norm
@@ -374,6 +380,9 @@ class UniGCNConv2(nn.Module):
         )
 
     def forward(self, X, vertex, edges):
+        device = X.device
+        vertex = vertex.to(device)
+        edges = edges.to(device)
         N = X.shape[0]
         degE = self.args.degE
         degV = self.args.degV
@@ -451,6 +460,9 @@ class UniGATConv(nn.Module):
         degE: None | list = None,
         degV: None | list = None,
     ) -> torch.Tensor:
+        device = X.device
+        vertex = vertex.to(device)
+        edges = edges.to(device)
         H, C, N = self.heads, self.out_channels, X.shape[0]
 
         # X0 = X # NOTE: reserved for skip connection
@@ -647,6 +659,8 @@ class UniGNN(nn.Module):
 
                     # Add batch dimension for transformer
                     X_transformer = X_orig.unsqueeze(0)  # [1, N, features]
+                    X_transformer = X_transformer.to(device)
+                    X = X.to(device)
 
                     # Apply full transformer encoding
                     X_transformer = self.transformer(X_transformer)
