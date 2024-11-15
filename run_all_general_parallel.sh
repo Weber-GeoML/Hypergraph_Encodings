@@ -15,7 +15,7 @@ source activate hgencodings_gpu_weber
 add_encodings=(False True)
 do_transformer=(False True)
 transformer_versions=("v1" "v2")
-transformer_depths=(1 2)
+transformer_depths=(1 2 3 10)
 models=("UniGCN" "UniSAGE" "UniGCNII" "UniGAT" "UniGIN")
 data_types=("cocitation" "coauthorship")
 coauthorship_datasets=("cora")
