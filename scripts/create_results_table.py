@@ -187,7 +187,7 @@ def create_results_table(log_dir):
         # Build model name with transformer info if present
         if config.get("do_transformer", False):
             transformer_info = (
-                f" (T{config['transformer_version']}d{config['transformer_depth']})"
+                f" (T_{config['transformer_version']}d_{config['transformer_depth']})"
             )
         else:
             transformer_info = ""
