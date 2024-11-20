@@ -18,11 +18,73 @@ import numpy as np
 # necessary for pickle.load
 import scipy.sparse as sp
 from tqdm import tqdm
+import torch
 
 from encodings_hnns.encodings import HypergraphEncodings
 from encodings_hnns.laplacians import DisconnectedError
 
 warnings.simplefilter("ignore")
+
+
+def _convert_to_hypergraph(dataset: torch.Tensor) -> dict:
+    """Converts a single graph to hypergraph format.
+
+    Args:
+        dataset: Single graph data
+
+    Returns:
+        Dictionary containing hypergraph data
+    """
+    x = dataset[0]  # node features
+    edge_attr = dataset[1]  # edge features
+    edge_index = dataset[2]  # connectivity
+    y = dataset[3]  # labels
+
+    # Convert to hypergraph format
+    hypergraph = {}
+    for i in range(edge_index.shape[1]):
+        # Create hyperedge from each edge
+        hypergraph[f"e_{i}"] = edge_index[:, i].tolist()
+
+    return {
+        "hypergraph": hypergraph,
+        "features": x.numpy(),
+        "labels": y.numpy() if isinstance(y, torch.Tensor) else y,
+        "n": x.shape[0],
+    }
+
+
+def load_and_convert_lrgb_datasets(base_path: str, dataset_name: str) -> list:
+    """Loads and converts LRGB datasets into the required format.
+
+    Args:
+        base_path:
+            Path to the LRGB datasets directory
+        dataset_name:
+            Name of the dataset (e.g., 'peptidesstruct')
+
+    Returns:
+        List of converted Data objects
+    """
+    print(f"Loading {dataset_name} from {base_path}...")
+    # Load train, val, and test sets
+    train_data = torch.load(os.path.join(base_path, dataset_name, "train.pt"))
+    val_data = torch.load(os.path.join(base_path, dataset_name, "val.pt"))
+    test_data = torch.load(os.path.join(base_path, dataset_name, "test.pt"))
+
+    print(f"Train data shape: {train_data.shape}")
+    print(f"Val data shape: {val_data.shape}")
+    print(f"Test data shape: {test_data.shape}")
+    # print the first few elements
+    print(f"Train data first few elements: {train_data[:5]}")
+    print(f"Val data first few elements: {val_data[:5]}")
+    print(f"Test data first few elements: {test_data[:5]}")
+    # Convert all datasets
+    converted_data = []
+    for dataset in [train_data, val_data, test_data]:
+        for i in range(len(dataset)):
+            converted_data.append(_convert_to_hypergraph(dataset[i]))
+    return converted_data
 
 
 class encodings_saver(object):
@@ -378,7 +440,7 @@ class encodings_saver(object):
 
 # Run
 if __name__ == "__main__":
-    lukas = True
+    lukas = False
     if lukas:
         data_type = "hypergraph_classification_datasets"
         # dataset_name = "reddit_hypergraphs"  # does not matter
@@ -387,3 +449,25 @@ if __name__ == "__main__":
         encodings_saver_instance = encodings_saver(data_type)
         # parse calls load_data
         parsed_data = encodings_saver_instance.compute_encodings()
+
+    cluster = True
+    if cluster:
+        base_path = "/n/holyscratch01/mweber_lab/lrgb_datasets"
+        datasets = [
+            "peptidesstruct",
+        ]
+
+    for dataset_name in datasets:
+        print(f"Processing {dataset_name}...")
+        converted_dataset = load_and_convert_lrgb_datasets(base_path, dataset_name)
+
+        assert False
+
+        # Save the converted dataset
+        save_path = os.path.join("data", "graph_classification_datasets")
+        os.makedirs(save_path, exist_ok=True)
+
+        save_file = os.path.join(save_path, f"{dataset_name}_hypergraphs.pickle")
+        with open(save_file, "wb") as handle:
+            pickle.dump(converted_dataset, handle)
+        print(f"Saved {len(converted_dataset)} graphs to {save_file}")
