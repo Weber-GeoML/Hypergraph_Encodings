@@ -29,6 +29,8 @@ warnings.simplefilter("ignore")
 def _convert_to_hypergraph(dataset: torch.Tensor) -> dict:
     """Converts a single graph to hypergraph format.
 
+    THIS IS SPECIFICALLY FOR THE LRGB DATASETS
+
     Args:
         dataset: Single graph data
 
@@ -57,6 +59,8 @@ def _convert_to_hypergraph(dataset: torch.Tensor) -> dict:
 def load_and_convert_lrgb_datasets(base_path: str, dataset_name: str) -> list:
     """Loads and converts LRGB datasets into the required format.
 
+    THIS IS SPECIFICALLY FOR THE LRGB DATASETS
+
     Args:
         base_path:
             Path to the LRGB datasets directory
@@ -72,13 +76,17 @@ def load_and_convert_lrgb_datasets(base_path: str, dataset_name: str) -> list:
     val_data = torch.load(os.path.join(base_path, dataset_name, "val.pt"))
     test_data = torch.load(os.path.join(base_path, dataset_name, "test.pt"))
 
-    print(f"Train data shape: {train_data.shape}")
-    print(f"Val data shape: {val_data.shape}")
-    print(f"Test data shape: {test_data.shape}")
+    print(f"Train data shape: {len(train_data)}")
+    print(f"Val data shape: {len(val_data)}")
+    print(f"Test data shape: {len(test_data)}")
     # print the first few elements
     print(f"Train data first few elements: {train_data[:5]}")
     print(f"Val data first few elements: {val_data[:5]}")
     print(f"Test data first few elements: {test_data[:5]}")
+    print("*" * 100)
+    print(f"the type is {type(train_data[0])}")
+    print("*" * 100)
+    print(train_data[0])
     # Convert all datasets
     converted_data = []
     for dataset in [train_data, val_data, test_data]:
