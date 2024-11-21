@@ -54,9 +54,9 @@ def _convert_to_hypergraph(dataset: torch.Tensor) -> dict:
 
     return {
         "hypergraph": hypergraph,
-        "features": x.numpy(),
+        "features": X.numpy(),
         "labels": y.numpy() if isinstance(y, torch.Tensor) else y,
-        "n": x.shape[0],
+        "n": X.shape[0],
     }
 
 
