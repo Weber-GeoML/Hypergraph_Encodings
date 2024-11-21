@@ -37,10 +37,14 @@ def _convert_to_hypergraph(dataset: torch.Tensor) -> dict:
     Returns:
         Dictionary containing hypergraph data
     """
-    x = dataset[0]  # node features
+    X = dataset[0]  # node features
+    print(f"X shape: {X.shape}")
     edge_attr = dataset[1]  # edge features
+    print(f"edge_attr shape: {edge_attr.shape}")
     edge_index = dataset[2]  # connectivity
+    print(f"edge_index shape: {edge_index.shape}")
     y = dataset[3]  # labels
+    print(f"y shape: {y.shape}")
 
     # Convert to hypergraph format
     hypergraph = {}
