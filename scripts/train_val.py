@@ -120,7 +120,6 @@ X, Y, G = fetch_data(
     normalize_encodings=args.normalize_encodings,  # whether or not to normalize the encodings
 )
 print(f"X are the features \n {X} \n with shape {X.shape}")
-features_shape = X.shape[0]
 print(f"Y are the labels \n {Y}")
 print(f"G is the hg")
 V, E, degE, degV, degE2 = calculate_V_E(X, G, args)
