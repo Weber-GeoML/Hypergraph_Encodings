@@ -27,8 +27,13 @@ class EncodingsSaverBase(object):
             os.path.abspath(inspect.getfile(inspect.currentframe()))
         )
         current = os.path.dirname(os.path.dirname(current))
-        # Makes the path
+        # Makes the paths
         self.d: str = os.path.join(current, "data", data)
+        self.individual_files_dir = os.path.join(self.d, "individual_files")
+
+        # Create individual_files directory if it doesn't exist
+        os.makedirs(self.individual_files_dir, exist_ok=True)
+
         self.data = data
 
     def _process_hypergraph(
@@ -56,18 +61,26 @@ class EncodingsSaverBase(object):
         if verbose:
             print(f"The file is {lukas_file}")
             print(f"The count is {count}")
+            print(f"Features shape: {hg['features'].shape}")
+            print(f"Labels shape: {hg['labels'].shape}")
+
         # construct the hypergraph object in the same way we are used to
         hypergraph: dict = hg["hypergraph"]
         features: np.ndarray = hg["features"]
+        if isinstance(features, np.ndarray):
+            if len(features.shape) == 1:
+                features = features.reshape(-1, 1)
+        else:
+            features = np.array(features).reshape(-1, 1)
         all_nodes: list = sorted(
             set(node for hyperedge in hypergraph.values() for node in hyperedge)
         )
         if verbose:
             print(f"we have {len(all_nodes)} nodes")
-        features_shapes = features.shape
-        if verbose:
-            print(f"The features have shape {features.shape}")
+
         labels: np.ndarray = hg["labels"]
+        if len(labels.shape) == 1:
+            labels = labels.reshape(-1, 1)
         dataset: dict = {
             "hypergraph": hypergraph,
             "features": features,
@@ -88,6 +101,12 @@ class EncodingsSaverBase(object):
                 hgencodings = HypergraphEncodings()
                 k_rw = 20
                 dataset_copy = dataset.copy()
+                if verbose:
+                    print(f"Computing {random_walk_type} random walk encodings...")
+                    print(f"Input features shape: {dataset_copy['features'].shape}")
+
+                features_shapes = dataset_copy["features"].shape
+
                 dataset_copy = hgencodings.add_randowm_walks_encodings(
                     dataset_copy,
                     rw_type=random_walk_type,
@@ -132,7 +151,7 @@ class EncodingsSaverBase(object):
             list_hgs_lape_hodge.append(dataset_copy)
             list_hgs_lape_normalized.append(dataset_copy)
         try:
-            for curvature_type in ["ORC", "FRC"]:
+            for curvature_type in ["FRC"]:  # turn ORC off for cluster
                 hgencodings = HypergraphEncodings()
                 dataset_copy = dataset.copy()
                 dataset_copy = hgencodings.add_curvature_encodings(
@@ -182,7 +201,7 @@ class EncodingsSaverBase(object):
                 f"{lukas_file}_with_encodings_{encoding_type}_count_{count}.pickle"
             )
             with open(
-                os.path.join(self.d, "individual_files", save_file), "wb"
+                os.path.join(self.individual_files_dir, save_file), "wb"
             ) as handle:
                 pickle.dump(encoding_list, handle)
 
