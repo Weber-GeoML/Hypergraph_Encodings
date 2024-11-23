@@ -127,7 +127,7 @@ class Laplacians:
         )
 
     def compute_random_walk_laplacian(
-        self, verbose: bool = True, type: str = "EN"
+        self, verbose: bool = False, type: str = "EN"
     ) -> None:
         """Computes the random walk Laplacian.
 
@@ -215,14 +215,14 @@ class Laplacians:
                         matrix_[i, j] = 1  # diag
                     elif node_j not in self.node_neighbors[node_i]:
                         matrix_[i, j] = 0
-                        matrix_[
-                            j, i
-                        ] = 0  # not neigbors so cannot travel between i and j
+                        matrix_[j, i] = (
+                            0  # not neigbors so cannot travel between i and j
+                        )
                     elif node_j in self.node_neighbors[node_i]:
                         matrix_[i, j] = -i_neighbors_counts[node_j] / count_weights
             self.rw_laplacian = matrix_
 
-    def compute_ldp(self, verbose: bool = True) -> None:
+    def compute_ldp(self, verbose: bool = False) -> None:
         """Computes the ldp. Local degree profile.
 
         Args:
