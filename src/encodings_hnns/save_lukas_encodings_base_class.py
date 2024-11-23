@@ -11,6 +11,14 @@ from encodings_hnns.laplacians import DisconnectedError
 
 warnings.simplefilter("ignore")
 
+# Define mapping of encoding types to their keys
+ENCODING_MAP: dict[str, dict[str, str]] = {
+    "Laplacian": {"Hodge": "lape_hodge", "Normalized": "lape_normalized"},
+    "LCP": {"ORC": "orc", "FRC": "frc"},
+    "LDP": {"LDP": "ldp"},
+    "RW": {"EE": "rw_EE", "EN": "rw_EN", "WE": "rw_WE"},
+}
+
 
 class EncodingsSaverBase(object):
     """Base class for computing and saving encodings"""
@@ -36,14 +44,103 @@ class EncodingsSaverBase(object):
 
         self.data = data
 
+    def compute_random_walks(
+        self, dataset: dict, verbose: bool = False, random_walk_type: str = "WE"
+    ) -> list:
+        list_hgs_with_encodings: list = []
+        try:
+            hgencodings = HypergraphEncodings()
+            k_rw = 20
+            dataset_copy = dataset.copy()
+            if verbose:
+                print(f"Computing {random_walk_type} random walk encodings...")
+                print(f"Input features shape: {dataset_copy['features'].shape}")
+
+            features_shapes = dataset_copy["features"].shape
+
+            dataset_copy = hgencodings.add_randowm_walks_encodings(
+                dataset_copy,
+                rw_type=random_walk_type,
+                k=k_rw,
+                normalized=True,
+                dataset_name=None,
+                verbose=False,
+            )
+            features_shapes_with_encodings = dataset_copy["features"].shape
+            assert features_shapes != features_shapes_with_encodings
+            list_hgs_with_encodings.append(dataset_copy)
+            del hgencodings
+        except DisconnectedError as e:
+            print(f"Error: {e}")
+
+        return list_hgs_with_encodings
+
+    def compute_laplacian(
+        self, dataset: dict, verbose: bool = False, laplacian_type: str = "Hodge"
+    ) -> list:
+        list_hgs_with_encodings: list = []
+        try:
+            hgencodings = HypergraphEncodings()
+            dataset_copy = dataset.copy()
+            dataset_copy = hgencodings.add_laplacian_encodings(
+                dataset_copy,
+                type=laplacian_type,
+                normalized=True,
+                dataset_name=None,
+                verbose=verbose,
+            )
+            list_hgs_with_encodings.append(dataset_copy)
+            del hgencodings
+        except DisconnectedError as e:
+            print(f"Error: {e}")
+        return list_hgs_with_encodings
+
+    def compute_lcp(
+        self, dataset: dict, verbose: bool = False, curvature_type: str = "FRC"
+    ) -> list:
+        list_hgs_with_encodings: list = []
+        try:
+            hgencodings = HypergraphEncodings()
+            dataset_copy = dataset.copy()
+            dataset_copy = hgencodings.add_curvature_encodings(
+                dataset_copy,
+                type=curvature_type,
+                normalized=True,
+                dataset_name=None,
+                verbose=verbose,
+            )
+            list_hgs_with_encodings.append(dataset_copy)
+        except DisconnectedError as e:
+            print(f"Error: {e}")
+        return list_hgs_with_encodings
+
+    def compute_ldp(self, dataset: dict, verbose: bool = False) -> list:
+        list_hgs_with_encodings: list = []
+        try:
+            hgencodings = HypergraphEncodings()
+            dataset_copy = dataset.copy()
+            dataset_copy = hgencodings.add_degree_encodings(
+                dataset_copy,
+                normalized=True,
+                dataset_name=None,
+                verbose=verbose,
+            )
+            list_hgs_with_encodings.append(dataset_copy)
+        except DisconnectedError as e:
+            print(f"Error: {e}")
+        return list_hgs_with_encodings
+
     def _process_hypergraph(
         self,
         hg,
         lukas_file: str,
         count: int,
         verbose: bool = False,
-        encodings_to_compute: str = "EW",
-    ) -> tuple[list, list, list, list, list, list, list, list]:
+        encodings_to_compute: str = "LDP",
+        laplacian_type: str = "Hodge",
+        random_walk_type: str = "WE",
+        curvature_type: str = "FRC",
+    ) -> list:
         """Processes one hypergraph only.
 
         Used for multiprocessing.
@@ -89,117 +186,40 @@ class EncodingsSaverBase(object):
             "n": features.shape[0],
         }
 
-        # TODO: so here, instead of having multiptle lists, let's just have one
-        # and compute the encoding requested
-        # pass in as an arg which one to compute
-
         # Add encodings for random walks, Laplacian, and curvature
         # they each contain only one element (one hg) at the end
-        list_hgs_rw_EE, list_hgs_rw_EN, list_hgs_rw_WE = [], [], []
-        list_hgs_lape_hodge, list_hgs_lape_normalized = [], []
-        list_hgs_orc, list_hgs_frc = [], []
-        list_hgs_ldp = []
+        list_hgs_with_encodings: list = []
 
-        # add the encodings
-        try:
-            for random_walk_type in ["EE", "EN", "WE"]:
-                hgencodings = HypergraphEncodings()
-                k_rw = 20
-                dataset_copy = dataset.copy()
-                if verbose:
-                    print(f"Computing {random_walk_type} random walk encodings...")
-                    print(f"Input features shape: {dataset_copy['features'].shape}")
 
-                features_shapes = dataset_copy["features"].shape
-
-                dataset_copy = hgencodings.add_randowm_walks_encodings(
-                    dataset_copy,
-                    rw_type=random_walk_type,
-                    k=k_rw,
-                    normalized=True,
-                    dataset_name=None,
-                    verbose=False,
-                )
-                features_shapes_with_encodings = dataset_copy["features"].shape
-                assert features_shapes != features_shapes_with_encodings
-                if random_walk_type == "WE":
-                    list_hgs_rw_WE.append(dataset_copy)
-                elif random_walk_type == "EE":
-                    list_hgs_rw_EE.append(dataset_copy)
-                elif random_walk_type == "EN":
-                    list_hgs_rw_EN.append(dataset_copy)
-                del hgencodings
-        except DisconnectedError as e:
-            print(f"Error: {e}")
-            list_hgs_rw_WE.append(dataset_copy)
-            list_hgs_rw_EE.append(dataset_copy)
-            list_hgs_rw_EN.append(dataset_copy)
-
-        try:
-            for laplacian_type in ["Hodge", "Normalized"]:
-                hgencodings = HypergraphEncodings()
-                dataset_copy = dataset.copy()
-                dataset_copy = hgencodings.add_laplacian_encodings(
-                    dataset_copy,
-                    type=laplacian_type,
-                    normalized=True,
-                    dataset_name=None,
-                    verbose=verbose,
-                )
-                if laplacian_type == "Hodge":
-                    list_hgs_lape_hodge.append(dataset_copy)
-                elif laplacian_type == "Normalized":
-                    list_hgs_lape_normalized.append(dataset_copy)
-                del hgencodings
-        except DisconnectedError as e:
-            print(f"Error: {e}")
-            list_hgs_lape_hodge.append(dataset_copy)
-            list_hgs_lape_normalized.append(dataset_copy)
-        try:
-            for curvature_type in ["FRC"]:  # turn ORC off for cluster
-                hgencodings = HypergraphEncodings()
-                dataset_copy = dataset.copy()
-                dataset_copy = hgencodings.add_curvature_encodings(
-                    dataset_copy,
-                    type=curvature_type,
-                    normalized=True,
-                    dataset_name=None,
-                    verbose=verbose,
-                )
-                if curvature_type == "ORC":
-                    list_hgs_orc.append(dataset_copy)
-                elif curvature_type == "FRC":
-                    list_hgs_frc.append(dataset_copy)
-                del hgencodings
-        except DisconnectedError as e:
-            print(f"Error: {e}")
-            list_hgs_orc.append(dataset_copy)
-            list_hgs_frc.append(dataset_copy)
-        try:
-            hgencodings = HypergraphEncodings()
-            dataset_copy = dataset.copy()
-            dataset_copy = hgencodings.add_degree_encodings(
-                dataset_copy,
-                normalized=True,
-                dataset_name=None,
-                verbose=verbose,
+        if encodings_to_compute == "RW":
+            # add the encodings
+            list_hgs_with_encodings.extend(
+                self.compute_random_walks(dataset, verbose, random_walk_type)
             )
-            list_hgs_ldp.append(dataset_copy)
-        except DisconnectedError as e:
-            print(f"Error: {e}")
-            list_hgs_ldp.append(dataset_copy)
+        elif encodings_to_compute == "Laplacian":
+            list_hgs_with_encodings.extend(
+                self.compute_laplacian(dataset, verbose, laplacian_type)
+            )
+        elif encodings_to_compute == "LCP":
+            list_hgs_with_encodings.extend(
+                self.compute_lcp(dataset, verbose, curvature_type)
+            )
+        elif encodings_to_compute == "LDP":
+            list_hgs_with_encodings.extend(
+                self.compute_ldp(dataset, verbose)
+            )
 
-        encoding_map: dict = {
-            "rw_EE": list_hgs_rw_EE,
-            "rw_EN": list_hgs_rw_EN,
-            "rw_WE": list_hgs_rw_WE,
-            "lape_hodge": list_hgs_lape_hodge,
-            "lape_normalized": list_hgs_lape_normalized,
-            "orc": list_hgs_orc,
-            "frc": list_hgs_frc,
-            "ldp": list_hgs_ldp,
-            # Add other mappings as needed
-        }
+        # Get the specific encoding type and key
+        encoding_subtype: str = {
+            "Laplacian": laplacian_type,
+            "LCP": curvature_type,
+            "RW": random_walk_type,
+            "LDP": "LDP",
+        }[encodings_to_compute]
+
+        encoding_key: str = ENCODING_MAP[encodings_to_compute][encoding_subtype]
+
+        encoding_map: dict = {encoding_key: list_hgs_with_encodings}
 
         for encoding_type, encoding_list in encoding_map.items():
             save_file = (
@@ -210,21 +230,15 @@ class EncodingsSaverBase(object):
             ) as handle:
                 pickle.dump(encoding_list, handle)
 
-        return (
-            list_hgs_rw_EE,
-            list_hgs_rw_EN,
-            list_hgs_rw_WE,
-            list_hgs_lape_hodge,
-            list_hgs_lape_normalized,
-            list_hgs_orc,
-            list_hgs_frc,
-            list_hgs_ldp,
-        )
+        return list_hgs_with_encodings
 
     def _process_file(
         self,
         lukas_file: str,
-        encodings_to_compute: str = "EW",
+        encodings_to_compute: str = "LDP",
+        laplacian_type: str = "Hodge",
+        random_walk_type: str = "WE",
+        curvature_type: str = "FRC",
     ) -> tuple[list, list, list, list, list, list, list, list]:
         """Processes one file at a time.
 
@@ -235,15 +249,7 @@ class EncodingsSaverBase(object):
             lukas_file:
                 the file
         """
-        # TODO: here, just return one list.
-        list_hgs_rw_EE: list[dict] = []
-        list_hgs_rw_EN: list[dict] = []
-        list_hgs_rw_WE: list[dict] = []
-        list_hgs_lape_hodge: list[dict] = []
-        list_hgs_lape_normalized: list[dict] = []
-        list_hgs_orc: list[dict] = []
-        list_hgs_frc: list[dict] = []
-        list_hgs_ldp: list[dict] = []
+        list_hgs_with_encodings_file: list[dict] = []
 
         with open(os.path.join(self.d, f"{lukas_file}.pickle"), "rb") as handle:
             # list of hypergraphs
@@ -262,37 +268,23 @@ class EncodingsSaverBase(object):
 
         # Retrieve and accumulate results
         for result in results:
-            (
-                rw_EE,
-                rw_EN,
-                rw_WE,
-                lape_hodge,
-                lape_normalized,
-                orc,
-                frc,
-                ldp,
-            ) = result.get()
+            list_hgs_with_encodings = result.get()
 
-            list_hgs_rw_EE.extend(rw_EE)
-            list_hgs_rw_EN.extend(rw_EN)
-            list_hgs_rw_WE.extend(rw_WE)
-            list_hgs_lape_hodge.extend(lape_hodge)
-            list_hgs_lape_normalized.extend(lape_normalized)
-            list_hgs_orc.extend(orc)
-            list_hgs_frc.extend(frc)
-            list_hgs_ldp.extend(ldp)
+            list_hgs_with_encodings_file.extend(list_hgs_with_encodings)
+
+
+        # Get the specific encoding type and key
+        encoding_subtype: str = {
+            "Laplacian": laplacian_type,
+            "LCP": curvature_type,
+            "RW": random_walk_type,
+            "LDP": "LDP",
+        }[encodings_to_compute]
+
+        encoding_key: str = ENCODING_MAP[encodings_to_compute][encoding_subtype]s
 
         # Save each accumulated encoding list as a separate pickle file
-        accumulated_encodings = {
-            "rw_EE": list_hgs_rw_EE,
-            "rw_EN": list_hgs_rw_EN,
-            "rw_WE": list_hgs_rw_WE,
-            "lape_hodge": list_hgs_lape_hodge,
-            "lape_normalized": list_hgs_lape_normalized,
-            "orc": list_hgs_orc,
-            "frc": list_hgs_frc,
-            "ldp": list_hgs_ldp,
-        }
+        accumulated_encodings = {encoding_key: list_hgs_with_encodings_file}
 
         for encoding_type, encoding_list in accumulated_encodings.items():
             combined_file = f"{lukas_file}_with_encodings_{encoding_type}.pickle"
@@ -303,13 +295,4 @@ class EncodingsSaverBase(object):
                     f"Saved combined encodings to {combined_file} with {len(encoding_list)} elements"
                 )
 
-        return (
-            list_hgs_rw_EE,
-            list_hgs_rw_EN,
-            list_hgs_rw_WE,
-            list_hgs_lape_hodge,
-            list_hgs_lape_normalized,
-            list_hgs_orc,
-            list_hgs_frc,
-            list_hgs_ldp,
-        )
+        return list_hgs_with_encodings_file

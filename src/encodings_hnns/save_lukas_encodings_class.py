@@ -6,6 +6,11 @@ from encodings_hnns.save_lukas_encodings_base_class import EncodingsSaverBase
 warnings.simplefilter("ignore")
 
 
+# TODO TODO TODO
+# TODO: Also need to modify this file to account for the changes I made,
+# THEN need something in scripts, then a bash script.
+
+
 class encodings_saver(EncodingsSaverBase):
     """Parses data"""
 

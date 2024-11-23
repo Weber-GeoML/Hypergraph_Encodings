@@ -7,6 +7,14 @@ from encodings_hnns.save_lukas_encodings_base_class import EncodingsSaverBase
 
 warnings.simplefilter("ignore")
 
+# Define mapping of encoding types to their keys
+ENCODING_MAP: dict[str, dict[str, str]] = {
+    "Laplacian": {"Hodge": "lape_hodge", "Normalized": "lape_normalized"},
+    "LCP": {"ORC": "orc", "FRC": "frc"},
+    "LDP": {"LDP": "ldp"},
+    "RW": {"EE": "rw_EE", "EN": "rw_EN", "WE": "rw_WE"},
+}
+
 
 class encodings_saver_lrgb(EncodingsSaverBase):
     """Handles encoding computation for LRGB datasets"""
@@ -21,7 +29,10 @@ class encodings_saver_lrgb(EncodingsSaverBase):
         dataset_name: str,
         split: str,
         encodings_to_compute: str,
-    ) -> dict[str, dict[str, list]]:
+        laplacian_type: str,
+        random_walk_type: str,
+        curvature_type: str,
+    ) -> dict[str, list]:
         """Process one split of the dataset (train/val/test)"""
         results: list[mp.pool.AsyncResult] = []
         with mp.Pool() as pool:
@@ -34,34 +45,32 @@ class encodings_saver_lrgb(EncodingsSaverBase):
             pool.close()
             pool.join()
 
-        # Combine results
-        combined_results: dict[str, list] = {
-            "rw_EE": [],
-            "rw_EN": [],
-            "rw_WE": [],
-            "lape_hodge": [],
-            "lape_normalized": [],
-            "orc": [],
-            "frc": [],
-            "ldp": [],
-        }
+        # Get the specific encoding type and key
+        encoding_subtype: str = {
+            "Laplacian": laplacian_type,
+            "LCP": curvature_type,
+            "RW": random_walk_type,
+            "LDP": "LDP",
+        }[encodings_to_compute]
 
+        encoding_key: str = ENCODING_MAP[encodings_to_compute][encoding_subtype]
+
+        # Combine results
+        combined_results: dict[str, list] = {encoding_key: []}
         for result in results:
             encodings = result.get()
-            combined_results["rw_EE"].extend(encodings[0])
-            combined_results["rw_EN"].extend(encodings[1])
-            combined_results["rw_WE"].extend(encodings[2])
-            combined_results["lape_hodge"].extend(encodings[3])
-            combined_results["lape_normalized"].extend(encodings[4])
-            combined_results["orc"].extend(encodings[5])
-            combined_results["frc"].extend(encodings[6])
-            combined_results["ldp"].extend(encodings[7])
+            combined_results[encoding_key].extend(encodings)
 
         return combined_results
 
     def compute_encodings(
-        self, converted_datasets: tuple, encodings_to_compute: str
-    ) -> dict[str, tuple[list, list, list, list, list, list, list, list]]:
+        self,
+        converted_datasets: tuple,
+        encodings_to_compute: str,
+        laplacian_type: str,
+        random_walk_type: str,
+        curvature_type: str,
+    ) -> dict[str, dict[str, list]]:
         """Returns a dataset specific function to compute the
         encodings on the data added by Lukas
 
@@ -71,14 +80,42 @@ class encodings_saver_lrgb(EncodingsSaverBase):
 
         all_data, train_data, val_data, test_data = converted_datasets
 
-        results: dict[str, dict[str, list]] = {
-            "all": self.process_split(all_data, self.data, "all", encodings_to_compute),
-            "train": self.process_split(
-                train_data, self.data, "train", encodings_to_compute
+        results: dict[str, dict[str, dict[str, list]]] = {
+            "all": self.process_split(
+                all_data,
+                self.data,
+                "all",
+                encodings_to_compute,
+                laplacian_type,
+                random_walk_type,
+                curvature_type,
             ),
-            "val": self.process_split(val_data, self.data, "val", encodings_to_compute),
+            "train": self.process_split(
+                train_data,
+                self.data,
+                "train",
+                encodings_to_compute,
+                laplacian_type,
+                random_walk_type,
+                curvature_type,
+            ),
+            "val": self.process_split(
+                val_data,
+                self.data,
+                "val",
+                encodings_to_compute,
+                laplacian_type,
+                random_walk_type,
+                curvature_type,
+            ),
             "test": self.process_split(
-                test_data, self.data, "test", encodings_to_compute
+                test_data,
+                self.data,
+                "test",
+                encodings_to_compute,
+                laplacian_type,
+                random_walk_type,
+                curvature_type,
             ),
         }
 

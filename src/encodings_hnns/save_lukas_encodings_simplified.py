@@ -9,9 +9,9 @@ import multiprocessing as mp
 import os
 import pickle
 import warnings
-import click
 from typing import List, Optional
 
+import click
 # necessary for pickle.load
 import torch
 
@@ -272,6 +272,9 @@ def process_lrgb_dataset(dataset_name: str, base_path: str, encodings_to_compute
                 train_converted,
                 val_converted,
                 test_converted,
-                encodings_to_compute,
             )
-        )
+                encodings_to_compute,  # eg  RW, LDP, LCP, Laplacian
+                laplacian_type,
+                random_walk_type,
+                curvature_type,
+            )
