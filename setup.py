@@ -11,6 +11,7 @@ setup(
         "pandas",
         "matplotlib",
         "torch",
+        "networkx",
         "scipy==1.10.0",
         "torch-geometric",
         "torch-scatter",

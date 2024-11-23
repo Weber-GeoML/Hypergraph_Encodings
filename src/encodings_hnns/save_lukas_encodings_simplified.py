@@ -25,44 +25,44 @@ from encodings_hnns.save_lukas_encodings_lrgb import encodings_saver_lrgb
 warnings.simplefilter("ignore")
 
 
-def compute_clique_expansion(dataset: dict) -> torch_geometric.data.Data:
-    """Computes the clique expansion of a hypergraph.
+# def compute_clique_expansion(dataset: dict) -> torch_geometric.data.Data:
+#     """Computes the clique expansion of a hypergraph.
 
-    This code converts a hypergraph into a regular graph using the clique expansion method.
+#     This code converts a hypergraph into a regular graph using the clique expansion method.
 
-    Args:
-        dataset:
-            the hypergraph
-            A hypergraph is a dictionary with the following keys:
-                - hypergraph : a dictionary with the hyperedges as values
-                - features : a dictionary with the features of the nodes as values
-                - labels : a dictionary with the labels of the nodes as values
-                - n : the number of nodes in the hypergraph
-    """
-    hypergraph: dict[str, list] = dataset["hypergraph"]
-    num_nodes: int = dataset["n"]
-    G: nx.Graph = nx.Graph()
-    # add nodes (note that the nodes go from 0 to n-1 here...)
-    G.add_nodes_from(range(num_nodes))
+#     Args:
+#         dataset:
+#             the hypergraph
+#             A hypergraph is a dictionary with the following keys:
+#                 - hypergraph : a dictionary with the hyperedges as values
+#                 - features : a dictionary with the features of the nodes as values
+#                 - labels : a dictionary with the labels of the nodes as values
+#                 - n : the number of nodes in the hypergraph
+#     """
+#     hypergraph: dict[str, list] = dataset["hypergraph"]
+#     num_nodes: int = dataset["n"]
+#     G: nx.Graph = nx.Graph()
+#     # add nodes (note that the nodes go from 0 to n-1 here...)
+#     G.add_nodes_from(range(num_nodes))
 
-    # get edges
-    hyperedges: list[list] = list(hypergraph.values())
-    for hyperedge in hyperedges:
-        #  For each hyperedge, creates regular edges between all
-        # pairs of nodes in that hyperedge.
-        edges = itertools.combinations(hyperedge, 2)
-        G.add_edges_from(edges)
+#     # get edges
+#     hyperedges: list[list] = list(hypergraph.values())
+#     for hyperedge in hyperedges:
+#         #  For each hyperedge, creates regular edges between all
+#         # pairs of nodes in that hyperedge.
+#         edges = itertools.combinations(hyperedge, 2)
+#         G.add_edges_from(edges)
 
-    # convert to torch geometric data object
-    graph: torch_geometric.data.Data = from_networkx(G)
+#     # convert to torch geometric data object
+#     graph: torch_geometric.data.Data = from_networkx(G)
 
-    # get node features
-    graph.x = torch.tensor(dataset["features"]).float()
+#     # get node features
+#     graph.x = torch.tensor(dataset["features"]).float()
 
-    # get node labels
-    # (finds the index where the label is 1 in one-hot encoded format)
-    graph.y = torch.tensor([np.where(node == 1)[0][0] for node in dataset["labels"]])
-    return graph
+#     # get node labels
+#     # (finds the index where the label is 1 in one-hot encoded format)
+#     graph.y = torch.tensor([np.where(node == 1)[0][0] for node in dataset["labels"]])
+#     return graph
 
 
 def _convert_to_hypergraph(dataset: torch.Tensor) -> dict:
