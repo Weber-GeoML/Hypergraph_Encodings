@@ -433,7 +433,7 @@ class encodings_saver(object):
         #     list_hgs_ldp,
         # )
 
-    def _compute_encodings(self, verbose: bool = True) -> dict:
+    def _compute_encodings(self, verbose: bool = False) -> dict:
         """Computes the encodings on the data
 
         Args:

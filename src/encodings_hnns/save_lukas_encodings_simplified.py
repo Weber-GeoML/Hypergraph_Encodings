@@ -59,7 +59,7 @@ warnings.simplefilter("ignore")
 #     return graph
 
 
-def _convert_to_hypergraph(dataset: torch.Tensor) -> dict:
+def _convert_to_hypergraph(dataset: torch.Tensor, verbose: bool = False) -> dict:
     """Converts a single graph to hypergraph format.
 
     THIS IS SPECIFICALLY FOR THE LRGB DATASETS
@@ -71,15 +71,19 @@ def _convert_to_hypergraph(dataset: torch.Tensor) -> dict:
         Dictionary containing hypergraph data
     """
     X = dataset[0]  # node features
-    print(f"X shape: {X.shape}")
+    if verbose:
+        print(f"X shape: {X.shape}")
     edge_attr = dataset[1]  # edge features
-    print(
-        f"edge_attr shape: {edge_attr.shape}"
-    )  # I don't think we will do anything with these. These are edge features.
+    if verbose:
+        print(
+            f"edge_attr shape: {edge_attr.shape}"
+        )  # I don't think we will do anything with these. These are edge features.
     edge_index = dataset[2]  # connectivity
-    print(f"edge_index shape: {edge_index.shape}")
+    if verbose:
+        print(f"edge_index shape: {edge_index.shape}")
     y = dataset[3]  # labels
-    print(f"y shape: {y.shape}")
+    if verbose:
+        print(f"y shape: {y.shape}")
 
     """
     eg:
@@ -116,7 +120,7 @@ def _convert_to_hypergraph(dataset: torch.Tensor) -> dict:
 
     return {
         "hypergraph": hypergraph,
-        "features": X.numpy(),
+        "features": X.numpy().reshape(-1, 1),
         "labels": (
             y.numpy() if isinstance(y, torch.Tensor) else y
         ),  # this is now a graph level label
@@ -209,6 +213,9 @@ if __name__ == "__main__":
     cluster = True
     if cluster:
         base_path = "/n/holyscratch01/mweber_lab/lrgb_datasets"
+        base_path = (
+            "/Users/pellegrinraphael/Desktop/Repos_GNN/Hypergraph_Encodings/data"
+        )
         datasets = [
             "peptidesstruct",
         ]
