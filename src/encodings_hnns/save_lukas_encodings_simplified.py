@@ -5,19 +5,13 @@ And now the "features" field of every dict will have been updated with the featu
 
 """
 
-import itertools
 import multiprocessing as mp
 import os
 import pickle
 import warnings
 
-# import hypernetx as hnx
-import networkx as nx
-import numpy as np
-
 # necessary for pickle.load
 import torch
-from torch_geometric.data import from_networkx
 
 from encodings_hnns.save_lukas_encodings_class import encodings_saver
 from encodings_hnns.save_lukas_encodings_lrgb import encodings_saver_lrgb
