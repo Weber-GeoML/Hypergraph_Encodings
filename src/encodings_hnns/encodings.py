@@ -108,7 +108,9 @@ class HypergraphEncodings:
         dataset["features"]
 
         """
-        filename: str = f"computed_encodings/{dataset_name}_degree_encodings_normalized_{normalized}.pkl"
+        filename: str = (
+            f"computed_encodings/{dataset_name}_degree_encodings_normalized_{normalized}.pkl"
+        )
         if os.path.exists(filename):
             with open(filename, "rb") as f:
                 print(f"Loading hypergraph from {filename}")
@@ -157,11 +159,17 @@ class HypergraphEncodings:
                     print(f"We add the degree encoding:\n {ld_vals}")
                 if normalized:
                     stacked_features = np.hstack(
-                        (hypergraph["features"][node], ld_vals)
+                        (
+                            hypergraph["features"][node].reshape(-1, 1),
+                            ld_vals,
+                        )
                     )
                 elif not normalized:
                     stacked_features = np.hstack(
-                        ([hypergraph["features"][node]], ld_vals)
+                        (
+                            hypergraph["features"][node].reshape(-1, 1),
+                            ld_vals,
+                        )
                     )
                 if verbose:
                     print(f"The stacked features are \n {stacked_features}")
@@ -204,7 +212,9 @@ class HypergraphEncodings:
             the hypergraph with the frc or orc encodings added to the featuress
 
         """
-        filename: str = f"computed_encodings/{dataset_name}_curvature_encodings_{type}_normalized_{normalized}.pkl"
+        filename: str = (
+            f"computed_encodings/{dataset_name}_curvature_encodings_{type}_normalized_{normalized}.pkl"
+        )
         if os.path.exists(filename):
             with open(filename, "rb") as f:
                 print(f"Loading hypergraph from {filename}")
@@ -280,11 +290,17 @@ class HypergraphEncodings:
                     print(f"We add the encoding:\n {rc_vals}")
                 if normalized:
                     padded_features[node] = np.hstack(
-                        (hypergraph["features"][node], rc_vals)
+                        (
+                            hypergraph["features"][node].reshape(-1, 1),
+                            rc_vals,
+                        )
                     )
                 elif not normalized:
                     padded_features[node] = np.hstack(
-                        ([hypergraph["features"][node]], rc_vals)
+                        (
+                            hypergraph["features"][node].reshape(-1, 1),
+                            rc_vals,
+                        )
                     )
             hypergraph["features"] = padded_features
             assert (
@@ -335,9 +351,13 @@ class HypergraphEncodings:
             the hypergraph with the Laplacian encodings added to the featuress
         """
         if type == "Hodge" or type == "Normalized":
-            filename: str = f"computed_encodings/{dataset_name}_laplacian_encodings_{type}_normalized_{normalized}.pkl"
+            filename: str = (
+                f"computed_encodings/{dataset_name}_laplacian_encodings_{type}_normalized_{normalized}.pkl"
+            )
         elif type == "RW":
-            filename: str = f"computed_encodings/{dataset_name}_laplacian_encodings_{type}_rw_{rw_type}_normalized_{normalized}.pkl"
+            filename: str = (
+                f"computed_encodings/{dataset_name}_laplacian_encodings_{type}_rw_{rw_type}_normalized_{normalized}.pkl"
+            )
         if os.path.exists(filename):
             with open(filename, "rb") as f:
                 print(f"Loading hypergraph from {filename}")
@@ -455,11 +475,17 @@ class HypergraphEncodings:
                 # this assumes that the features are present
                 if normalized:
                     stacked_features = np.hstack(
-                        (hypergraph["features"][node], laplacian_vals)
+                        (
+                            hypergraph["features"][node].reshape(-1, 1),
+                            laplacian_vals,
+                        )
                     )
                 elif not normalized:
                     stacked_features = np.hstack(
-                        ([hypergraph["features"][node]], laplacian_vals)
+                        (
+                            hypergraph["features"][node].reshape(-1, 1),
+                            laplacian_vals,
+                        )
                     )
                 if verbose:
                     print(f"The stacked features are {stacked_features}")
@@ -507,7 +533,9 @@ class HypergraphEncodings:
             the hypergraph with the RW encodings added to the featuress
 
         """
-        filename: str = f"computed_encodings/{dataset_name}_rw_encodings_{rw_type}_k_{k}_normalized_{normalized}.pkl"
+        filename: str = (
+            f"computed_encodings/{dataset_name}_rw_encodings_{rw_type}_k_{k}_normalized_{normalized}.pkl"
+        )
         if os.path.exists(filename):
             with open(filename, "rb") as f:
                 print(f"Loading hypergraph from {filename}")
@@ -592,11 +620,17 @@ class HypergraphEncodings:
                     )
                 if normalized:
                     stacked_features = np.hstack(
-                        (hypergraph["features"][node], laplacian_vals)
+                        (
+                            hypergraph["features"][node].reshape(-1, 1),
+                            laplacian_vals,
+                        )
                     )
                 elif not normalized:
                     stacked_features = np.hstack(
-                        ([hypergraph["features"][node]], laplacian_vals)
+                        (
+                            hypergraph["features"][node].reshape(-1, 1),
+                            laplacian_vals,
+                        )
                     )
                 padded_features[node] = stacked_features
                 i += 1
