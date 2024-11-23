@@ -9,6 +9,8 @@ import multiprocessing as mp
 import os
 import pickle
 import warnings
+import click
+from typing import List, Optional
 
 # necessary for pickle.load
 import torch
@@ -199,7 +201,7 @@ def load_and_convert_lrgb_datasets(
 
 
 # Run
-if __name__ == "__main__":
+def process_lrgb_dataset(dataset_name: str, base_path: str, encodings_to_compute: str):
     lukas = False
     if lukas:
         data_type = "hypergraph_classification_datasets"
@@ -210,9 +212,9 @@ if __name__ == "__main__":
         # parse calls load_data
         parsed_data = encodings_saver_instance.compute_encodings()
 
-    cluster = True
-    if cluster:
-        base_path = "/n/holyscratch01/mweber_lab/lrgb_datasets"
+    lrgb = True
+    if lrgb:
+        # base_path = "/n/holyscratch01/mweber_lab/lrgb_datasets"
         base_path = (
             "/Users/pellegrinraphael/Desktop/Repos_GNN/Hypergraph_Encodings/data"
         )
@@ -265,5 +267,11 @@ if __name__ == "__main__":
         # Create encoder instance and compute encodings
         encoder = encodings_saver_lrgb(dataset_name)
         results = encoder.compute_encodings(
-            (converted_dataset, train_converted, val_converted, test_converted)
+            (
+                converted_dataset,
+                train_converted,
+                val_converted,
+                test_converted,
+                encodings_to_compute,
+            )
         )

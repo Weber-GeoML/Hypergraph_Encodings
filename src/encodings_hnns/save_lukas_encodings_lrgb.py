@@ -16,7 +16,11 @@ class encodings_saver_lrgb(EncodingsSaverBase):
         self.data = data
 
     def process_split(
-        self, split_data: list, dataset_name: str, split: str
+        self,
+        split_data: list,
+        dataset_name: str,
+        split: str,
+        encodings_to_compute: str,
     ) -> dict[str, dict[str, list]]:
         """Process one split of the dataset (train/val/test)"""
         results: list[mp.pool.AsyncResult] = []
@@ -24,7 +28,7 @@ class encodings_saver_lrgb(EncodingsSaverBase):
             for count, hg in enumerate(split_data):
                 result = pool.apply_async(
                     self._process_hypergraph,
-                    (hg, dataset_name, count, split),
+                    (hg, dataset_name, count, split, encodings_to_compute),
                 )
                 results.append(result)
             pool.close()
@@ -56,7 +60,7 @@ class encodings_saver_lrgb(EncodingsSaverBase):
         return combined_results
 
     def compute_encodings(
-        self, converted_datasets: tuple
+        self, converted_datasets: tuple, encodings_to_compute: str
     ) -> dict[str, tuple[list, list, list, list, list, list, list, list]]:
         """Returns a dataset specific function to compute the
         encodings on the data added by Lukas
@@ -68,10 +72,14 @@ class encodings_saver_lrgb(EncodingsSaverBase):
         all_data, train_data, val_data, test_data = converted_datasets
 
         results: dict[str, dict[str, list]] = {
-            "all": self.process_split(all_data, self.data, "all"),
-            "train": self.process_split(train_data, self.data, "train"),
-            "val": self.process_split(val_data, self.data, "val"),
-            "test": self.process_split(test_data, self.data, "test"),
+            "all": self.process_split(all_data, self.data, "all", encodings_to_compute),
+            "train": self.process_split(
+                train_data, self.data, "train", encodings_to_compute
+            ),
+            "val": self.process_split(val_data, self.data, "val", encodings_to_compute),
+            "test": self.process_split(
+                test_data, self.data, "test", encodings_to_compute
+            ),
         }
 
         # Save combined results

@@ -42,6 +42,7 @@ class EncodingsSaverBase(object):
         lukas_file: str,
         count: int,
         verbose: bool = False,
+        encodings_to_compute: str = "EW",
     ) -> tuple[list, list, list, list, list, list, list, list]:
         """Processes one hypergraph only.
 
@@ -87,6 +88,10 @@ class EncodingsSaverBase(object):
             "labels": labels,
             "n": features.shape[0],
         }
+
+        # TODO: so here, instead of having multiptle lists, let's just have one
+        # and compute the encoding requested
+        # pass in as an arg which one to compute
 
         # Add encodings for random walks, Laplacian, and curvature
         # they each contain only one element (one hg) at the end
@@ -217,7 +222,9 @@ class EncodingsSaverBase(object):
         )
 
     def _process_file(
-        self, lukas_file: str
+        self,
+        lukas_file: str,
+        encodings_to_compute: str = "EW",
     ) -> tuple[list, list, list, list, list, list, list, list]:
         """Processes one file at a time.
 
@@ -228,6 +235,7 @@ class EncodingsSaverBase(object):
             lukas_file:
                 the file
         """
+        # TODO: here, just return one list.
         list_hgs_rw_EE: list[dict] = []
         list_hgs_rw_EN: list[dict] = []
         list_hgs_rw_WE: list[dict] = []
@@ -305,43 +313,3 @@ class EncodingsSaverBase(object):
             list_hgs_frc,
             list_hgs_ldp,
         )
-
-        # for result in results:
-        #     list_hgs_rw_EE.extend(result[0])
-        #     list_hgs_rw_EN.extend(result[1])
-        #     list_hgs_rw_WE.extend(result[2])
-        #     list_hgs_lape_hodge.extend(result[3])
-        #     list_hgs_lape_normalized.extend(result[4])
-        #     list_hgs_orc.extend(result[5])
-        #     list_hgs_frc.extend(result[6])
-        #     list_hgs_ldp.extend(result[7])
-
-        # encoding_map: dict = {
-        #     "rw_EE": list_hgs_rw_EE,
-        #     "rw_EN": list_hgs_rw_EN,
-        #     "rw_WE": list_hgs_rw_WE,
-        #     "lape_hodge": list_hgs_lape_hodge,
-        #     "lape_normalized": list_hgs_lape_normalized,
-        #     "orc": list_hgs_orc,
-        #     "frc": list_hgs_frc,
-        #     "ldp": list_hgs_ldp,
-        #     # Add other mappings as needed
-        # }
-
-        # # Loop through the encoding map and save each list to a file
-        # for encoding_type, encoding_list in encoding_map.items():
-        #     save_file = f"{lukas_file}_with_encodings_{encoding_type}.pickle"
-        #     with open(os.path.join(self.d, save_file), "wb") as handle:
-        #         pickle.dump(encoding_list, handle)
-
-        # # Return all lists
-        # return (
-        #     list_hgs_rw_EE,
-        #     list_hgs_rw_EN,
-        #     list_hgs_rw_WE,
-        #     list_hgs_lape_hodge,
-        #     list_hgs_lape_normalized,
-        #     list_hgs_orc,
-        #     list_hgs_frc,
-        #     list_hgs_ldp,
-        # )
