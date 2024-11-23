@@ -1,10 +1,11 @@
+import json
 import os
 import re
-import pandas as pd
-import numpy as np
-from tabulate import tabulate
+
 import matplotlib.pyplot as plt
-import json
+import numpy as np
+import pandas as pd
+from tabulate import tabulate
 
 
 def parse_log_file(file_path):

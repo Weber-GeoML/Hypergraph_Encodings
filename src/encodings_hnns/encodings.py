@@ -417,7 +417,6 @@ class HypergraphEncodings:
 
             features_augmented = hypergraph["features"]
 
-
             # Ensure k does not exceed the number of eigenvectors available
             k = min(k, eigenvectors.shape[1])
 

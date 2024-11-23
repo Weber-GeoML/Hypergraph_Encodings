@@ -428,9 +428,9 @@ def initialise(
     # x_i= 1/√d_i sum 1/√d_e Wh_e,
     degE: torch.Tensor = degE.pow(-0.5)
     degV: torch.Tensor = degV.pow(-0.5)
-    degV[degV.isinf()] = (
-        1  # when not added self-loop, some nodes might not be connected with any edge
-    )
+    degV[
+        degV.isinf()
+    ] = 1  # when not added self-loop, some nodes might not be connected with any edge
 
     V, E = V.to(device), E.to(device)
     args.degV = degV.to(device)

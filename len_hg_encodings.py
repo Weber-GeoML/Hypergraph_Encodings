@@ -1,5 +1,5 @@
-import pickle
 import os
+import pickle
 
 # Directory where the pickle files are stored
 # directory = '/Users/pellegrinraphael/Desktop/Repos_GNN/Hypergraph_Encodings/data/hypergraph_classification_datasets'

@@ -53,7 +53,6 @@ def normalize_l2(X):
 
 # v1: X -> XW -> AXW -> norm
 class UniSAGEConv(nn.Module):
-
     def __init__(
         self,
         args,
@@ -120,7 +119,6 @@ class UniSAGEConv(nn.Module):
 
 # v1: X -> XW -> AXW -> norm
 class UniGINConv(nn.Module):
-
     def __init__(
         self, args, in_channels, out_channels, heads=8, dropout=0.0, negative_slope=0.2
     ):
@@ -178,7 +176,6 @@ class UniGINConv(nn.Module):
 
 # v1: X -> XW -> AXW -> norm
 class UniGCNConv(nn.Module):
-
     def __init__(
         self,
         args,
@@ -361,7 +358,6 @@ class UniGCNConv(nn.Module):
 
 # v2: X -> AX -> norm -> AXW
 class UniGCNConv2(nn.Module):
-
     def __init__(
         self, args, in_channels, out_channels, heads=8, dropout=0.0, negative_slope=0.2
     ):
@@ -413,7 +409,6 @@ class UniGCNConv2(nn.Module):
 
 
 class UniGATConv(nn.Module):
-
     def __init__(
         self,
         args,

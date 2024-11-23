@@ -1,11 +1,12 @@
+import argparse
+from typing import Union
+
+import numpy as np
 import scipy.sparse as sp
 import torch
 import torch.optim as optim
 import torch_sparse
 from torch_scatter import scatter
-import numpy as np
-import argparse
-from typing import Union
 
 from uniGCN.UniGCN import UniGNN
 
@@ -158,9 +159,9 @@ def initialise_for_hypergraph_classification(
         # x_i= 1/√d_i sum 1/√d_e Wh_e,
         degE: torch.Tensor = degE.pow(-0.5)
         degV: torch.Tensor = degV.pow(-0.5)
-        degV[degV.isinf()] = (
-            1  # when not added self-loop, some nodes might not be connected with any edge
-        )
+        degV[
+            degV.isinf()
+        ] = 1  # when not added self-loop, some nodes might not be connected with any edge
 
         degVs[idx] = degV.to(device)
         degEs[idx] = degE.to(device)

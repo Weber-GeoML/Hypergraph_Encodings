@@ -4,30 +4,27 @@ This is the file for node level classifications
 
 import datetime
 import os
+import pickle
 import shutil
+import sys
 import time
 from random import sample
 
 import config
+import matplotlib.pyplot as plt
 import numpy as np
 import path
 import torch
 import torch.nn.functional as F
 from torch.optim import optimizer
-import matplotlib.pyplot as plt
-import pickle
-import sys
-import path
 
 # load data
 from encodings_hnns.data_handling import load
-from uniGCN.calculate_vertex_edges import calculate_V_E
 from uniGCN.calculate_vertex_edges import calculate_V_E
 
 ### configure logger
 from uniGCN.logger import get_logger
 from uniGCN.prepare import accuracy, fetch_data, initialise
-import config
 
 # Initialize results dictionary before the training loops
 all_results = {"train_accs": {}, "val_accs": {}, "test_accs": {}, "params": {}}

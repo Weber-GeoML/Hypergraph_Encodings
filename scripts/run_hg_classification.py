@@ -2,28 +2,28 @@
 
 import datetime
 import os
-from random import sample
 import pickle
 import shutil
+import sys
 import time
-import matplotlib.pyplot as plt
+from random import sample
 
 import config
+import matplotlib.pyplot as plt
 import numpy as np
 import path
 import torch
 import torch.nn.functional as F
 from sklearn.model_selection import train_test_split
+from split_data_for_hypergraph_classification import get_split
 from torch.optim import optimizer
 from tqdm import tqdm  # Add this import
-import sys
 
 ### configure logger
 ### configure logger
 from uniGCN.logger import get_logger
 from uniGCN.prepare import accuracy
 from uniGCN.prepare_hg import initialise_for_hypergraph_classification
-from split_data_for_hypergraph_classification import get_split
 
 # Initialize current_dataset as None before the loading attempts
 current_dataset = None

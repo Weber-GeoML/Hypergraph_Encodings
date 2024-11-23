@@ -14,6 +14,6 @@ export PATH="/n/home04/rpellegrinext/Hypergraph_Encodings/julia-1.9.3/bin:$PATH"
 # Activate the Conda environment
 source activate hgencodings_gpu_weber
 
-echo "Running: python src/encodings_hnns/save_lukas_encodings.py"
-python src/encodings_hnns/save_lukas_encodings.py
+echo "Running: python src/encodings_hnns/save_lukas_encodings_simplified.py"
+python src/encodings_hnns/save_lukas_encodings_simplified.py
                                                     

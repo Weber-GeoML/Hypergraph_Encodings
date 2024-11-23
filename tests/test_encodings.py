@@ -10,8 +10,8 @@ Can use the toy hypergraph from our draft"""
 
 # TODO: test this way more, not just for ldp
 
-import pytest
 import numpy as np
+import pytest
 from numpy.testing import assert_array_equal
 
 from encodings_hnns.encodings import HypergraphEncodings
