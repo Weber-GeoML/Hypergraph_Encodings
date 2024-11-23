@@ -57,7 +57,7 @@ def toy_hypergraph_with_features() -> dict[str, dict]:
             "green": [2, 4, 5],
             "blue": [3, 4],
         },
-        "features": np.matrix([[1], [1], [1], [1], [1], [1]]),
+        "features": np.array([[1], [1], [1], [1], [1], [1]]),
         "labels": {},
         "n": 6,
     }
@@ -80,8 +80,7 @@ def toy_hypergraph_with_encodings_ldp() -> dict[str, dict]:
             "green": [3, 5, 6],
             "blue": [4, 5],
         },
-        # features added from LDP
-        "features": np.matrix(
+        "features": np.array(
             [
                 [1, 1, 2, 3, 2.5, 2.5, 0.5],
                 [1, 2, 1, 3, 2, 2, 1],
