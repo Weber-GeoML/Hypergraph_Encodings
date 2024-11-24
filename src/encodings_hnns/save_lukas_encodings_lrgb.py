@@ -16,7 +16,7 @@ class encodings_saver_lrgb(EncodingsSaverBase):
         self.data = data
 
     def process_split(
-        self, split_data: list, dataset_name: str, split: str
+        self, split_data: list, dataset_name: str, split: str, verbose: bool = False
     ) -> dict[str, dict[str, list]]:
         """Process one split of the dataset (train/val/test)"""
         results: list[mp.pool.AsyncResult] = []
@@ -24,7 +24,7 @@ class encodings_saver_lrgb(EncodingsSaverBase):
             for count, hg in enumerate(split_data):
                 result = pool.apply_async(
                     self._process_hypergraph,
-                    (hg, dataset_name, count, split),
+                    (hg, dataset_name, count, verbose),
                 )
                 results.append(result)
             pool.close()

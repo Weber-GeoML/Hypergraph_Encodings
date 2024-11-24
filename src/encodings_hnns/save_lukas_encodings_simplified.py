@@ -265,5 +265,5 @@ if __name__ == "__main__":
         # Create encoder instance and compute encodings
         encoder = encodings_saver_lrgb(dataset_name)
         results = encoder.compute_encodings(
-            (converted_dataset, train_converted, val_converted, test_converted)
+            (converted_dataset, train_converted, val_converted, test_converted),
         )
