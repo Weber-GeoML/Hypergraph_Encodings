@@ -90,43 +90,24 @@ class encodings_saver_lrgb(EncodingsSaverBase):
 
         all_data, train_data, val_data, test_data = converted_datasets
 
+        splits = {
+            "all": all_data,
+            "train": train_data,
+            "val": val_data,
+            "test": test_data,
+        }
+
         results: dict[str, dict[str, dict[str, list]]] = {
-            "all": self.process_split(
-                all_data,
+            split_name: self.process_split(
+                split_data,
                 self.data,
-                "all",
+                split_name,
                 encodings_to_compute,
                 laplacian_type,
                 random_walk_type,
                 curvature_type,
-            ),
-            "train": self.process_split(
-                train_data,
-                self.data,
-                "train",
-                encodings_to_compute,
-                laplacian_type,
-                random_walk_type,
-                curvature_type,
-            ),
-            "val": self.process_split(
-                val_data,
-                self.data,
-                "val",
-                encodings_to_compute,
-                laplacian_type,
-                random_walk_type,
-                curvature_type,
-            ),
-            "test": self.process_split(
-                test_data,
-                self.data,
-                "test",
-                encodings_to_compute,
-                laplacian_type,
-                random_walk_type,
-                curvature_type,
-            ),
+            )
+            for split_name, split_data in splits.items()
         }
 
         # Save combined results
