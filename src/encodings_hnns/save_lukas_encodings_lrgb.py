@@ -32,6 +32,7 @@ class encodings_saver_lrgb(EncodingsSaverBase):
         laplacian_type: str,
         random_walk_type: str,
         curvature_type: str,
+        verbose: bool = False,
     ) -> dict[str, list]:
         """Process one split of the dataset (train/val/test)"""
         results: list[mp.pool.AsyncResult] = []
@@ -39,7 +40,16 @@ class encodings_saver_lrgb(EncodingsSaverBase):
             for count, hg in enumerate(split_data):
                 result = pool.apply_async(
                     self._process_hypergraph,
-                    (hg, dataset_name, count, split, encodings_to_compute),
+                    (
+                        hg,
+                        dataset_name,
+                        count,
+                        verbose,
+                        encodings_to_compute,
+                        laplacian_type,
+                        random_walk_type,
+                        curvature_type,
+                    ),
                 )
                 results.append(result)
             pool.close()
