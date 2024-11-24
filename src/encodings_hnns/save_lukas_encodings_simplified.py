@@ -213,9 +213,9 @@ if __name__ == "__main__":
     cluster = True
     if cluster:
         base_path = "/n/holyscratch01/mweber_lab/lrgb_datasets"
-        base_path = (
-            "/Users/pellegrinraphael/Desktop/Repos_GNN/Hypergraph_Encodings/data"
-        )
+        # base_path = (
+        #     "/Users/pellegrinraphael/Desktop/Repos_GNN/Hypergraph_Encodings/data"
+        # )
         datasets = [
             "peptidesstruct",
         ]
