@@ -642,13 +642,13 @@ class UniGNN(nn.Module):
                             * feature_dim,  # Standard transformer uses 4x
                             dropout=self.args.dropout,
                             batch_first=True,
-                        )
+                        ).to(device)
 
                         # Stack multiple transformer layers
                         self.transformer = nn.TransformerEncoder(
                             self.transformer_layers,
                             num_layers=self.args.transformer_depth,
-                        )
+                        ).to(device)
 
                     # Handle dimension mismatch with projection if needed
                     if X_orig.shape[-1] != feature_dim:
@@ -657,12 +657,11 @@ class UniGNN(nn.Module):
                             print(f"X_orig.shape[-1] is {X_orig.shape}")
                         projection = nn.Linear(
                             X_orig.shape[-1], feature_dim, device=X.device
-                        )
+                        ).to(device)
                         X_orig = projection(X_orig)
 
                     # Add batch dimension for transformer
-                    X_transformer = X_orig.unsqueeze(0)  # [1, N, features]
-                    X_transformer = X_transformer.to(device)
+                    X_transformer = X_orig.unsqueeze(0).to(device)
                     X = X.to(device)
 
                     # Apply full transformer encoding
@@ -788,23 +787,23 @@ class UniGNN(nn.Module):
                                 * feature_dim,  # Standard transformer uses 4x
                                 dropout=self.args.dropout,
                                 batch_first=True,
-                            )
+                            ).to(device)
 
                             # Stack multiple transformer layers
                             self.transformer = nn.TransformerEncoder(
                                 self.transformer_layers,
                                 num_layers=self.args.transformer_depth,
-                            )
+                            ).to(device)
 
                         # Handle dimension mismatch with projection if needed
                         if X_orig.shape[-1] != feature_dim:
                             projection = nn.Linear(
                                 X_orig.shape[-1], feature_dim, device=X.device
-                            )
+                            ).to(device)
                             X_orig = projection(X_orig)
 
                         # Add batch dimension for transformer
-                        X_transformer = X_orig.unsqueeze(0)  # [1, N, features]
+                        X_transformer = X_orig.unsqueeze(0).to(device)
 
                         # Apply full transformer encoding
                         X_transformer = self.transformer(X_transformer)
