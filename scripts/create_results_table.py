@@ -22,13 +22,15 @@ def parse_log_file(file_path):
 
         # Add encoding info if present
         if len(parts) > 3:
-            if parts[3] == "no_encodings":
+            current_idx = 3
+            if parts[current_idx] == "no_encodings":
                 config_dict["add_encodings"] = False
+                current_idx += 1
             else:
                 config_dict["add_encodings"] = True
-                config_dict["encodings"] = parts[3]
+                config_dict["encodings"] = parts[current_idx]
+                current_idx += 1
                 # Add additional encoding parameters if present
-                current_idx = 4
                 if len(parts) > current_idx:
                     if parts[3] == "RW":
                         config_dict["random_walk_type"] = parts[current_idx]
@@ -40,17 +42,22 @@ def parse_log_file(file_path):
                         config_dict["laplacian_type"] = parts[current_idx]
                         current_idx += 1
 
-                # Add transformer info if present
-                if len(parts) > current_idx and "transformer" in parts[current_idx]:
-                    config_dict["do_transformer"] = True
-                    current_idx += 1  # Skip 'transformerTrue'
-                    if len(parts) > current_idx:
-                        config_dict["transformer_version"] = parts[current_idx]
-                        current_idx += 1
-                    if len(parts) > current_idx and "depth" in parts[current_idx]:
-                        config_dict["transformer_depth"] = parts[current_idx].replace(
-                            "depth", ""
-                        )
+            # Add transformer info if present
+            if len(parts) > current_idx and "transformer" in parts[current_idx]:
+                config_dict["do_transformer"] = True
+                current_idx += 1  # Skip 'transformerTrue'
+                if len(parts) > current_idx:
+                    config_dict["transformer_version"] = parts[current_idx]
+                    current_idx += 1
+                if len(parts) > current_idx and "depth" in parts[current_idx]:
+                    config_dict["transformer_depth"] = parts[current_idx].replace(
+                        "depth", ""
+                    )
+                    current_idx += 1
+
+            # Add nlayer info if present
+            if len(parts) > current_idx and "nlayer" in parts[current_idx]:
+                config_dict["nlayer"] = parts[current_idx].replace("nlayer", "")
 
         # Extract accuracy from last line
         with open(file_path, "r") as f:

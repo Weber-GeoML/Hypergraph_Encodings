@@ -12,6 +12,7 @@ module load anaconda/2023.07
 source activate hgencodings_gpu_weber
 
 # Define parameters
+nlayers=(2 16 32)  # Add layer counts here
 add_encodings=(False True)
 do_transformer=(False True)
 transformer_versions=("v1" "v2")
@@ -27,92 +28,89 @@ laplacian_types=("Hodge" "Normalized")
 
 # Create combinations array
 combinations=()
-for transformer in "${do_transformer[@]}"; do
-    if [ "$transformer" == "True" ]; then
-        # Only loop through transformer versions and depths if transformer is enabled
-        for transformer_version in "${transformer_versions[@]}"; do
-            for transformer_depth in "${transformer_depths[@]}"; do
-                # Skip depth > 1 for v1
-                if [ "$transformer_version" == "v1" ] && [ "$transformer_depth" -gt 1 ]; then
-                    continue
-                fi
-                for model in "${models[@]}"; do
-                    for data_type in "${data_types[@]}"; do
-                        if [ "$data_type" == "coauthorship" ]; then
-                            datasets=("${coauthorship_datasets[@]}")
-                        else
-                            datasets=("${cocitation_datasets[@]}")
-                        fi
-                        for dataset in "${datasets[@]}"; do
-                            for add_encoding in "${add_encodings[@]}"; do
-                                if [ "$add_encoding" == "True" ]; then
-                                    for encoding in "${encodings[@]}"; do
-                                        if [ "$encoding" == "RW" ]; then
-                                            for rw_type in "${rw_types[@]}"; do
-                                                combinations+=("$model $data_type $dataset $encoding $rw_type $transformer $transformer_version $transformer_depth $add_encoding")
-                                            done
-                                        elif [ "$encoding" == "LCP" ]; then
-                                            for curvature_type in "${curvature_types[@]}"; do
-                                                combinations+=("$model $data_type $dataset $encoding $curvature_type $transformer $transformer_version $transformer_depth $add_encoding")
-                                            done
-                                        elif [ "$encoding" == "Laplacian" ]; then
-                                            for laplacian_type in "${laplacian_types[@]}"; do
-                                                combinations+=("$model $data_type $dataset $encoding $laplacian_type $transformer $transformer_version $transformer_depth $add_encoding")
-                                            done
-                                        elif [ "$encoding" == "LDP" ]; then
-                                            # Handle LDP encoding without additional parameters
-                                            combinations+=("$model $data_type $dataset $encoding none $transformer $transformer_version $transformer_depth $add_encoding")
-                                        else
-                                            # Handle any other encodings without additional parameters
-                                            combinations+=("$model $data_type $dataset $encoding none $transformer $transformer_version $transformer_depth $add_encoding")
-                                        fi
-                                    done
-                                else
-                                    combinations+=("$model $data_type $dataset none none $transformer $transformer_version $transformer_depth $add_encoding")
-                                fi
+for nlayer in "${nlayers[@]}"; do
+    for transformer in "${do_transformer[@]}"; do
+        if [ "$transformer" == "True" ]; then
+            for transformer_version in "${transformer_versions[@]}"; do
+                for transformer_depth in "${transformer_depths[@]}"; do
+                    # Skip depth > 1 for v1
+                    if [ "$transformer_version" == "v1" ] && [ "$transformer_depth" -gt 1 ]; then
+                        continue
+                    fi
+                    for model in "${models[@]}"; do
+                        for data_type in "${data_types[@]}"; do
+                            if [ "$data_type" == "coauthorship" ]; then
+                                datasets=("${coauthorship_datasets[@]}")
+                            else
+                                datasets=("${cocitation_datasets[@]}")
+                            fi
+                            for dataset in "${datasets[@]}"; do
+                                for add_encoding in "${add_encodings[@]}"; do
+                                    if [ "$add_encoding" == "True" ]; then
+                                        for encoding in "${encodings[@]}"; do
+                                            if [ "$encoding" == "RW" ]; then
+                                                for rw_type in "${rw_types[@]}"; do
+                                                    combinations+=("$model $data_type $dataset $encoding $rw_type $transformer $transformer_version $transformer_depth $add_encoding $nlayer")
+                                                done
+                                            elif [ "$encoding" == "LCP" ]; then
+                                                for curvature_type in "${curvature_types[@]}"; do
+                                                    combinations+=("$model $data_type $dataset $encoding $curvature_type $transformer $transformer_version $transformer_depth $add_encoding $nlayer")
+                                                done
+                                            elif [ "$encoding" == "Laplacian" ]; then
+                                                for laplacian_type in "${laplacian_types[@]}"; do
+                                                    combinations+=("$model $data_type $dataset $encoding $laplacian_type $transformer $transformer_version $transformer_depth $add_encoding $nlayer")
+                                                done
+                                            else
+                                                combinations+=("$model $data_type $dataset $encoding none $transformer $transformer_version $transformer_depth $add_encoding $nlayer")
+                                            fi
+                                        done
+                                    else
+                                        combinations+=("$model $data_type $dataset none none $transformer $transformer_version $transformer_depth $add_encoding $nlayer")
+                                    fi
+                                done
                             done
                         done
                     done
                 done
             done
-        done
-    else
-        # If transformer is disabled, use single combination without transformer parameters
-        for model in "${models[@]}"; do
-            for data_type in "${data_types[@]}"; do
-                if [ "$data_type" == "coauthorship" ]; then
-                    datasets=("${coauthorship_datasets[@]}")
-                else
-                    datasets=("${cocitation_datasets[@]}")
-                fi
-                for dataset in "${datasets[@]}"; do
-                    for add_encoding in "${add_encodings[@]}"; do
-                        if [ "$add_encoding" == "True" ]; then
-                            for encoding in "${encodings[@]}"; do
-                                if [ "$encoding" == "RW" ]; then
-                                    for rw_type in "${rw_types[@]}"; do
-                                        combinations+=("$model $data_type $dataset $encoding $rw_type $transformer none none $add_encoding")
-                                    done
-                                elif [ "$encoding" == "LCP" ]; then
-                                    for curvature_type in "${curvature_types[@]}"; do
-                                        combinations+=("$model $data_type $dataset $encoding $curvature_type $transformer none none $add_encoding")
-                                    done
-                                elif [ "$encoding" == "Laplacian" ]; then
-                                    for laplacian_type in "${laplacian_types[@]}"; do
-                                        combinations+=("$model $data_type $dataset $encoding $laplacian_type $transformer none none $add_encoding")
-                                    done
-                                else
-                                    combinations+=("$model $data_type $dataset $encoding none $transformer none none $add_encoding")
-                                fi
-                            done
-                        else
-                            combinations+=("$model $data_type $dataset none none $transformer none none $add_encoding")
-                        fi
+        else
+            # If transformer is disabled, use single combination without transformer parameters
+            for model in "${models[@]}"; do
+                for data_type in "${data_types[@]}"; do
+                    if [ "$data_type" == "coauthorship" ]; then
+                        datasets=("${coauthorship_datasets[@]}")
+                    else
+                        datasets=("${cocitation_datasets[@]}")
+                    fi
+                    for dataset in "${datasets[@]}"; do
+                        for add_encoding in "${add_encodings[@]}"; do
+                            if [ "$add_encoding" == "True" ]; then
+                                for encoding in "${encodings[@]}"; do
+                                    if [ "$encoding" == "RW" ]; then
+                                        for rw_type in "${rw_types[@]}"; do
+                                            combinations+=("$model $data_type $dataset $encoding $rw_type $transformer none none $add_encoding $nlayer")
+                                        done
+                                    elif [ "$encoding" == "LCP" ]; then
+                                        for curvature_type in "${curvature_types[@]}"; do
+                                            combinations+=("$model $data_type $dataset $encoding $curvature_type $transformer none none $add_encoding $nlayer")
+                                        done
+                                    elif [ "$encoding" == "Laplacian" ]; then
+                                        for laplacian_type in "${laplacian_types[@]}"; do
+                                            combinations+=("$model $data_type $dataset $encoding $laplacian_type $transformer none none $add_encoding $nlayer")
+                                        done
+                                    else
+                                        combinations+=("$model $data_type $dataset $encoding none $transformer none none $add_encoding $nlayer")
+                                    fi
+                                done
+                            else
+                                combinations+=("$model $data_type $dataset none none $transformer none none $add_encoding $nlayer")
+                            fi
+                        done
                     done
                 done
             done
-        done
-    fi
+        fi
+    done
 done
 
 # Get the current combination based on SLURM_ARRAY_TASK_ID
@@ -126,6 +124,7 @@ transformer=${combination[5]}
 transformer_version=${combination[6]}
 transformer_depth=${combination[7]}
 add_encoding=${combination[8]}
+nlayer=${combination[9]}
 
 # Create log directory
 log_dir="logs_loops_general_new"
@@ -145,16 +144,17 @@ fi
 if [ "$transformer" == "True" ]; then
     log_file="${log_file}_transformer${transformer}_${transformer_version}_depth${transformer_depth}"
 fi
-log_file="${log_file}.log"
+log_file="${log_file}_nlayer${nlayer}.log"
 
 # Run the specific combination
-echo "Running combination $SLURM_ARRAY_TASK_ID: $model $data_type $dataset $encoding $encoding_type $transformer $transformer_version $transformer_depth $add_encoding"
+echo "Running combination $SLURM_ARRAY_TASK_ID: $model $data_type $dataset $encoding $encoding_type $transformer $transformer_version $transformer_depth $add_encoding $nlayer"
 python scripts/train_val.py \
     --add-self-loop \
     --model="$model" \
     --data="$data_type" \
     --dataset="$dataset" \
     --encodings="$encoding" \
+    --nlayer="$nlayer" \
     $([ "$add_encoding" == "True" ] && echo "--add-encodings") \
     $([ "$add_encoding" == "False" ] && echo "--no-add-encodings") \
     $([ "$encoding" == "RW" ] && echo "--random-walk-type=$encoding_type") \
