@@ -5,6 +5,7 @@ import numpy as np
 from tabulate import tabulate
 import matplotlib.pyplot as plt
 import json
+import textwrap
 
 
 def parse_log_file(file_path):
@@ -15,6 +16,7 @@ def parse_log_file(file_path):
         parts = filename.replace(".log", "").split("_")
 
         config_dict = {
+            "filename": filename,
             "model": parts[0],
             "data": parts[1],
             "dataset": parts[2],
@@ -233,22 +235,57 @@ def create_results_table(log_dir):
 
     # Create and save visual table
     if len(df) > 0:  # Only create plot if we have data
-        fig, ax = plt.subplots(figsize=(15, len(rows) * 0.5))
+        # Function to wrap text
+        def wrap_text(text, width=20):
+            """Wrap text at specified width."""
+            if isinstance(text, str):
+                return "\n".join(textwrap.wrap(text, width=width))
+            return text
+
+        # Apply text wrapping to model names and dataset names
+        wrapped_df = df.copy()
+        wrapped_df["Model"] = wrapped_df["Model"].apply(
+            lambda x: wrap_text(x, width=25)
+        )
+        wrapped_df.columns = [wrap_text(col, width=15) for col in wrapped_df.columns]
+
+        # Calculate figure size based on content
+        n_rows, n_cols = len(wrapped_df) + 1, len(wrapped_df.columns)  # +1 for header
+        row_height = 1.5  # Increased height for wrapped text
+        fig_height = n_rows * row_height
+        fig_width = n_cols * 2.5
+
+        # Create figure and table
+        fig, ax = plt.subplots(figsize=(fig_width, fig_height))
         ax.axis("tight")
         ax.axis("off")
+
         table = ax.table(
-            cellText=df.values, colLabels=df.columns, cellLoc="center", loc="center"
+            cellText=wrapped_df.values,
+            colLabels=wrapped_df.columns,
+            cellLoc="center",
+            loc="center",
+            colWidths=[1.0 / n_cols] * n_cols,
         )
 
         # Adjust table style
         table.auto_set_font_size(False)
         table.set_fontsize(9)
-        table.scale(1.2, 1.5)
+
+        # Adjust cell heights for wrapped text
+        for cell in table._cells.values():
+            cell.set_height(row_height / n_rows)
+            cell._text.set_horizontalalignment("center")
+            cell._text.set_verticalalignment("center")
+            cell._text.set_multialignment("center")
 
         plt.title("Results Summary")
         plt.tight_layout()
         plt.savefig(
-            os.path.join(results_dir, "results_table.png"), dpi=300, bbox_inches="tight"
+            os.path.join(results_dir, "results_table.png"),
+            dpi=300,
+            bbox_inches="tight",
+            pad_inches=0.5,
         )
         plt.close()
 
