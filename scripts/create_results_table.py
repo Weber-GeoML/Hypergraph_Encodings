@@ -220,80 +220,89 @@ def create_results_table(log_dir):
 
     df = pd.DataFrame(rows, columns=["Model"] + datasets)
 
-    # Save results
+    # Split tables by model
+    models = df["Model"].apply(lambda x: x.split()[0]).unique()  # Get base model names
     results_dir = os.path.join(log_dir, "results")
     os.makedirs(results_dir, exist_ok=True)
-
-    # Save LaTeX table
-    latex_table = df.to_latex(index=False, escape=False)
-    with open(os.path.join(results_dir, "results_table.tex"), "w") as f:
-        f.write(latex_table)
 
     # Save full results
     with open(os.path.join(results_dir, "full_results.json"), "w") as f:
         json.dump(full_results, f, indent=4)
 
-    # Create and save visual table
-    if len(df) > 0:  # Only create plot if we have data
-        # Function to wrap text
-        def wrap_text(text, width=20):
-            """Wrap text at specified width."""
-            if isinstance(text, str):
-                return "\n".join(textwrap.wrap(text, width=width))
-            return text
+    # Create separate tables for each model
+    for model_name in models:
+        model_df = df[df["Model"].str.startswith(model_name)]
 
-        # Apply text wrapping to model names and dataset names
-        wrapped_df = df.copy()
-        wrapped_df["Model"] = wrapped_df["Model"].apply(
-            lambda x: wrap_text(x, width=25)
-        )
-        wrapped_df.columns = [wrap_text(col, width=15) for col in wrapped_df.columns]
+        # Save LaTeX table for this model
+        latex_table = model_df.to_latex(index=False, escape=False)
+        with open(
+            os.path.join(results_dir, f"results_table_{model_name}.tex"), "w"
+        ) as f:
+            f.write(latex_table)
 
-        # Calculate figure size based on content
-        n_rows, n_cols = len(wrapped_df) + 1, len(wrapped_df.columns)  # +1 for header
-        row_height = 1.5  # Increased height for wrapped text
-        fig_height = n_rows * row_height
-        fig_width = n_cols * 2.5
+        # Create and save visual table
+        if len(model_df) > 0:
+            # Function to wrap text
+            def wrap_text(text, width=20):
+                """Wrap text at specified width."""
+                if isinstance(text, str):
+                    return "\n".join(textwrap.wrap(text, width=width))
+                return text
 
-        # Create figure and table
-        fig, ax = plt.subplots(figsize=(fig_width, fig_height))
-        ax.axis("tight")
-        ax.axis("off")
+            # Apply text wrapping
+            wrapped_df = model_df.copy()
+            wrapped_df["Model"] = wrapped_df["Model"].apply(
+                lambda x: wrap_text(x, width=25)
+            )
+            wrapped_df.columns = [
+                wrap_text(col, width=15) for col in wrapped_df.columns
+            ]
 
-        table = ax.table(
-            cellText=wrapped_df.values,
-            colLabels=wrapped_df.columns,
-            cellLoc="center",
-            loc="center",
-            colWidths=[1.0 / n_cols] * n_cols,
-        )
+            # Calculate figure size
+            n_rows, n_cols = len(wrapped_df) + 1, len(wrapped_df.columns)
+            row_height = 1.5
+            fig_height = min(n_rows * row_height, 60)  # Cap maximum height
+            fig_width = n_cols * 2.5
 
-        # Adjust table style
-        table.auto_set_font_size(False)
-        table.set_fontsize(9)
+            # Create figure and table
+            fig, ax = plt.subplots(figsize=(fig_width, fig_height))
+            ax.axis("tight")
+            ax.axis("off")
 
-        # Adjust cell heights for wrapped text
-        for cell in table._cells.values():
-            cell.set_height(row_height / n_rows)
-            cell._text.set_horizontalalignment("center")
-            cell._text.set_verticalalignment("center")
-            cell._text.set_multialignment("center")
+            table = ax.table(
+                cellText=wrapped_df.values,
+                colLabels=wrapped_df.columns,
+                cellLoc="center",
+                loc="center",
+                colWidths=[1.0 / n_cols] * n_cols,
+            )
 
-        plt.title("Results Summary")
-        plt.tight_layout()
-        plt.savefig(
-            os.path.join(results_dir, "results_table.png"),
-            dpi=300,
-            bbox_inches="tight",
-            pad_inches=0.5,
-        )
-        plt.close()
+            # Adjust table style
+            table.auto_set_font_size(False)
+            table.set_fontsize(9)
 
-        print(f"\n=== Results Saved in {results_dir} ===")
-        print(f"LaTeX table saved as: results_table.tex")
-        print(f"Full results saved as: full_results.json")
-        print(f"Summary plot saved as: results_table.png")
+            # Adjust cell heights
+            for cell in table._cells.values():
+                cell.set_height(row_height / n_rows)
+                cell._text.set_horizontalalignment("center")
+                cell._text.set_verticalalignment("center")
+                cell._text.set_multialignment("center")
 
+            plt.title(f"Results Summary - {model_name}")
+            plt.tight_layout()
+            plt.savefig(
+                os.path.join(results_dir, f"results_table_{model_name}.png"),
+                dpi=300,
+                bbox_inches="tight",
+                pad_inches=0.5,
+            )
+            plt.close()
+
+        print(f"\n=== Results for {model_name} Saved in {results_dir} ===")
+        print(f"LaTeX table saved as: results_table_{model_name}.tex")
+        print(f"Summary plot saved as: results_table_{model_name}.png")
+
+    print(f"Full results saved as: full_results.json")
     return df, full_results
 
 
