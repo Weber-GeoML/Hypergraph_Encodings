@@ -149,6 +149,7 @@ class parser(object):
 # Example utilization
 if __name__ == "__main__":
 
+    print("EXAMPLE UTILIZATION")
     data_type = "coauthorship"
     dataset_name = "cora"
 
@@ -195,7 +196,6 @@ if __name__ == "__main__":
     # Number of key-value pairs
     num_hyperedges = len(parsed_data["hypergraph"])
     print(f"Number of hyperedges (key-value pairs): {num_hyperedges}")
-    assert False
 
     ###### Cora
     data_type = "coauthorship"
@@ -226,3 +226,4 @@ if __name__ == "__main__":
     # Now you can use dataset, train, and test
     # print(train)
     # print(test)
+    print("DONE")

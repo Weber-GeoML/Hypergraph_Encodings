@@ -1,9 +1,17 @@
-""" Equivalent of train_val.py, but for hypergraph classification"""
+""" Equivalent of train_val.py, but for hypergraph classification
+
+NOTE: THIS DOES NOT WORK YET. THIS IS A WORK IN PROGRESS.
+
+THis is the script we run from run_all_hg_classfication.sh, run_all_hg_classification_parallel.sh
+"""
 
 import datetime
 import os
 from random import sample
 import pickle
+import shutil
+import time
+import matplotlib.pyplot as plt
 
 import config
 import numpy as np
@@ -13,8 +21,8 @@ import torch.nn.functional as F
 from sklearn.model_selection import train_test_split
 from torch.optim import optimizer
 from tqdm import tqdm  # Add this import
-import shutil
-import time
+import sys
+
 
 ### configure logger
 ### configure logger
@@ -22,6 +30,120 @@ from uniGCN.logger import get_logger
 from uniGCN.prepare import accuracy
 from uniGCN.prepare_hg import initialise_for_hypergraph_classification
 from split_data_for_hypergraph_classification import get_split
+
+# Initialize current_dataset as None before the loading attempts
+current_dataset = None
+
+# Print command line arguments
+print("\nCommand Line Arguments:")
+print("=" * 80)
+print(f"Script name: {sys.argv[0]}")
+print(f"Arguments passed: {sys.argv[1:]}")
+print("=" * 80)
+
+# Print config.py contents
+print("\nContents of config.py:")
+print("=" * 80)
+try:
+    with open("scripts/config.py", "r") as f:
+        print(f.read())
+except Exception as e:
+    print(f"Error reading config.py: {e}")
+print("=" * 80)
+
+# Print default arguments and any overrides from command line
+print("\nDefault arguments from config.parse():")
+print("=" * 80)
+try:
+    default_args = config.parse()  # Call parse() without arguments
+    print("Default values:")
+    for arg, value in vars(default_args).items():
+        print(f"{arg}: {value}")
+
+    print("\nParsed command line arguments:")
+    actual_args = config.parse()  # Parse with actual command line args
+    for arg, value in vars(actual_args).items():
+        if getattr(default_args, arg) != value:
+            print(
+                f"{arg}: {value} (overridden from default: {getattr(default_args, arg)})"
+            )
+            setattr(config, arg, value)  # Update the config attribute
+except Exception as e:
+    print(f"Error getting arguments: {e}")
+print("=" * 80)
+
+print("\nFinal configuration:")
+print("=" * 80)
+for arg, value in vars(args).items():
+    print(f"{arg}: {value}")
+print("=" * 80)
+
+
+# At the end of the file, create summary plots
+def create_summary_plots(all_results, out_dir):
+    """Create summary plots from all runs."""
+    plt.figure(figsize=(15, 10))
+
+    # Plot 1: Box plot of final accuracies
+    plt.subplot(2, 2, 1)
+    final_trains = [
+        params["final_train_acc"] for params in all_results["params"].values()
+    ]
+    final_vals = [params["final_val_acc"] for params in all_results["params"].values()]
+    final_tests = [
+        params["final_test_acc"] for params in all_results["params"].values()
+    ]
+
+    plt.boxplot(
+        [final_trains, final_vals, final_tests], labels=["Train", "Validation", "Test"]
+    )
+    plt.title("Distribution of Final Accuracies")
+    plt.ylabel("Accuracy (%)")
+
+    # Plot 2: Learning curves with confidence intervals
+    plt.subplot(2, 2, 2)
+    max_epochs = max(len(accs) for accs in all_results["train_accs"].values())
+    epochs = range(1, max_epochs + 1)
+
+    # Calculate mean and std for each metric
+    def get_stats(accs_dict):
+        padded_accs = [
+            accs + [accs[-1]] * (max_epochs - len(accs)) for accs in accs_dict.values()
+        ]
+        return np.mean(padded_accs, axis=0), np.std(padded_accs, axis=0)
+
+    train_mean, train_std = get_stats(all_results["train_accs"])
+    val_mean, val_std = get_stats(all_results["val_accs"])
+    test_mean, test_std = get_stats(all_results["test_accs"])
+
+    plt.plot(epochs, train_mean, "b-", label="Train")
+    plt.fill_between(epochs, train_mean - train_std, train_mean + train_std, alpha=0.2)
+    plt.plot(epochs, val_mean, "g-", label="Validation")
+    plt.fill_between(epochs, val_mean - val_std, val_mean + val_std, alpha=0.2)
+    plt.plot(epochs, test_mean, "r-", label="Test")
+    plt.fill_between(epochs, test_mean - test_std, test_mean + test_std, alpha=0.2)
+
+    plt.title("Average Learning Curves (with std)")
+    plt.xlabel("Epoch")
+    plt.ylabel("Accuracy (%)")
+    plt.legend()
+
+    # Save results and plot
+    results_dir = out_dir / "results"
+    results_dir.makedirs_p()
+
+    # Save numerical results
+    with open(results_dir / "all_results.pkl", "wb") as f:
+        pickle.dump(all_results, f)
+
+    # Save plot
+    plt.tight_layout()
+    plt.savefig(results_dir / "summary_plots.png", dpi=300, bbox_inches="tight")
+    plt.close()
+
+    print("\n=== Results Saved ===")
+    print(f"All results saved to: {results_dir / 'all_results.pkl'}")
+    print(f"Summary plots saved to: {results_dir / 'summary_plots.png'}")
 
 
 # File originally taken from UniGCN repo
@@ -52,7 +174,38 @@ dirname = f"{datetime.datetime.now()}".replace(" ", "_").replace(":", ".")
 # Define the data split for train, val, test
 data_split: list[float] = [0.5, 0.25, 0.25]
 
-out_dir: str = path.Path(f"./{args.out_dir}/{model_name}_{nlayer}_hg_classification/")
+# Create a more detailed output directory name
+out_dir_components = [
+    args.out_dir,
+    f"model_{model_name}",
+    f"nlayer_{nlayer}",
+    f"dataset_{args.dataset_hypergraph_classification}",
+]
+
+# Add transformer details if enabled
+if args.do_transformer:
+    out_dir_components.extend(
+        [f"transformer_{args.transformer_version}", f"depth_{args.transformer_depth}"]
+    )
+
+# Add encoding details if enabled
+if args.add_encodings_hg_classification:
+    out_dir_components.append(f"encoding_{args.encodings}")
+    if args.encodings == "RW":
+        out_dir_components.append(f"rwtype_{args.random_walk_type}")
+    elif args.encodings == "LCP":
+        out_dir_components.append(f"curvature_{args.curvature_type}")
+    elif args.encodings == "Laplacian":
+        out_dir_components.append(f"laptype_{args.laplacian_type}")
+
+# Add timestamp for uniqueness
+timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+out_dir_components.append(f"time_{timestamp}")
+
+# Construct the path
+out_dir = path.Path("_".join(out_dir_components))
+
+# Create directory
 if out_dir.exists():
     shutil.rmtree(out_dir)
 out_dir.makedirs_p()
@@ -64,18 +217,96 @@ baselogger.info(args)
 resultlogger.info(args)
 
 
-# load the dataset specified in args
-dataset_name = args.dataset_hypergraph_classification
-dataset_path = (
-    f"data/hypergraph_classification_datasets/{dataset_name}_hypergraphs.pickle"
-)
+# Determine which dataset file to load based on config
+dataset_name = args.dataset_hypergraph_classification.lower()  # Convert to lowercase
+base_path = "data/hypergraph_classification_datasets"
 
-print("\n=== Dataset Information ===")
-print(f"Loading dataset: {dataset_name}")
-print(f"From path: {dataset_path}")
+if args.add_encodings_hg_classification:
+    # Construct encoding suffix based on config
+    encoding_type = args.encodings.lower()  # e.g., ("rw" "lcp" "laplacian" "ldp"
 
-with open(dataset_path, "rb") as f:
-    current_dataset = pickle.load(f)
+    if encoding_type == "rw":
+        encoding_suffix = f"with_encodings_{encoding_type}_{args.random_walk_type.upper()}"  # EE, EN, or WE
+        dataset_paths = [
+            f"{base_path}/{dataset_name}_hypergraphs_{encoding_suffix}.pickle"
+        ]
+    elif encoding_type == "lcp":
+        # Convert FRC or ORC to lowercase
+        encoding_suffix = f"with_encodings_{args.curvature_type.lower()}"
+        dataset_paths = [
+            f"{base_path}/{dataset_name}_hypergraphs_{encoding_suffix}.pickle"
+        ]
+    elif encoding_type == "laplacian":
+        # Run both new and regular versions
+        laplacian_type = args.laplacian_type.lower()
+        dataset_paths = [
+            f"{base_path}/{dataset_name}_hypergraphs_with_encodings_lape_{laplacian_type}_new_version.pickle",
+        ]
+    else:  # for ldp
+        encoding_suffix = f"with_encodings_{encoding_type}"
+        dataset_paths = [
+            f"{base_path}/{dataset_name}_hypergraphs_{encoding_suffix}.pickle"
+        ]
+else:
+    dataset_paths = [f"{base_path}/{dataset_name}_hypergraphs.pickle"]
+
+# Try loading each dataset version
+for dataset_path in dataset_paths:
+    print(f"\n=== Attempting to load dataset: {dataset_path} ===")
+    print(f"Dataset name: {dataset_name}")
+    print(f"Using encodings: {args.add_encodings_hg_classification}")
+    if args.add_encodings_hg_classification:
+        print(f"Encoding type: {args.encodings}")
+        if args.encodings.lower() == "rw":
+            print(f"Random walk type: {args.random_walk_type}")
+        elif args.encodings.lower() == "lcp":
+            print(f"Curvature type: {args.curvature_type}")
+        elif args.encodings.lower() == "laplacian":
+            print(f"Laplacian type: {args.laplacian_type}")
+
+    try:
+        with open(dataset_path, "rb") as f:
+            current_dataset = pickle.load(f)
+
+        if not current_dataset:  # Check if dataset is empty
+            print(f"Warning: Dataset loaded but is empty: {dataset_path}")
+            continue
+
+        print(
+            f"Dataset loaded successfully! It contains {len(current_dataset)} hypergraphs"
+        )
+
+        # Add dataset validation
+        if not isinstance(current_dataset, list):
+            print(f"Warning: Dataset should be a list, got {type(current_dataset)}")
+            continue
+
+        if not current_dataset[0].get("features") is not None:
+            print("Warning: First hypergraph missing 'features' key")
+            continue
+
+        # Now safe to access features
+        feature_shape = current_dataset[0]["features"].shape
+        num_features = feature_shape[1]
+
+        print(f"Successfully loaded and validated dataset: {dataset_path}")
+        print(f"Feature shape: {feature_shape}")
+        break  # Successfully loaded a dataset, exit the loop
+
+    except FileNotFoundError:
+        print(f"Warning: Dataset file not found: {dataset_path}")
+        continue
+    except Exception as e:
+        print(f"\n=== Error loading dataset: {dataset_path} ===")
+        print(f"Error type: {type(e).__name__}")
+        print(f"Error message: {str(e)}")
+        continue
+
+# Check if any dataset was successfully loaded
+if not current_dataset:
+    raise ValueError(
+        "No valid dataset could be loaded with the specified configuration"
+    )
 
 # Add dataset statistics
 num_hypergraphs = len(current_dataset)
@@ -141,6 +372,7 @@ Y = torch.from_numpy(np.stack(Y))  # This preserves the array structure
 if len(Y.shape) > 1:
     Y = Y.squeeze()  # Remove extra dimensions
 Y = Y.long()  # Convert to long dtype
+Y = Y.to(device)
 print(f"Y shape: {Y.shape}")  # Should be 1D now
 print(f"Y type: {Y.dtype}")
 print(f"Y: \n {Y}")
@@ -155,8 +387,11 @@ num_hypergraphs = len(current_dataset)
 indices = list(range(num_hypergraphs))
 # TODO: make sure that the radom state does not give a 'trivial' split
 # as the first 500 hgs are labels 0 and the last 500 are label 1.
-train_idx, temp_idx = train_test_split(indices, test_size=0.3, random_state=2)
 
+
+# At the start of the file, after imports
+# Create a dictionary to store all accuracies
+all_results = {"train_accs": {}, "val_accs": {}, "test_accs": {}, "params": {}}
 
 seed: int
 for seed in range(1, 9):
@@ -178,6 +413,7 @@ for seed in range(1, 9):
     out_dir.makedirs_p()
 
     for run in tqdm(range(1, args.n_runs + 1), desc="Training runs"):
+        train_idx, temp_idx = train_test_split(indices, test_size=0.3, random_state=2)
         baselogger.info(f"\n--- Starting run {run}/{args.n_runs} ---")
         run_dir = out_dir / f"{run}"
         run_dir.makedirs_p()
@@ -191,10 +427,34 @@ for seed in range(1, 9):
             temp_idx, test_size=0.8, random_state=2
         )  # 0.8 of 0.3 = 0.24 for test set
 
-        print(f"\nSplit Statistics:")
-        print(f"Training set size: {len(train_idx)} hypergraphs")
-        print(f"Validation set size: {len(val_idx)} hypergraphs")
-        print(f"Test set size: {len(test_idx)} hypergraphs")
+        # After splitting the data
+        train_labels = [current_dataset[idx]["labels"] for idx in train_idx]
+        val_labels = [current_dataset[idx]["labels"] for idx in val_idx]
+        test_labels = [current_dataset[idx]["labels"] for idx in test_idx]
+
+        # Convert numpy arrays to hashable type (tuple or scalar)
+        unique_labels = set()
+        for label in train_labels + val_labels + test_labels:
+            if isinstance(label, np.ndarray):
+                label = tuple(label.flatten())
+            unique_labels.add(label)
+        unique_labels = sorted(unique_labels)
+
+        # Count occurrences of each class
+        train_dist = [train_labels.count(label) for label in unique_labels]
+        val_dist = [val_labels.count(label) for label in unique_labels]
+        test_dist = [test_labels.count(label) for label in unique_labels]
+
+        print("Split Statistics:")
+        print(
+            f"Training set size: {len(train_idx)} hypergraphs (Class distribution: {train_dist})"
+        )
+        print(
+            f"Validation set size: {len(val_idx)} hypergraphs (Class distribution: {val_dist})"
+        )
+        print(
+            f"Test set size: {len(test_idx)} hypergraphs (Class distribution: {test_dist})"
+        )
 
         # Check for overlap
         train_set = set(train_idx)
@@ -214,6 +474,16 @@ for seed in range(1, 9):
             degEs,
             degE2s,
         ) = initialise_for_hypergraph_classification(current_dataset, args)
+
+        # Add right after model creation
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model = model.to(device)
+
+        # Modify the data loading section to move all tensors to device
+        for i, hg in enumerate(current_dataset):
+            current_dataset[i]["features"] = torch.tensor(
+                hg["features"], dtype=torch.float32, device=device
+            )
 
         print("\n=== Training Information ===")
         print(f"Model: {model_name}")
@@ -238,7 +508,10 @@ for seed in range(1, 9):
         test_accs_for_best_val = (
             []
         )  # List to store test accuracy for the best validation accuracy
-        for epoch in tqdm(range(args.epochs), desc=f"Epochs (Run {run})"):
+        train_accs_history = []
+        val_accs_history = []
+        test_accs_history = []
+        for epoch in range(args.epochs):
             # train
             tic_epoch = time.time()
             model.train()
@@ -250,10 +523,10 @@ for seed in range(1, 9):
             Z = torch.stack(Z).squeeze(1)
             # Convert indices to tensors
             train_idx = torch.tensor(
-                train_idx
+                train_idx, device=device
             ).long()  # Convert list to tensor and then to long dtype
-            val_idx = torch.tensor(val_idx).long()
-            test_idx = torch.tensor(test_idx).long()
+            val_idx = torch.tensor(val_idx, device=device).long()
+            test_idx = torch.tensor(test_idx, device=device).long()
             loss = F.nll_loss(Z[train_idx], Y[train_idx])
 
             loss.backward()
@@ -271,6 +544,11 @@ for seed in range(1, 9):
             train_acc: float = accuracy(Z[train_idx], Y[train_idx])
             test_acc: float = accuracy(Z[test_idx], Y[test_idx])
             val_acc: float = accuracy(Z[val_idx], Y[val_idx])
+
+            # Store accuracies
+            train_accs_history.append(train_acc)
+            val_accs_history.append(val_acc)
+            test_accs_history.append(test_acc)
 
             # log acc
             if best_val_acc < val_acc:
@@ -303,6 +581,28 @@ for seed in range(1, 9):
         best_test_accs.append(best_test_acc)
         overall_test_accuracies_best_val.append(test_accs_for_best_val[-1])
 
+        # Store accuracies with unique key
+        run_key = f"seed_{seed}_run_{run}"
+        all_results["train_accs"][run_key] = train_accs_history
+        all_results["val_accs"][run_key] = val_accs_history
+        all_results["test_accs"][run_key] = test_accs_history
+        all_results["params"][run_key] = {
+            "model": model_name,
+            "nlayer": nlayer,
+            "dataset": dataset_name,
+            "encodings": (
+                args.encodings if args.add_encodings_hg_classification else "none"
+            ),
+            "transformer": args.do_transformer,
+            "final_train_acc": train_accs_history[-1],
+            "final_val_acc": val_accs_history[-1],
+            "final_test_acc": test_accs_history[-1],
+            "best_val_acc": best_val_acc,
+            "best_test_acc": best_test_acc,
+        }
+
+# Call the plotting function at the end
+# create_summary_plots(all_results, out_dir)
 
 resultlogger.info(f"We had {len(test_accs)} runs")
 resultlogger.info(

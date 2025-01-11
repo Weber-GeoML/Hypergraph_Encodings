@@ -1,4 +1,7 @@
-"""File taken from UniGCN"""
+"""File taken from UniGCN
+
+Specifies all the configurations. Note that the bash script might modify/loop some of these parameters.
+"""
 
 import argparse
 
@@ -9,11 +12,51 @@ def parse():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     p.add_argument(
-        "--add-encodings",
-        type=bool,
-        default=True,
-        help="whether to add encodings to the features",
+        "--do-transformer",
+        action="store_true",
+        help="Whether to use transformer layer after convolutions",
+    )  # In addition, store_true creates default values of False
+    p.add_argument(
+        "--no-transformer",
+        action="store_false",
+        dest="do_transformer",
+        help="Do not use transformer layer after convolutions",
+    )  # In addition creates default values of True
+    p.add_argument(
+        "--transformer-version",
+        type=str,
+        default="v2",
+        choices=["v1", "v2"],
+        help="Version of transformer to use (v1: simple single-layer, v2: full transformer)",
     )
+    p.add_argument(
+        "--transformer-depth",
+        type=int,
+        default=10,
+        help="Number of transformer layers (only used in v2)",
+    )
+    p.add_argument(
+        "--add-encodings",
+        action="store_true",
+        help="whether to add encodings to the features",
+    )  # In addition, store_true creates default values of False
+    p.add_argument(
+        "--no-add-encodings",
+        action="store_false",
+        dest="add_encodings",
+        help="do not add encodings to the features",
+    )  # In addition creates default values of True
+    p.add_argument(
+        "--add-encodings-hg-classification",
+        action="store_true",
+        help="whether to add encodings to the features for hypergraph classification",
+    )
+    p.add_argument(
+        "--no-add-encodings-hg-classification",
+        action="store_false",
+        dest="add_encodings_hg_classification",
+        help="do not add encodings to the features for hypergraph classification",
+    )  # In addition creates default values of True
     p.add_argument(
         "--dataset-hypergraph-classification",
         type=str,
@@ -24,8 +67,8 @@ def parse():
     p.add_argument(
         "--encodings",
         type=str,
-        default="RW",
-        help="what encodings to add",
+        default="LCP",
+        help="what encodings to add. RW, LDP, LCP, Laplacian",
     )
     p.add_argument(
         "--random-walk-type",
@@ -36,20 +79,30 @@ def parse():
     p.add_argument(
         "--curvature-type",
         type=str,
-        default="FRC",
+        default="ORC",
         help="what curvature to use. ORC or FRC",
     )
     p.add_argument(
         "--normalize-features",
-        type=bool,
-        default=True,
+        action="store_true",
         help="whether to normalize features",
     )
     p.add_argument(
+        "--no-normalize-features",
+        action="store_false",
+        dest="normalize_features",
+        help="do not normalize features",
+    )
+    p.add_argument(
         "--normalize-encodings",
-        type=bool,
-        default=True,
+        action="store_true",
         help="whether to normalize encodings",
+    )
+    p.add_argument(
+        "--no-normalize-encodings",
+        action="store_false",
+        dest="normalize_encodings",
+        help="do not normalize encodings",
     )
     p.add_argument(
         "--laplacian-type",

@@ -222,9 +222,9 @@ class ORC:
 # Example utilization
 if __name__ == "__main__":
 
+    print("EXAMPLE UTILIZATION")
     data_type = "coauthorship"
     dataset_name = "cora"
-
     # Create an instance of the parser class
     parser_instance = parser(data_type, dataset_name)
 
@@ -237,9 +237,8 @@ if __name__ == "__main__":
 
     # Instantiates the ORC class
     orc = ORC(data)
-
     # Computes the Forman-Ricci curvature
     orc.compute_orc()
-
     # Accesses the results
     print("ORC:", orc.node_curvature_edges)
+    print("DONE")

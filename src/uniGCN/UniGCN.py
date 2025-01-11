@@ -16,6 +16,9 @@ from uniGCN.calculate_vertex_edges import calculate_V_E
 
 # NOTE: can not tell which implementation is better statistically
 
+# Check if CUDA is available and move tensors to GPU if possible
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 def glorot(tensor):
     """TODO
@@ -76,21 +79,20 @@ class UniSAGEConv(nn.Module):
             self.__class__.__name__, self.in_channels, self.out_channels, self.heads
         )
 
-    def forward(self, X, vertex, edges):
-        """TODO
+    def forward(
+        self,
+        X: torch.Tensor,
+        vertex: torch.Tensor,
+        edges: torch.Tensor,
+        verbose: bool = False,
+        hypergraph_classification: bool = False,
+        degE: None | list = None,
+        degV: None | list = None,
+    ) -> torch.Tensor:
+        device = X.device
+        vertex = vertex.to(device)
+        edges = edges.to(device)
 
-        Args:
-            X:
-                TODO
-            vertex:
-                TODO
-            edges:
-                TODO
-
-        Returns:
-            TODO
-
-        """
         N = X.shape[0]
 
         # X0 = X # NOTE: reserved for skip connection
@@ -138,19 +140,20 @@ class UniGINConv(nn.Module):
             self.__class__.__name__, self.in_channels, self.out_channels, self.heads
         )
 
-    def forward(self, X, vertex, edges):
-        """TODO
-
-        Args:
-            X:
-                TODO
-            vertex:
-                TODO
-            edges:
-                TODO
-
-        """
+    def forward(
+        self,
+        X: torch.Tensor,
+        vertex: torch.Tensor,
+        edges: torch.Tensor,
+        verbose: bool = False,
+        hypergraph_classification: bool = False,
+        degE: None | list = None,
+        degV: None | list = None,
+    ) -> torch.Tensor:
         N = X.shape[0]
+        X = X.to(device)
+        vertex = vertex.to(device)
+        edges = edges.to(device)
         # X0 = X # NOTE: reserved for skip connection
 
         # v1: X -> XW -> AXW -> norm
@@ -258,6 +261,9 @@ class UniGCNConv(nn.Module):
         Returns:
             x tilde i from UniGCN.
         """
+        device = X.device
+        vertex = vertex.to(device)
+        edges = edges.to(device)
         # print(f"hypergraph_classification is {hypergraph_classification}")
         if verbose:
             print(f"vertex is {vertex}")
@@ -266,6 +272,8 @@ class UniGCNConv(nn.Module):
         if hypergraph_classification:
             assert degE is not None
             assert degV is not None
+            degE = torch.tensor(degE, dtype=torch.float32, device=device)
+            degV = torch.tensor(degV, dtype=torch.float32, device=device)
         N: int = X.shape[0]  # the number of nodes
         if verbose:
             print(f"N is {N}")
@@ -273,7 +281,22 @@ class UniGCNConv(nn.Module):
         if hypergraph_classification:
             pass
         else:
-            degE = self.args.degE
+            if not hasattr(self.args, "degE"):
+                available_attrs = [
+                    attr for attr in dir(self.args) if not attr.startswith("_")
+                ]
+                raise AttributeError(
+                    f"args must have degE attribute for non-hypergraph classification.\n"
+                    f"Available attributes are: {available_attrs}"
+                )
+            if self.args.degE is None:
+                raise ValueError(
+                    f"args.degE cannot be None for non-hypergraph classification.\n"
+                    f"args.degE type: {type(self.args.degE)}\n"
+                    f"args.degE value: {self.args.degE}"
+                )
+            degE = torch.tensor(self.args.degE, device=device)
+            degV = torch.tensor(self.args.degV, device=device)
         if verbose:
             print(f"degE is {degE}")
         # degree of vertices
@@ -282,6 +305,12 @@ class UniGCNConv(nn.Module):
         if hypergraph_classification:
             pass
         else:
+            assert hasattr(
+                self.args, "degV"
+            ), "args must have degV attribute for non-hypergraph classification"
+            assert (
+                self.args.degV is not None
+            ), "args.degV cannot be None for non-hypergraph classification"
             degV = self.args.degV
         if verbose:
             print(f"degV is {degV}")
@@ -351,6 +380,9 @@ class UniGCNConv2(nn.Module):
         )
 
     def forward(self, X, vertex, edges):
+        device = X.device
+        vertex = vertex.to(device)
+        edges = edges.to(device)
         N = X.shape[0]
         degE = self.args.degE
         degV = self.args.degV
@@ -415,17 +447,22 @@ class UniGATConv(nn.Module):
         glorot(self.att_v)
         glorot(self.att_e)
 
-    def forward(self, X, vertex, edges):
-        """TODO
-
-        Args:
-            X:
-                TODO
-            vertex:
-                TODO
-            edges:
-                TODO
-        """
+    # what would be smarter here, instead of passing unused arguments
+    # would be to have a if model_name == "UniGCN" or "UniGAT" etc
+    # and then have the arguments not passed! TODO later.
+    def forward(
+        self,
+        X: torch.Tensor,
+        vertex: torch.Tensor,
+        edges: torch.Tensor,
+        verbose: bool = False,
+        hypergraph_classification: bool = False,
+        degE: None | list = None,
+        degV: None | list = None,
+    ) -> torch.Tensor:
+        device = X.device
+        vertex = vertex.to(device)
+        edges = edges.to(device)
         H, C, N = self.heads, self.out_channels, X.shape[0]
 
         # X0 = X # NOTE: reserved for skip connection
@@ -520,6 +557,7 @@ class UniGNN(nn.Module):
         X: torch.Tensor,
         V: torch.Tensor,
         E: torch.Tensor,
+        verbose: bool = False,
     ) -> torch.Tensor:
         """TODO:
 
@@ -535,12 +573,102 @@ class UniGNN(nn.Module):
 
         X = self.input_drop(X)
         for conv in self.convs:  # note that we loop for as many layers as specified
-            # TODO: create a copy of the original X
+            X_orig = X.clone()  # Create copy of original X
             X = conv(X, V, E)
             X = self.act(X)
             X = self.dropout(X)
-            # TODO: transformer
-            # TODO: combine original X and transfomer(X)
+            X = X.to(device)
+            X_orig = X_orig.to(device)
+
+            if self.args.do_transformer:
+                if self.args.transformer_version == "v1":
+                    # VERSION 1: Simple self-attention mechanism
+                    # Uses a single scaled dot-product attention layer without positional encoding
+                    # Advantages: Lightweight, faster training
+                    # Disadvantages: Less expressive than full transformer
+
+                    feature_dim = X.shape[-1]
+
+                    # Handle dimension mismatch with projection if needed
+                    # TODO: if we remove MP, could do X_without_encoding.shape[-1] and project there
+                    if X_orig.shape[-1] != feature_dim:
+                        if verbose:
+                            print(f"feature_dim is {feature_dim}")
+                            print(f"X_orig.shape is {X_orig.shape}")
+                        projection = nn.Linear(
+                            X_orig.shape[-1], feature_dim, device=X.device
+                        )
+                        X_orig = projection(X_orig)
+
+                    # Add batch dimension for attention computation
+                    X_transformer = X_orig.unsqueeze(0)  # [1, N, features]
+
+                    # Apply basic self-attention using PyTorch's built-in function
+                    # This is equivalent to a single attention head without the feed-forward network
+                    X_transformer = F.scaled_dot_product_attention(
+                        query=X_transformer,
+                        key=X_transformer,
+                        value=X_transformer,
+                        dropout_p=self.dropout.p if self.training else 0.0,
+                    )
+                    X_transformer = X_transformer.to(device)
+
+                    # Add residual connection
+                    # TODO: remove MP: X = X_transformer
+                    X = X + X_transformer.squeeze(0)
+
+                elif self.args.transformer_version == "v2":
+                    # VERSION 2: Full Transformer Encoder Architecture
+                    # Uses complete transformer blocks with:
+                    # - Multi-head attention
+                    # - Feed-forward neural networks
+                    # - Layer normalization
+                    # - Residual connections
+                    # Advantages: More expressive, better at capturing complex relationships
+                    # Disadvantages: More parameters, slower training
+
+                    feature_dim = X.shape[-1]
+
+                    # Create or update full transformer architecture
+                    if not hasattr(self, "transformer"):
+                        # Create transformer encoder layer with:
+                        # - Multi-head attention (nhead heads)
+                        # - 4x larger feed-forward network
+                        # - Dropout for regularization
+                        self.transformer_layers = nn.TransformerEncoderLayer(
+                            d_model=feature_dim,
+                            nhead=self.args.nhead,
+                            dim_feedforward=4
+                            * feature_dim,  # Standard transformer uses 4x
+                            dropout=self.args.dropout,
+                            batch_first=True,
+                        ).to(device)
+
+                        # Stack multiple transformer layers
+                        self.transformer = nn.TransformerEncoder(
+                            self.transformer_layers,
+                            num_layers=self.args.transformer_depth,
+                        ).to(device)
+
+                    # Handle dimension mismatch with projection if needed
+                    if X_orig.shape[-1] != feature_dim:
+                        if verbose:
+                            print(f"feature_dim is {feature_dim}")
+                            print(f"X_orig.shape[-1] is {X_orig.shape}")
+                        projection = nn.Linear(
+                            X_orig.shape[-1], feature_dim, device=X.device
+                        ).to(device)
+                        X_orig = projection(X_orig)
+
+                    # Add batch dimension for transformer
+                    X_transformer = X_orig.unsqueeze(0).to(device)
+                    X = X.to(device)
+
+                    # Apply full transformer encoding
+                    X_transformer = self.transformer(X_transformer)
+
+                    # Add residual connection
+                    X = X + X_transformer.squeeze(0)
 
         X = self.conv_out(X, V, E)
         return F.log_softmax(X, dim=1)
@@ -558,29 +686,40 @@ class UniGNN(nn.Module):
         Args:
             list_hypergraphs:
                 the list of dicts (that contains hg, features, labels etc)
-            degEs:
-                the list of the relevant degEs
-            degVs:
-                the list of the relevant degVs
             What would be smarter would be to add degEs and degVs to
             the dictionaries directly. Only need to compute it onnce, no need to pass it around:
             TODO later.
 
         Returns:
-            a tensor/vector that has gone
-            through a softmax.
+            List of prediction tensors (one per hypergraph)
         """
-        list_preds: list[float] = []
-        for idx, dico in enumerate(list_hypergraphs):
-            X: torch.Tensor
-            G: dict
-            X = dico["features"]
+        list_preds: list[torch.Tensor] = []
+
+        for dico in list_hypergraphs:
+            # Get features and ensure they're float32
+            X = torch.tensor(dico["features"], dtype=torch.float32)
             G = dico["hypergraph"]
-            V, E, degE, degV, degE2 = calculate_V_E(X, G, self.args)
-            if not isinstance(X, torch.Tensor):
-                X = torch.tensor(X)
+
+            # Get or calculate degrees
+            if "degE" in dico and "degV" in dico:
+                degE = torch.tensor(dico["degE"], dtype=torch.float32)
+                degV = torch.tensor(dico["degV"], dtype=torch.float32)
+                # Convert vertex/edge indices from G
+                V, E = [], []
+                for edge_idx, (_, nodes) in enumerate(G.items()):
+                    V.extend(nodes)
+                    E.extend([edge_idx] * len(nodes))
+                V = torch.tensor(V, dtype=torch.long)
+                E = torch.tensor(E, dtype=torch.long)
+            else:
+                V, E, degE, degV, _ = calculate_V_E(X, G, self.args)
+                degE = degE.float()
+                degV = degV.float()
+
+            # Forward pass through the network
             X = self.input_drop(X)
-            for conv in self.convs:  # note that we loop for as many layers as specified
+            for conv in self.convs:
+                X_orig = X.clone()  # Store original features for transformer
                 X = conv(
                     X=X,
                     vertex=V,
@@ -592,6 +731,87 @@ class UniGNN(nn.Module):
                 X = self.act(X)
                 X = self.dropout(X)
 
+                if self.args.do_transformer:
+                    if self.args.transformer_version == "v1":
+                        # VERSION 1: Simple self-attention mechanism
+                        # Uses a single scaled dot-product attention layer without positional encoding
+                        # Advantages: Lightweight, faster training
+                        # Disadvantages: Less expressive than full transformer
+
+                        feature_dim = X.shape[-1]
+
+                        # Handle dimension mismatch with projection if needed
+                        if X_orig.shape[-1] != feature_dim:
+                            projection = nn.Linear(
+                                X_orig.shape[-1], feature_dim, device=X.device
+                            )
+                            X_orig = projection(X_orig)
+
+                        # Add batch dimension for attention computation
+                        X_transformer = X_orig.unsqueeze(0)  # [1, N, features]
+
+                        # Apply basic self-attention using PyTorch's built-in function
+                        # This is equivalent to a single attention head without the feed-forward network
+                        X_transformer = F.scaled_dot_product_attention(
+                            query=X_transformer,
+                            key=X_transformer,
+                            value=X_transformer,
+                            dropout_p=self.dropout.p if self.training else 0.0,
+                        )
+
+                        # Add residual connection
+                        X = X + X_transformer.squeeze(0)
+
+                    elif self.args.transformer_version == "v2":
+                        # VERSION 2: Full Transformer Encoder Architecture
+                        # Uses complete transformer blocks with:
+                        # - Multi-head attention
+                        # - Feed-forward neural networks
+                        # - Layer normalization
+                        # - Residual connections
+                        # Advantages: More expressive, better at capturing complex relationships
+                        # Disadvantages: More parameters, slower training
+
+                        feature_dim = X.shape[-1]
+
+                        # Create or update full transformer architecture
+                        if not hasattr(self, "transformer"):
+                            # Create transformer encoder layer with:
+                            # - Multi-head attention (nhead heads)
+                            # - 4x larger feed-forward network
+                            # - Dropout for regularization
+                            self.transformer_layers = nn.TransformerEncoderLayer(
+                                d_model=feature_dim,
+                                nhead=self.args.nhead,
+                                dim_feedforward=4
+                                * feature_dim,  # Standard transformer uses 4x
+                                dropout=self.args.dropout,
+                                batch_first=True,
+                            ).to(device)
+
+                            # Stack multiple transformer layers
+                            self.transformer = nn.TransformerEncoder(
+                                self.transformer_layers,
+                                num_layers=self.args.transformer_depth,
+                            ).to(device)
+
+                        # Handle dimension mismatch with projection if needed
+                        if X_orig.shape[-1] != feature_dim:
+                            projection = nn.Linear(
+                                X_orig.shape[-1], feature_dim, device=X.device
+                            ).to(device)
+                            X_orig = projection(X_orig)
+
+                        # Add batch dimension for transformer
+                        X_transformer = X_orig.unsqueeze(0).to(device)
+
+                        # Apply full transformer encoding
+                        X_transformer = self.transformer(X_transformer)
+
+                        # Add residual connection
+                        X = X + X_transformer.squeeze(0)
+
+            # Output layer
             X = self.conv_out(
                 X=X,
                 vertex=V,
@@ -600,9 +820,10 @@ class UniGNN(nn.Module):
                 degE=degE,
                 degV=degV,
             )
-            # Aggregating using mean (you can also use sum or other methods) or sum
-            X_aggregated = torch.mean(X, dim=0).unsqueeze(0)  # Shape (1, 2)
-            output = F.log_softmax(X_aggregated, dim=1)
+
+            # Global pooling and prediction
+            X_pooled = torch.mean(X, dim=0, keepdim=True)
+            output = F.log_softmax(X_pooled, dim=1)
             list_preds.append(output)
 
         return list_preds
@@ -679,8 +900,6 @@ class UniGCNII(nn.Module):
         nclass: int,
         nlayer: int,
         nhead: int,
-        V: torch.long,
-        E: torch.long,
     ) -> None:
         """UniGNNII
 
@@ -690,21 +909,15 @@ class UniGCNII(nn.Module):
             nfeat:
                 dimension of features
             nhid:
-                dimension of hidden features, note that actually it\'s #nhid x #nhead
+                dimension of hidden features, note that actually it's #nhid x #nhead
             nclass:
                 number of classes
             nlayer:
                 number of hidden layers
             nhead:
                 number of conv heads
-            V:
-                V is the row index for the sparse incident matrix H, |V| x |E|
-            E:
-                E is the col index for the sparse incident matrix H, |V| x |E|
         """
         super().__init__()
-        self.V = V
-        self.E = E
         nhid = nhid * nhead
         act = {"relu": nn.ReLU(), "prelu": nn.PReLU()}
         self.act = act[args.activation]
@@ -722,14 +935,16 @@ class UniGCNII(nn.Module):
         )
         self.dropout = nn.Dropout(args.dropout)
 
-    def forward(self, x):
-        """TODO
+    def forward(
+        self, x: torch.Tensor, V: torch.Tensor, E: torch.Tensor
+    ) -> torch.Tensor:
+        """Forward pass of UniGCNII
 
         Args:
-            x:
-                TODO
+            x: Input features
+            V:
+            E:
         """
-        V, E = self.V, self.E
         lamda, alpha = 0.5, 0.1
         x = self.dropout(x)
         x = F.relu(self.convs[0](x))
@@ -741,3 +956,65 @@ class UniGCNII(nn.Module):
         x = self.dropout(x)
         x = self.convs[-1](x)
         return F.log_softmax(x, dim=1)
+
+    def forward_hypergraph_classification(
+        self,
+        list_hypergraphs: list,
+    ) -> list[torch.Tensor]:
+        """UniGCNII for hypergraph classification.
+
+        Args:
+            list_hypergraphs: List of dictionaries containing hypergraph data
+                Each dict must have:
+                    - 'features': node features tensor
+                    - 'hypergraph': dictionary of edge lists
+                    - Optional: 'degE', 'degV' (pre-computed degrees)
+
+        Returns:
+            List of prediction tensors (one per hypergraph)
+        """
+        list_preds: list[torch.Tensor] = []
+        lamda, alpha = 0.5, 0.1  # Same hyperparameters as in forward()
+
+        for dico in list_hypergraphs:
+            # Get features and ensure they're float32
+            X = torch.tensor(dico["features"], dtype=torch.float32)
+            G = dico["hypergraph"]
+
+            # Get or calculate degrees and indices
+            if "degE" in dico and "degV" in dico:
+                degE = torch.tensor(dico["degE"], dtype=torch.float32)
+                degV = torch.tensor(dico["degV"], dtype=torch.float32)
+                # Convert vertex/edge indices from G
+                V, E = [], []
+                for edge_idx, (_, nodes) in enumerate(G.items()):
+                    V.extend(nodes)
+                    E.extend([edge_idx] * len(nodes))
+                V = torch.tensor(V, dtype=torch.long)
+                E = torch.tensor(E, dtype=torch.long)
+            else:
+                V, E, degE, degV, _ = calculate_V_E(X, G, self.args)
+                degE = degE.float()
+                degV = degV.float()
+
+            # Initial transformation
+            X = self.dropout(X)
+            X = F.relu(self.convs[0](X))
+            X0 = X  # Store for skip connections
+
+            # Convolution layers
+            for i, conv in enumerate(self.convs[1:-1]):
+                X = self.dropout(X)
+                beta = math.log(lamda / (i + 1) + 1)
+                X = F.relu(conv(X, V, E, alpha, beta, X0))
+
+            # Final layer
+            X = self.dropout(X)
+            X = self.convs[-1](X)
+
+            # Global pooling and prediction
+            X_pooled = torch.mean(X, dim=0, keepdim=True)
+            output = F.log_softmax(X_pooled, dim=1)
+            list_preds.append(output)
+
+        return list_preds

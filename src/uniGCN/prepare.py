@@ -93,6 +93,8 @@ def fetch_data(
     if not normalize_features:
         normalize_encodings = False
         # added by RP!
+        if not add_encodings:
+            print("We are not adding any encodings")
         if add_encodings:
             print("We are adding encodings!")
             hgencodings = HypergraphEncodings()
@@ -446,7 +448,7 @@ def initialise(
 
     # UniGNN and optimiser
     if args.model_name == "UniGCNII":
-        model = UniGCNII(args, nfeat, nhid, nclass, nlayer, nhead, V, E)
+        model = UniGCNII(args, nfeat, nhid, nclass, nlayer, nhead)
         optimiser = torch.optim.Adam(
             [
                 dict(params=model.reg_params, weight_decay=0.01),
