@@ -7,6 +7,7 @@
 #SBATCH --partition=mweber_gpu     # Specify the partition
 #SBATCH --gpus=4                   # Request 1 GPU
 
+
 # Load required modules (adjust based on your cluster setup)
 # Load Conda (if needed)
 module load anaconda/2023.07  # Example, depending on your system
