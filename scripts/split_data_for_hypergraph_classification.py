@@ -1,6 +1,7 @@
+from random import sample
+
 import numpy as np
 import torch
-from random import sample
 
 
 def split_data(data, split) -> tuple:
