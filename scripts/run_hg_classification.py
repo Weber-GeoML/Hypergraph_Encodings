@@ -1,6 +1,8 @@
 """ Equivalent of train_val.py, but for hypergraph classification
 
 NOTE: THIS DOES NOT WORK YET. THIS IS A WORK IN PROGRESS.
+
+THis is the script we run from run_all_hg_classfication.sh, run_all_hg_classification_parallel.sh
 """
 
 import datetime
