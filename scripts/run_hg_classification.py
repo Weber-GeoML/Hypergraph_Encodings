@@ -1,4 +1,7 @@
-""" Equivalent of train_val.py, but for hypergraph classification"""
+""" Equivalent of train_val.py, but for hypergraph classification
+
+NOTE: THIS DOES NOT WORK YET. THIS IS A WORK IN PROGRESS.
+"""
 
 import datetime
 import os

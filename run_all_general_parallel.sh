@@ -7,6 +7,9 @@
 #SBATCH --partition=mweber_gpu     
 #SBATCH --gpus=1                   # One GPU per task
 
+# This is the module I use to run
+# This is the most up to data bash script
+
 # Load modules and activate environment
 module load anaconda/2023.07
 source activate hgencodings_gpu_weber
