@@ -215,9 +215,9 @@ class Laplacians:
                         matrix_[i, j] = 1  # diag
                     elif node_j not in self.node_neighbors[node_i]:
                         matrix_[i, j] = 0
-                        matrix_[
-                            j, i
-                        ] = 0  # not neigbors so cannot travel between i and j
+                        matrix_[j, i] = (
+                            0  # not neigbors so cannot travel between i and j
+                        )
                     elif node_j in self.node_neighbors[node_i]:
                         matrix_[i, j] = -i_neighbors_counts[node_j] / count_weights
             self.rw_laplacian = matrix_
@@ -349,6 +349,7 @@ class Laplacians:
 # Example utilization
 if __name__ == "__main__":
 
+    print("EXAMPLE UTILIZATION")
     hg: dict[str, dict | int] = {
         "hypergraph": {
             "yellow": [1, 2, 3],
@@ -370,13 +371,11 @@ if __name__ == "__main__":
     # Instantiates the Laplacians class
     laplacian = Laplacians(data)
     laplacian.compute_node_neighbors()
-    print(laplacian.node_neighbors)
+    print(f"node_neighbors: \n {laplacian.node_neighbors}")
     laplacian.compute_node_degrees()
-    print(laplacian.node_degrees)
-    assert False
+    print(f"node_degrees: \n {laplacian.node_degrees}")
     laplacian.compute_random_walk_laplacian(type="WE")
-
-    # Computes the Forman-Ricci curvature
     laplacian.compute_normalized_laplacian()
     laplacian.compute_random_walk_laplacian()
-    print(laplacian.rw_laplacian)
+    print(f"rw_laplacian: \n {laplacian.rw_laplacian}")
+    print("DONE")
