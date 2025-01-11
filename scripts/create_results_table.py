@@ -4,14 +4,15 @@ This script is used to create a results table from the log files in the log_dir 
 It creates a latex table and a png table.
 """
 
+import json
 import os
 import re
-import pandas as pd
-import numpy as np
-from tabulate import tabulate
-import matplotlib.pyplot as plt
-import json
 import textwrap
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from tabulate import tabulate
 
 
 def parse_log_file(file_path):

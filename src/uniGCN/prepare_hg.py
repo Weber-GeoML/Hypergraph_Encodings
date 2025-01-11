@@ -1,11 +1,12 @@
+import argparse
+from typing import Union
+
+import numpy as np
 import scipy.sparse as sp
 import torch
 import torch.optim as optim
 import torch_sparse
 from torch_scatter import scatter
-import numpy as np
-import argparse
-from typing import Union
 
 from uniGCN.UniGCN import UniGNN
 
