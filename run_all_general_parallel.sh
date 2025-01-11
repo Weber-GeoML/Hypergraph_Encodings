@@ -150,6 +150,7 @@ fi
 log_file="${log_file}_nlayer${nlayer}.log"
 
 # Run the specific combination
+echo "Hi! We are running"
 echo "Running combination $SLURM_ARRAY_TASK_ID: $model $data_type $dataset $encoding $encoding_type $transformer $transformer_version $transformer_depth $add_encoding $nlayer"
 python scripts/train_val.py \
     --add-self-loop \
@@ -167,3 +168,4 @@ python scripts/train_val.py \
     $([ "$transformer" == "False" ] && echo "--no-transformer") \
     $([ "$transformer" == "True" ] && echo "--transformer-version=$transformer_version") \
     $([ "$transformer" == "True" ] && echo "--transformer-depth=$transformer_depth") > "$log_file" 2>&1
+echo "Done!"
