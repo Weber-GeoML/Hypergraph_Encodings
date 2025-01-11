@@ -400,6 +400,7 @@ class HypergraphEncodings:
                 laplacian.compute_random_walk_laplacian(type=rw_type, verbose=verbose)
                 if verbose:
                     print(f"The RW laplacian is \n {laplacian.rw_laplacian}")
+                eigenvalues, eigenvectors = np.linalg.eig(laplacian.rw_laplacian)
 
             # TODO: take the real part of the eigenvalues/eigenvectors
             # put a flag to catch if it larger than 10e-3 (imaginary part)
