@@ -1,11 +1,15 @@
-import json
+"""
+This script is used to create a results table from the log files in the log_dir directory.
+
+It creates a latex table and a png table.
+"""
+
 import os
 import re
 
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-from tabulate import tabulate
+import json
+import textwrap
 
 
 def parse_log_file(file_path):
@@ -16,6 +20,7 @@ def parse_log_file(file_path):
         parts = filename.replace(".log", "").split("_")
 
         config_dict = {
+            "filename": filename,
             "model": parts[0],
             "data": parts[1],
             "dataset": parts[2],
@@ -23,13 +28,15 @@ def parse_log_file(file_path):
 
         # Add encoding info if present
         if len(parts) > 3:
-            if parts[3] == "no_encodings":
+            current_idx = 3
+            if parts[current_idx] == "no_encodings":
                 config_dict["add_encodings"] = False
+                current_idx += 1
             else:
                 config_dict["add_encodings"] = True
-                config_dict["encodings"] = parts[3]
+                config_dict["encodings"] = parts[current_idx]
+                current_idx += 1
                 # Add additional encoding parameters if present
-                current_idx = 4
                 if len(parts) > current_idx:
                     if parts[3] == "RW":
                         config_dict["random_walk_type"] = parts[current_idx]
@@ -41,17 +48,22 @@ def parse_log_file(file_path):
                         config_dict["laplacian_type"] = parts[current_idx]
                         current_idx += 1
 
-                # Add transformer info if present
-                if len(parts) > current_idx and "transformer" in parts[current_idx]:
-                    config_dict["do_transformer"] = True
-                    current_idx += 1  # Skip 'transformerTrue'
-                    if len(parts) > current_idx:
-                        config_dict["transformer_version"] = parts[current_idx]
-                        current_idx += 1
-                    if len(parts) > current_idx and "depth" in parts[current_idx]:
-                        config_dict["transformer_depth"] = parts[current_idx].replace(
-                            "depth", ""
-                        )
+            # Add transformer info if present
+            if len(parts) > current_idx and "transformer" in parts[current_idx]:
+                config_dict["do_transformer"] = True
+                current_idx += 1  # Skip 'transformerTrue'
+                if len(parts) > current_idx:
+                    config_dict["transformer_version"] = parts[current_idx]
+                    current_idx += 1
+                if len(parts) > current_idx and "depth" in parts[current_idx]:
+                    config_dict["transformer_depth"] = parts[current_idx].replace(
+                        "depth", ""
+                    )
+                    current_idx += 1
+
+            # Add nlayer info if present
+            if len(parts) > current_idx and "nlayer" in parts[current_idx]:
+                config_dict["nlayer"] = parts[current_idx].replace("nlayer", "")
 
         # Extract accuracy from last line
         with open(file_path, "r") as f:
@@ -212,45 +224,89 @@ def create_results_table(log_dir):
 
     df = pd.DataFrame(rows, columns=["Model"] + datasets)
 
-    # Save results
+    # Split tables by model
+    models = df["Model"].apply(lambda x: x.split()[0]).unique()  # Get base model names
     results_dir = os.path.join(log_dir, "results")
     os.makedirs(results_dir, exist_ok=True)
-
-    # Save LaTeX table
-    latex_table = df.to_latex(index=False, escape=False)
-    with open(os.path.join(results_dir, "results_table.tex"), "w") as f:
-        f.write(latex_table)
 
     # Save full results
     with open(os.path.join(results_dir, "full_results.json"), "w") as f:
         json.dump(full_results, f, indent=4)
 
-    # Create and save visual table
-    if len(df) > 0:  # Only create plot if we have data
-        fig, ax = plt.subplots(figsize=(15, len(rows) * 0.5))
-        ax.axis("tight")
-        ax.axis("off")
-        table = ax.table(
-            cellText=df.values, colLabels=df.columns, cellLoc="center", loc="center"
-        )
+    # Create separate tables for each model
+    for model_name in models:
+        model_df = df[df["Model"].str.startswith(model_name)]
 
-        # Adjust table style
-        table.auto_set_font_size(False)
-        table.set_fontsize(9)
-        table.scale(1.2, 1.5)
+        # Save LaTeX table for this model
+        latex_table = model_df.to_latex(index=False, escape=False)
+        with open(
+            os.path.join(results_dir, f"results_table_{model_name}.tex"), "w"
+        ) as f:
+            f.write(latex_table)
 
-        plt.title("Results Summary")
-        plt.tight_layout()
-        plt.savefig(
-            os.path.join(results_dir, "results_table.png"), dpi=300, bbox_inches="tight"
-        )
-        plt.close()
+        # Create and save visual table
+        if len(model_df) > 0:
+            # Function to wrap text
+            def wrap_text(text, width=20):
+                """Wrap text at specified width."""
+                if isinstance(text, str):
+                    return "\n".join(textwrap.wrap(text, width=width))
+                return text
 
-        print(f"\n=== Results Saved in {results_dir} ===")
-        print(f"LaTeX table saved as: results_table.tex")
-        print(f"Full results saved as: full_results.json")
-        print(f"Summary plot saved as: results_table.png")
+            # Apply text wrapping
+            wrapped_df = model_df.copy()
+            wrapped_df["Model"] = wrapped_df["Model"].apply(
+                lambda x: wrap_text(x, width=25)
+            )
+            wrapped_df.columns = [
+                wrap_text(col, width=15) for col in wrapped_df.columns
+            ]
 
+            # Calculate figure size
+            n_rows, n_cols = len(wrapped_df) + 1, len(wrapped_df.columns)
+            row_height = 1.5
+            fig_height = min(n_rows * row_height, 60)  # Cap maximum height
+            fig_width = n_cols * 2.5
+
+            # Create figure and table
+            fig, ax = plt.subplots(figsize=(fig_width, fig_height))
+            ax.axis("tight")
+            ax.axis("off")
+
+            table = ax.table(
+                cellText=wrapped_df.values,
+                colLabels=wrapped_df.columns,
+                cellLoc="center",
+                loc="center",
+                colWidths=[1.0 / n_cols] * n_cols,
+            )
+
+            # Adjust table style
+            table.auto_set_font_size(False)
+            table.set_fontsize(9)
+
+            # Adjust cell heights
+            for cell in table._cells.values():
+                cell.set_height(row_height / n_rows)
+                cell._text.set_horizontalalignment("center")
+                cell._text.set_verticalalignment("center")
+                cell._text.set_multialignment("center")
+
+            plt.title(f"Results Summary - {model_name}")
+            plt.tight_layout()
+            plt.savefig(
+                os.path.join(results_dir, f"results_table_{model_name}.png"),
+                dpi=300,
+                bbox_inches="tight",
+                pad_inches=0.5,
+            )
+            plt.close()
+
+        print(f"\n=== Results for {model_name} Saved in {results_dir} ===")
+        print(f"LaTeX table saved as: results_table_{model_name}.tex")
+        print(f"Summary plot saved as: results_table_{model_name}.png")
+
+    print(f"Full results saved as: full_results.json")
     return df, full_results
 
 

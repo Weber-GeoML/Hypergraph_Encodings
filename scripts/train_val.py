@@ -1,5 +1,7 @@
 """ File taken from UniGCN
-This is the file for node level classifications
+
+This is the file for node level classifications. This is the file
+that we call from run_all_general_parallel.sh, run_all_general.sh, run_all_ablation.sh
 """
 
 import datetime
