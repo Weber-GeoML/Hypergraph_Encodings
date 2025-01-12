@@ -6,7 +6,6 @@ that we call from run_all_general_parallel.sh, run_all_general.sh, run_all_ablat
 
 import datetime
 import os
-import pickle
 import shutil
 import sys
 import time

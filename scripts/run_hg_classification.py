@@ -11,7 +11,6 @@ import pickle
 import shutil
 import sys
 import time
-from random import sample
 
 import config
 import matplotlib.pyplot as plt
