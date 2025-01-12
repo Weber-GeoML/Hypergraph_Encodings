@@ -8,7 +8,6 @@ to a dataset (curvature, laplacians, random walks).
 # need to investigate what is the meaning of the other features...
 # assert that all_nodes is {0,1,2,3..., number of nodes}
 
-import json
 import os
 import pickle
 import random
@@ -157,6 +156,7 @@ class HypergraphEncodings:
                     )
                     print(f"We add the degree encoding:\n {ld_vals}")
                 if normalized:
+                    # hypergraph["features"][node].reshape(-1, 1)
                     try:
                         stacked_features = np.hstack(
                             ([hypergraph["features"][node]], ld_vals)
@@ -166,6 +166,7 @@ class HypergraphEncodings:
                             (hypergraph["features"][node], ld_vals)
                         )
                 elif not normalized:
+                    # hypergraph["features"][node].reshape(-1, 1)
                     stacked_features = np.hstack(
                         ([hypergraph["features"][node]], ld_vals)
                     )
@@ -287,6 +288,7 @@ class HypergraphEncodings:
                     )
                     print(f"We add the encoding:\n {rc_vals}")
                 if normalized:
+                    # hypergraph["features"][node].reshape(-1, 1)
                     try:
                         padded_features[node] = np.hstack(
                             (hypergraph["features"][node], rc_vals)
@@ -296,6 +298,7 @@ class HypergraphEncodings:
                             ([hypergraph["features"][node]], rc_vals)
                         )
                 elif not normalized:
+                    #
                     padded_features[node] = np.hstack(
                         ([hypergraph["features"][node]], rc_vals)
                     )

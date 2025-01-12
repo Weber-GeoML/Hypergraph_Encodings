@@ -7,7 +7,6 @@ This module contains functions for computing the Ollivier-Ricci curvatures of an
 import json
 import os
 import subprocess
-import sys
 
 from encodings_hnns.data_handling import parser
 
