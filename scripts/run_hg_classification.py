@@ -24,7 +24,6 @@ from split_data_for_hypergraph_classification import get_split
 from torch.optim import optimizer
 from tqdm import tqdm  # Add this import
 
-
 ### configure logger
 ### configure logger
 from uniGCN.logger import get_logger
