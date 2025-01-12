@@ -156,6 +156,7 @@ class HypergraphEncodings:
                     )
                     print(f"We add the degree encoding:\n {ld_vals}")
                 if normalized:
+                    # hypergraph["features"][node].reshape(-1, 1)
                     try:
                         stacked_features = np.hstack(
                             ([hypergraph["features"][node]], ld_vals)
@@ -165,6 +166,7 @@ class HypergraphEncodings:
                             (hypergraph["features"][node], ld_vals)
                         )
                 elif not normalized:
+                    # hypergraph["features"][node].reshape(-1, 1)
                     stacked_features = np.hstack(
                         ([hypergraph["features"][node]], ld_vals)
                     )
@@ -286,6 +288,7 @@ class HypergraphEncodings:
                     )
                     print(f"We add the encoding:\n {rc_vals}")
                 if normalized:
+                    # hypergraph["features"][node].reshape(-1, 1)
                     try:
                         padded_features[node] = np.hstack(
                             (hypergraph["features"][node], rc_vals)
@@ -295,6 +298,7 @@ class HypergraphEncodings:
                             ([hypergraph["features"][node]], rc_vals)
                         )
                 elif not normalized:
+                    #
                     padded_features[node] = np.hstack(
                         ([hypergraph["features"][node]], rc_vals)
                     )
