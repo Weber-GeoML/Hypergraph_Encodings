@@ -5,7 +5,6 @@ And now the "features" field of every dict will have been updated with the featu
 
 """
 
-import csv
 import inspect
 import multiprocessing as mp
 import os

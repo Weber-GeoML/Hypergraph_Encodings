@@ -8,7 +8,6 @@ to a dataset (curvature, laplacians, random walks).
 # need to investigate what is the meaning of the other features...
 # assert that all_nodes is {0,1,2,3..., number of nodes}
 
-import json
 import os
 import pickle
 import random
