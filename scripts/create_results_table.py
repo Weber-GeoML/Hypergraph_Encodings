@@ -10,6 +10,11 @@ import re
 import textwrap
 
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from tabulate import tabulate
+
+import matplotlib.pyplot as plt
 
 
 def parse_log_file(file_path):
