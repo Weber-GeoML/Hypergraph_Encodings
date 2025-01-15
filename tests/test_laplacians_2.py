@@ -1,6 +1,8 @@
 """ Test for the Laplacianss
 
-Can use the toy hypergraph from our draft"""
+Can use the toy graph 1 - 2 - 3
+
+I computed everything by hand first!"""
 
 from collections import OrderedDict
 

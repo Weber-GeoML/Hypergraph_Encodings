@@ -103,6 +103,14 @@ pip install -e .
 ```
 You might need to install julia separately as well as the ORC routine calls julia code.
 
+You might also need to installl PyTorch, torch-geometric and torch-scatter:
+
+```
+conda install pytorch -c pytorch
+conda install pyg -c pyg
+conda install pytorch-scatter -c pyg
+```
+
 ## Debugging
 
 Using Visual Studio, navigate to the file 

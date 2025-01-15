@@ -83,7 +83,7 @@ def toy_hypergraph_3() -> dict[str, dict]:
 
 
 @pytest.fixture
-def node_ldp() -> np.ndarray:
+def node_ldp() -> dict[int, list[float]]:
     """Returns the local degree profile for the toy hg"""
     # ordering is degree of node, min, max, median, mean, std
     # 1 has nbors 2, 3 with degree 2, 3
@@ -92,7 +92,7 @@ def node_ldp() -> np.ndarray:
     # 4 has nghbor 5 with degree 2
     # 5 has nghbors 3, 4, 6 with deegree 3, 1, 1
     # 6 has nghbors 3, 5 with degrees 3, 2
-    ldp: np.ndarray = {
+    ldp: dict[int, list[float]] = {
         1: [1, 2, 3, 2.5, 2.5, 0.5],
         2: [2, 1, 3, 2, 2, 1],
         3: [3, 1, 2, 1.5, 1.5, 0.5],
@@ -105,13 +105,13 @@ def node_ldp() -> np.ndarray:
 
 
 @pytest.fixture
-def node_ldp_2() -> np.ndarray:
+def node_ldp_2() -> dict[int, list[float]]:
     """Returns the local degree profile for the toy hg 2"""
     # ordering is degree of node, min, max, median, mean, std
     # 4 has nbors 5,7 with degree 2, 2
     # 5 has ngbors 4, 7 with degrees 1, 2
     # 7 has ngbors 4, 5 with degrees 1, 2
-    ldp: np.ndarray = {
+    ldp: dict[int, list[float]] = {
         4: [1, 2, 2, 2, 2, 0],
         5: [2, 1, 2, 1.5, 1.5, 0.5],
         7: [2, 1, 2, 1.5, 1.5, 0.5],
@@ -120,13 +120,13 @@ def node_ldp_2() -> np.ndarray:
 
 
 @pytest.fixture
-def node_ldp_3() -> np.ndarray:
+def node_ldp_3() -> dict[int, list[float]]:
     """Returns the local degree profile for the toy hg 3"""
     # ordering is degree of node, min, max, median, mean, std
     # 4 has nbors 5,7 with degree 2, 2
     # 5 has ngbors 4, 7 with degrees 1, 2
     # 7 has ngbors 4, 5 with degrees 1, 2
-    ldp: np.ndarray = {
+    ldp: dict[int, list[float]] = {
         4: [1, 2, 2, 2, 2, 0],
         5: [2, 1, 2, 1.5, 1.5, 0.5],
         7: [2, 1, 2, 1.5, 1.5, 0.5],
@@ -230,7 +230,7 @@ def ngbors_2() -> np.ndarray:
 
 
 @pytest.fixture
-def ngbors_3() -> np.ndarray:
+def ngbors_3() -> OrderedDict:
     nhbors = OrderedDict(
         [
             (4, {4, 5, 7}),
@@ -242,7 +242,7 @@ def ngbors_3() -> np.ndarray:
 
 
 @pytest.fixture
-def ngbors_not_inclusive() -> np.ndarray:
+def ngbors_not_inclusive() -> OrderedDict:
     nhbors = OrderedDict(
         [
             (1, {2, 3}),
@@ -257,7 +257,7 @@ def ngbors_not_inclusive() -> np.ndarray:
 
 
 @pytest.fixture
-def ngbors_not_inclusive_2() -> np.ndarray:
+def ngbors_not_inclusive_2() -> OrderedDict:
     nhbors = OrderedDict(
         [
             (4, {5, 7}),
@@ -269,7 +269,7 @@ def ngbors_not_inclusive_2() -> np.ndarray:
 
 
 @pytest.fixture
-def ngbors_not_inclusive_3() -> np.ndarray:
+def ngbors_not_inclusive_3() -> OrderedDict:
     nhbors = OrderedDict(
         [
             (4, {5, 7}),
@@ -760,7 +760,7 @@ def test_compute_random_walk_laplacian_EE(toy_hypergraph, rw_laplacian) -> None:
     assert_allclose(laplacian.rw_laplacian, rw_laplacian, atol=1e-8)
 
 
-def test_compute_node_neighbors(toy_hypergraph, ngbors):
+def test_compute_node_neighbors(toy_hypergraph, ngbors) -> None:
     """Test for compute_node_neighbors
 
     Args:
@@ -775,7 +775,7 @@ def test_compute_node_neighbors(toy_hypergraph, ngbors):
     assert laplacian.node_neighbors == ngbors
 
 
-def test_compute_node_neighbors_2(toy_hypergraph_2, ngbors_2):
+def test_compute_node_neighbors_2(toy_hypergraph_2, ngbors_2) -> None:
     """Test for compute_node_neighbors
 
     Args:
@@ -790,7 +790,7 @@ def test_compute_node_neighbors_2(toy_hypergraph_2, ngbors_2):
     assert laplacian.node_neighbors == ngbors_2
 
 
-def test_compute_node_neighbors_3(toy_hypergraph_3, ngbors_3):
+def test_compute_node_neighbors_3(toy_hypergraph_3, ngbors_3) -> None:
     """Test for compute_node_neighbors
 
     Args:
@@ -805,7 +805,7 @@ def test_compute_node_neighbors_3(toy_hypergraph_3, ngbors_3):
     assert laplacian.node_neighbors == ngbors_3
 
 
-def test_compute_node_neighbors_not_inclusive(toy_hypergraph, ngbors_not_inclusive):
+def test_compute_node_neighbors_not_inclusive(toy_hypergraph, ngbors_not_inclusive) -> None:
     """Test for compute_node_neighbors
 
     Args:
@@ -822,7 +822,7 @@ def test_compute_node_neighbors_not_inclusive(toy_hypergraph, ngbors_not_inclusi
 
 def test_compute_node_neighbors_not_inclusive_2(
     toy_hypergraph_2, ngbors_not_inclusive_2
-):
+) -> None:
     """Test for compute_node_neighbors
 
     Args:
@@ -839,7 +839,7 @@ def test_compute_node_neighbors_not_inclusive_2(
 
 def test_compute_node_neighbors_not_inclusive_3(
     toy_hypergraph_3, ngbors_not_inclusive_3
-):
+) -> None:
     """Test for compute_node_neighbors
 
     Args:
