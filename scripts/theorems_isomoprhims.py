@@ -87,6 +87,10 @@ def test_laplacian(hg1, hg2, lap_type, name1="Graph1", name2="Graph2"):
     if lap_type == "Normalized":
         L1 = encoder_shrikhande.laplacian.normalized_laplacian
         L2 = encoder_rooke.laplacian.normalized_laplacian
+        Dv1 = encoder_shrikhande.laplacian.Dv
+        Dv2 = encoder_rooke.laplacian.Dv
+        assert np.allclose(Dv1, 6*np.eye(Dv1.shape[0]), atol=1e-12, rtol=1e-12), "Dv is not the identity matrix"
+        assert np.allclose(Dv2, 6*np.eye(Dv2.shape[0]), atol=1e-12, rtol=1e-12), "Dv is not the identity matrix"
     elif lap_type == "RW":
         L1 = encoder_shrikhande.laplacian.rw_laplacian
         L2 = encoder_rooke.laplacian.rw_laplacian
@@ -177,24 +181,27 @@ def test_laplacian(hg1, hg2, lap_type, name1="Graph1", name2="Graph2"):
 
     # Save the heatmap of the difference of the features
     plt.imshow(
-        np.abs(hg1_lape["features"] - hg2_lape["features"]),
+        hg1_lape["features"] - hg2_lape["features"],
         cmap="hot",
         interpolation="nearest",
     )
     plt.colorbar()
+    plt.title(f"Difference in {lap_type} Features")
     plt.savefig(f"diff_features_{lap_type.lower()}.png")
     plt.close()
 
     # save the diff of the laplacians as a matrix heatmap
-    plt.imshow(np.abs(L1 - L2), cmap="hot", interpolation="nearest")
+    plt.imshow(L1 - L2, cmap="hot", interpolation="nearest")
     plt.colorbar()
+    plt.title(f"Difference in {lap_type} Laplacian Matrices")
     plt.savefig(f"diff_laplacian_{lap_type.lower()}.png")
     plt.close()
 
     if lap_type == "Hodge":
         # save the diff of the laplacians as a matrix heatmap
-        plt.imshow(np.abs(L3 - L4), cmap="hot", interpolation="nearest")
+        plt.imshow(L3 - L4, cmap="hot", interpolation="nearest")
         plt.colorbar()
+        plt.title(f"Difference in {lap_type} Down-Laplacian Matrices")
         plt.savefig(f"diff_laplacian_down_{lap_type.lower()}.png")
         plt.close()
 
