@@ -128,7 +128,7 @@ class HypergraphEncodings:
             # and std of the degrees of the neighbors
             ld_profile: dict = laplacian.ldp
 
-            if self.hyperedges == None:
+            if self.hyperedges is None:
                 self.compute_hyperedges(hypergraph, verbose=verbose)
 
             features_augmented = hypergraph["features"]
@@ -233,7 +233,7 @@ class HypergraphEncodings:
                 # following calls the julia code and runs the subroutines
                 rc.compute_orc()
 
-            if self.hyperedges == None:
+            if self.hyperedges is None:
                 self.compute_hyperedges(hypergraph, verbose=verbose)
                 if verbose:
                     print("the hyperedges are")
@@ -371,12 +371,12 @@ class HypergraphEncodings:
 
             # Computes the dictionary with keys as node
             # and values as hyperedges
-            if self.hyperedges == None:
+            if self.hyperedges is None:
                 self.compute_hyperedges(hypergraph, verbose=verbose)
 
             # Store the Laplacian object as instance variable
             self.laplacian = Laplacians(hypergraph=hypergraph)
-            
+
             eigenvalues: np.ndarray
             eigenvectors: np.ndarray
             if type == "Hodge":
@@ -403,7 +403,9 @@ class HypergraphEncodings:
                     self.laplacian.normalized_laplacian
                 )
             elif type == "RW":
-                self.laplacian.compute_random_walk_laplacian(type=rw_type, verbose=verbose)
+                self.laplacian.compute_random_walk_laplacian(
+                    type=rw_type, verbose=verbose
+                )
                 if verbose:
                     print(f"The RW laplacian is \n {self.laplacian.rw_laplacian}")
                 eigenvalues, eigenvectors = np.linalg.eig(self.laplacian.rw_laplacian)
@@ -438,7 +440,7 @@ class HypergraphEncodings:
             # 2^k different possibilities
             sign: int = random.choice([-1, 1])
             # for rook and shrikhande, we use the same sign
-            sign =1
+            # sign = 1
 
             features_augmented = hypergraph["features"]
 
@@ -550,7 +552,7 @@ class HypergraphEncodings:
                 hypergraph["features"].shape[0] == hypergraph["n"]
             ), f"BEFORE: The shape is {hypergraph['features'].shape[0]} but n is {hypergraph['n']}"
 
-            if self.hyperedges == None:
+            if self.hyperedges is None:
                 self.compute_hyperedges(hypergraph, verbose=verbose)
 
             laplacian: Laplacians = Laplacians(hypergraph=hypergraph)
