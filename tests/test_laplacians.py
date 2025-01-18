@@ -496,6 +496,27 @@ def rw_laplacian_WE_3() -> np.ndarray:
     return L_WE_alpha_0
 
 
+@pytest.fixture
+def hypergraph_adjacency() -> np.ndarray:
+    """Returns the hypergraph adjacency matrix for toy_hypergraph"""
+    # For the hypergraph with edges:
+    # yellow: [1, 2, 3]
+    # red: [2, 3]
+    # green: [3, 5, 6]
+    # blue: [4, 5]
+    # records how many edges are two pairs of nodes in together
+    adj = np.array([
+        [0, 1, 1, 0, 0, 0],
+        [1, 0, 2, 0, 0, 0],
+        [1, 2, 0, 0, 1, 1],
+        [0, 0, 0, 0, 1, 0],
+        [0, 0, 1, 1, 0, 1],
+        [0, 0, 1, 0, 1, 0]
+    ])
+    return adj
+
+
+
 def test_compute_boundary(toy_hypergraph, boundary) -> None:
     """Test for compute_laplacian
 
@@ -956,3 +977,19 @@ def test_compute_random_walk_laplacian_WE_3(
     laplacian: Laplacians = Laplacians(toy_hypergraph_3)
     laplacian.compute_random_walk_laplacian(type="WE")
     assert_allclose(laplacian.rw_laplacian, rw_laplacian_WE_3, atol=1e-8)
+
+
+def test_compute_hypergraph_adjacency(toy_hypergraph, hypergraph_adjacency) -> None:
+    """Test for compute_hypergraph_adjacency
+
+    Args:
+        toy_hypergraph:
+            hypergraph from draft
+        hypergraph_adjacency:
+            expected adjacency matrix
+    """
+    laplacian: Laplacians = Laplacians(toy_hypergraph)
+    laplacian.compute_hypergraph_adjacency()
+    assert_array_equal(laplacian.hypergraph_adjacency, hypergraph_adjacency)
+    laplacian.compute_hodge_laplacian()
+    assert_array_equal(laplacian.hypergraph_adjacency, laplacian.hodge_laplacian_down - laplacian.Dv)
