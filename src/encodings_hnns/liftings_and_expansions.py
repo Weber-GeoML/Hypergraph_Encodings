@@ -5,14 +5,16 @@ pip install fastjsonschema
 
 
 """
-import networkx as nx
 import itertools
-import torch
-from torch_geometric.utils import to_networkx
-from torch_geometric.data import Data
-import matplotlib.pyplot as plt
-import numpy as np
+
 import hypernetx as hnx
+import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
+import torch
+from torch_geometric.data import Data
+from torch_geometric.utils import to_networkx
+
 
 def lift_to_hypergraph(graph) -> dict:
     """

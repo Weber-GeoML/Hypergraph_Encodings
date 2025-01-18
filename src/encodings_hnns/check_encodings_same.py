@@ -1,18 +1,18 @@
 
+import itertools
 import json
 import os
 import re
 import textwrap
-import itertools
+
 import matplotlib.pyplot as plt
+import networkx as nx
 import numpy as np
 import pandas as pd
+from GraphRicciCurvature.FormanRicci import FormanRicci
+from GraphRicciCurvature.OllivierRicci import OllivierRicci
 from tabulate import tabulate
 
-from GraphRicciCurvature.OllivierRicci import OllivierRicci
-from GraphRicciCurvature.FormanRicci import FormanRicci
-
-import networkx as nx
 from encodings_hnns.encodings import HypergraphEncodings
 
 
