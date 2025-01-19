@@ -260,7 +260,7 @@ def test_laplacian(hg1, hg2, lap_type, name1 : str = "Graph1", name2 : str = "Gr
     plt.close()
 
     # save the diff of the laplacians as a matrix heatmap
-    plt.imshow(L1 - L2, cmap="hot", interpolation="nearest")
+    plt.imshow(L1 - L2, cmap="Blues", interpolation="nearest")
     plt.colorbar()
     plt.title(f"Difference in {lap_type} Laplacian Matrices")
     plt.savefig(f"diff_laplacian_{lap_type.lower()}.png")
@@ -268,7 +268,7 @@ def test_laplacian(hg1, hg2, lap_type, name1 : str = "Graph1", name2 : str = "Gr
 
     if lap_type == "Hodge":
         # save the diff of the laplacians as a matrix heatmap
-        plt.imshow(L3 - L4, cmap="hot", interpolation="nearest")
+        plt.imshow(L3 - L4, cmap="Blues", interpolation="nearest")
         plt.colorbar()
         plt.title(f"Difference in {lap_type} Down-Laplacian Matrices")
         plt.savefig(f"diff_laplacian_down_{lap_type.lower()}.png")
@@ -427,7 +427,7 @@ for name, G in graphs.items():
     # Get and plot adjacency matrix as heatmap
     adj_matrix = nx.adjacency_matrix(G).todense()
     plt.figure(figsize=(8, 8))
-    plt.imshow(adj_matrix, cmap="Blues")
+    plt.imshow(adj_matrix, cmap="viridis")
     plt.colorbar()
     plt.title(f"Adjacency Matrix - {name} Graph")
     plt.savefig(f"{name.lower()}_adjacency_heatmap.png")
@@ -453,7 +453,7 @@ for name, G in graphs.items():
 plt.figure(figsize=(8, 8))
 plt.imshow(np.abs(nx.adjacency_matrix(graphs['Shrikhande']).todense() - 
                   nx.adjacency_matrix(graphs['Rooke']).todense()), 
-           cmap="hot")
+           cmap="Blues")
 plt.colorbar()
 plt.title("Difference in Adjacency Matrices (Shrikhande - Rooke)")
 plt.savefig("adjacency_difference_heatmap.png")

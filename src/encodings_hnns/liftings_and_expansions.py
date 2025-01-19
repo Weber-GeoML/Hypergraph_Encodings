@@ -2,6 +2,7 @@
 Run:
 pip install --no-deps hypernetx
 pip install fastjsonschema
+# Note: I am now modifying the hypernetx library to allow for non-convex hypergraphs
 
 
 """
@@ -18,7 +19,7 @@ from torch_geometric.utils import to_networkx
 from encodings_hnns.laplacians import Laplacians
 
 
-def lift_to_hypergraph(graph) -> dict:
+def lift_to_hypergraph(graph, verbose=True) -> dict:
     """
     Constructs a hypergraph from a given graph by identifying maximal cliques of size >=3
     and including remaining edges as hyperedges of size 2.
@@ -40,8 +41,10 @@ def lift_to_hypergraph(graph) -> dict:
     
     # Find all maximal cliques of size 3 or larger
     cliques = [clique for clique in nx.find_cliques(G) if len(clique) >= 3]
-    print(f"Found {len(cliques)} cliques")
-    print(f"The cliques are {cliques}")
+    print(f"The number of cliques of size 3 or larger is {len(cliques)}")
+    if verbose:
+        print(f"Found {len(cliques)} cliques")
+        print(f"The cliques are {cliques}")
     
     # Keep track of edges that are part of cliques (to avoid duplicates)
     edges_in_cliques = set()
@@ -49,14 +52,17 @@ def lift_to_hypergraph(graph) -> dict:
         # For each clique, get all possible pairs of nodes (edges)
         for edge in itertools.combinations(clique, 2):
             edges_in_cliques.add(tuple(sorted(edge)))  # Store edges in sorted order for consistency
-            print(f"The edge {edge} is in the clique {clique}")
+            if verbose:
+                print(f"The edge {edge} is in the clique {clique}")
     
     # Get all edges from the graph, ensuring consistent ordering
     all_edges = set(tuple(sorted(edge)) for edge in G.edges())
-    print(f"The all edges are {all_edges}")
+    if verbose:
+        print(f"The all edges are {all_edges}")
     # Find edges that aren't part of any clique
     remaining_edges = all_edges - edges_in_cliques
-    print(f"The remaining edges are {remaining_edges}")
+    if verbose:
+        print(f"The remaining edges are {remaining_edges}")
     # Create the hypergraph dictionary
     hypergraph : dict = {}
     hyperedge_id : int = 0
@@ -68,18 +74,22 @@ def lift_to_hypergraph(graph) -> dict:
     
     # Add remaining edges as size-2 hyperedges
     for edge in remaining_edges:
+        print(f"The edge {edge} is not in any clique")
         hypergraph[f'he_{hyperedge_id}'] = list(edge)
         hyperedge_id += 1
+
+    print(f"The number of hyperedges is {len(hypergraph)}")
+    assert len(hypergraph) == hyperedge_id
     
     # Get number of nodes
     n = graph.num_nodes
     
-    # Extract node features if they exist, otherwise create empty feature arrays
-    features = graph.x.cpu().numpy() if hasattr(graph, 'x') else np.zeros((n, 1))
-    # Extract node labels if they exist, otherwise create default label array
-    labels = graph.y.cpu().numpy() if hasattr(graph, 'y') else np.zeros(n, dtype=int)
+    # Extract node features and labels, using empty arrays as fallback
+    features = graph.x.cpu().numpy() if (hasattr(graph, 'x') and graph.x is not None) else np.zeros((n, 1))
+    labels = graph.y.cpu().numpy() if (hasattr(graph, 'y') and graph.y is not None) else np.zeros(n, dtype=int)
 
-    print(f"The hypergraph is {hypergraph}")
+    if verbose:
+        print(f"The hypergraph is {hypergraph}")
     
     # Create final dataset dictionary with all components
     dataset : dict = {
@@ -162,6 +172,10 @@ def lift_and_plot_graphs():
     shrikhande_hyper = lift_to_hypergraph(shrikhande_pyg)
     rooke_hyper = lift_to_hypergraph(rooke_pyg)
 
+    # print the number of hyperedges
+    print(f"The number of hyperedges in Shrikhande is {len(shrikhande_hyper['hypergraph'])}")
+    print(f"The number of hyperedges in Rooke is {len(rooke_hyper['hypergraph'])}")
+
     
     # For Shrikhande graph
     # initialize the Laplacians:
@@ -223,13 +237,8 @@ def lift_and_plot_graphs():
     hnx.draw(H_shrikhande, 
              pos=pos,
              with_node_labels=True, 
-             with_edge_labels=True,
-             edges_kwargs={
-                 'edgecolors': 'blue',
-                 'facecolors': 'lightblue',
-                 'alpha': 0.3,
-                 'linewidth': 2,
-             })
+             with_edge_labels=False,
+             convex=False,)
     plt.title(f"Hypergraph Representation\n({len(shrikhande_hyper['hypergraph'])} hyperedges)")
     
     plt.tight_layout()
@@ -250,6 +259,7 @@ def lift_and_plot_graphs():
     # Bipartite representation
     plt.subplot(132)
     H_rooke = hnx.Hypergraph(rooke_hyper['hypergraph'])
+    # assert that the number of hypere
     BH = H_rooke.bipartite()
     top = set(n for n, d in BH.nodes(data=True) if d['bipartite'] == 0)
     pos = nx.bipartite_layout(BH, top)
@@ -267,13 +277,8 @@ def lift_and_plot_graphs():
     hnx.draw(H_rooke, 
              pos=pos,
              with_node_labels=True, 
-             with_edge_labels=True,
-             edges_kwargs={
-                 'edgecolors': 'blue',
-                 'facecolors': 'lightblue',
-                 'alpha': 0.3,
-                 'linewidth': 2,
-             })
+             with_edge_labels=False,
+             convex=False)
     plt.title(f"Hypergraph Representation\n({len(rooke_hyper['hypergraph'])} hyperedges)")
     
     plt.tight_layout()
