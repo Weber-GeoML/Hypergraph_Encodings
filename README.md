@@ -14,6 +14,10 @@ contains functions for the package.
 
 contains the interface.
 
+```tests/```
+
+contains the test files - we use pytest.
+
 ```computed_encodings/```
 
 contains the precomputed encodings saved as pickle files.
