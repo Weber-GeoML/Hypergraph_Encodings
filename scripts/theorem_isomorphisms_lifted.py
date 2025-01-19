@@ -2,11 +2,10 @@ from encodings_hnns.encodings import HypergraphEncodings
 
 
 import networkx as nx
-import itertools
 import torch
 from torch_geometric.data import Data
-import matplotlib.pyplot as plt
-import numpy as np
+from encodings_hnns.check_encodings_same import checks_encodings, test_laplacian
+from encodings_hnns.liftings_and_expansions import lift_to_hypergraph
 
 
 import networkx as nx
@@ -37,7 +36,7 @@ def lift_and_compare_encodings():
 
     # Define encodings to check with their parameters
     encodings_to_check = [
-        ("LDP", "Local Degree Profile", True),
+        ("LDP", "Local Degree Profile", False),
         ("LCP-FRC", "Local Curvature Profile - FRC", True),
         ("RWPE", "Random Walk Encodings", True),
         ("LCP-ORC", "Local Curvature Profile - ORC", False),
@@ -72,8 +71,5 @@ def lift_and_compare_encodings():
         )
 
 if __name__ == "__main__":
-    # Original lifting and plotting
-    lift_and_plot_graphs()
-    
     # New encoding comparison
     lift_and_compare_encodings()

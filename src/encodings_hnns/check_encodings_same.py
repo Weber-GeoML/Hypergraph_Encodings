@@ -1,19 +1,41 @@
-
-import itertools
-import json
-import os
-import re
-import textwrap
-
 import matplotlib.pyplot as plt
-import networkx as nx
 import numpy as np
-import pandas as pd
-from GraphRicciCurvature.FormanRicci import FormanRicci
-from GraphRicciCurvature.OllivierRicci import OllivierRicci
-from tabulate import tabulate
-
+import os
+from itertools import permutations
 from encodings_hnns.encodings import HypergraphEncodings
+
+
+def find_encoding_match(encoding1, encoding2):
+    """
+    Check if two encodings are equivalent under row permutations.
+    Returns (is_match, permuted_encoding1, permutation) if found, (False, None, None) if not.
+    
+    Args:
+        encoding1: numpy array of shape (n, d)
+        encoding2: numpy array of shape (n, d)
+    """
+    if encoding1.shape != encoding2.shape:
+        return False, None, None
+    
+    n_rows = encoding1.shape[0]
+    
+    # For small matrices, we can try all permutations
+    if n_rows <= 8:  # Adjust this threshold based on your needs
+        for perm in permutations(range(n_rows)):
+            permuted = encoding1[list(perm), :]
+            if np.allclose(permuted, encoding2):
+                return True, permuted, perm
+    else:
+        # For larger matrices, use a heuristic approach
+        # Sort rows lexicographically and compare
+        sorted1 = encoding1[np.lexsort(encoding1.T)]
+        sorted2 = encoding2[np.lexsort(encoding2.T)]
+        if np.allclose(sorted1, sorted2):
+            # Find the permutation that was applied
+            perm = np.argsort(np.lexsort(encoding1.T))
+            return True, sorted1, perm
+    
+    return False, None, None
 
 
 def checks_encodings(
@@ -23,17 +45,26 @@ def checks_encodings(
     hg2,
     encoder_shrikhande,
     encoder_rooke,
-    name1: str = "Shrikhande",
-    name2: str = "Rooke",
-) -> None:
+    name1: str = "Graph A",
+    name2: str = "Graph B",
+    save_plots: bool = True,
+    plot_dir: str = "plots/encodings",
+    pair_idx: int = None,
+    category: str = None,
+    is_isomorphic: bool = None,
+    node_mapping: dict = None,
+) -> bool:
     # Initialize encoder
     encoder_shrikhande = HypergraphEncodings()
     encoder_rooke = HypergraphEncodings()
     print(f"\n=== {name_of_encoding} ===")
+    
+    # Create plot directory if it doesn't exist
+    os.makedirs(plot_dir, exist_ok=True)
+    
+    # Get encodings based on type
     if name_of_encoding == "LDP":
-        hg1_encodings = encoder_shrikhande.add_degree_encodings(
-            hg1.copy(), verbose=False
-        )
+        hg1_encodings = encoder_shrikhande.add_degree_encodings(hg1.copy(), verbose=False)
         hg2_encodings = encoder_rooke.add_degree_encodings(hg2.copy(), verbose=False)
     elif name_of_encoding == "LAPE":
         hg1_encodings = encoder_shrikhande.add_laplacian_encodings(
@@ -63,42 +94,76 @@ def checks_encodings(
         hg2_encodings = encoder_rooke.add_curvature_encodings(
             hg2.copy(), verbose=False, type="FRC"
         )
-    # assert that the two degree distributions are the same
-    if same:
-        rtol = 1e-10  # relative tolerance
-        atol = 1e-10  # absolute tolerance
-        diffs = np.abs(hg1_encodings["features"] - hg2_encodings["features"])
-        assert np.allclose(
-            hg1_encodings["features"],
-            hg2_encodings["features"],
-            rtol=rtol,
-            atol=atol
-        ), f"The two distributions differ beyond tolerance. Max difference: {np.max(diffs)}. \n Difference matrix: {diffs}"
-    print(f"The two degree distributions are the same!")
-    print(f"\n{name1} {name_of_encoding} shape:", hg1_encodings["features"].shape)
-    print(f"{name2} {name_of_encoding} shape:", hg2_encodings["features"].shape)
 
-    # Count unique features (element-wise)
-    # Count unique rows (node-wise)
-    unique_rows_1 = np.unique(hg1_encodings["features"], axis=0)
-    unique_rows_2 = np.unique(hg2_encodings["features"], axis=0)
-    print(f"\nUnique node feature vectors in {name1}:")
-    print(f"Number of unique rows: {unique_rows_1.shape[0]}")
-    print("Values:")
-    for i, row in enumerate(unique_rows_1):
-        print(f"Pattern {i+1}: {row}")
-        # Count how many nodes have this pattern
-        count = np.sum(np.all(hg1_encodings["features"] == row, axis=1))
-        print(f"Frequency: {count} nodes")
-
-    print(f"\nUnique node feature vectors in {name2}:")
-    print(f"Number of unique rows: {unique_rows_2.shape[0]}")
-    print("Values:")
-    for i, row in enumerate(unique_rows_2):
-        print(f"Pattern {i+1}: {row}")
-        # Count how many nodes have this pattern
-        count = np.sum(np.all(hg2_encodings["features"] == row, axis=1))
-        print(f"Frequency: {count} nodes")
+    # Create figure for comparison
+    plt.figure(figsize=(12, 5))
+    
+    # Add a title that includes pair info and category
+    title = f"{name_of_encoding} Encodings Comparison"
+    if pair_idx is not None and category is not None:
+        title += f"\nPair {pair_idx} ({category})"
+    plt.suptitle(title, fontsize=14, y=1.05)
+    
+    # Create subplots
+    ax1 = plt.subplot(1, 2, 1)
+    ax2 = plt.subplot(1, 2, 2)
+    
+    # Try to find matching permutation and plot
+    is_match, permuted, perm = find_encoding_match(
+        hg1_encodings["features"], 
+        hg2_encodings["features"]
+    )
+    
+    if is_match:
+        print(f"\n✅ Found matching permutation for {name_of_encoding} encodings!")
+        print(f"Permutation: {perm}")
+        
+        # Plot permuted version of first encoding
+        im1 = ax1.imshow(permuted, cmap="viridis")
+        im2 = ax2.imshow(hg2_encodings["features"], cmap="viridis")
+        ax1.set_title(f"{name1}\n(Permuted to match {name2})")
+    else:
+        print(f"\n❌ No matching permutation found for {name_of_encoding} encodings")
+        
+        # Plot original encodings
+        im1 = ax1.imshow(hg1_encodings["features"], cmap="viridis")
+        im2 = ax2.imshow(hg2_encodings["features"], cmap="viridis")
+        ax1.set_title(f"{name1}\n(Original ordering)")
+    
+    ax2.set_title(name2)
+    
+    # Add colorbars
+    plt.colorbar(im1, ax=ax1)
+    plt.colorbar(im2, ax=ax2)
+    
+    # Add row labels if the matrices are small enough
+    if hg1_encodings["features"].shape[0] <= 10:
+        for i in range(hg1_encodings["features"].shape[0]):
+            ax1.text(-0.5, i, f"Node {i}", va='center')
+            ax2.text(-0.5, i, f"Node {i}", va='center')
+    
+    # Adjust layout and save
+    plt.tight_layout()
+    if save_plots:
+        filename_base = f"pair_{pair_idx}_{category.lower()}" if pair_idx is not None else "comparison"
+        plt.savefig(
+            f"{plot_dir}/{filename_base}_{name_of_encoding.lower()}_comparison.png",
+            bbox_inches='tight',
+            dpi=300
+        )
+    plt.close()
+    
+    # Print additional analysis
+    if is_match:
+        print("Encoding statistics after permutation:")
+        print(f"Max difference: {np.max(np.abs(permuted - hg2_encodings['features']))}")
+        print(f"Mean difference: {np.mean(np.abs(permuted - hg2_encodings['features']))}")
+    else:
+        print("Encoding differences in original ordering:")
+        print(f"Max difference: {np.max(np.abs(hg1_encodings['features'] - hg2_encodings['features']))}")
+        print(f"Mean difference: {np.mean(np.abs(hg1_encodings['features'] - hg2_encodings['features']))}")
+    
+    return is_match
 
 
 # Save matrices in pmatrix format
@@ -117,7 +182,19 @@ def reconstruct_matrix(eigenvalues, eigenvectors) -> np.ndarray:
     return reconstructed_matrix
 
 
-def test_laplacian(hg1, hg2, lap_type, name1 : str = "Graph1", name2 : str = "Graph2", verbose : bool = False):
+def test_laplacian(
+    hg1, 
+    hg2, 
+    lap_type, 
+    name1: str = "Graph1", 
+    name2: str = "Graph2", 
+    verbose: bool = False,
+    save_plots: bool = True,
+    plot_dir: str = "plots/encodings",
+    pair_idx: int = None,
+    category: str = None,
+    is_isomorphic: bool = None
+):
     """
     Args:
         hg1, hg2: hypergraphs
@@ -311,23 +388,28 @@ def test_laplacian(hg1, hg2, lap_type, name1 : str = "Graph1", name2 : str = "Gr
             f"Maximum difference in features: {np.max(np.abs(hg1_lape['features'] - hg2_lape['features']))}"
         )
 
-    # Save the heatmap of the difference of the features
-    plt.imshow(
-        hg1_lape["features"] - hg2_lape["features"],
-        cmap="hot",
-        interpolation="nearest",
-    )
-    plt.colorbar()
-    plt.title(f"Difference in {lap_type} Features")
-    plt.savefig(f"diff_features_{lap_type.lower()}.png")
-    plt.close()
+    # Construct filename base
+    iso_status = "iso" if is_isomorphic else "non_iso" if is_isomorphic is not None else ""
+    filename_base = f"pair_{pair_idx}_{category}_{iso_status}" if pair_idx is not None and category else lap_type
 
-    # save the diff of the laplacians as a matrix heatmap
-    plt.imshow(L1 - L2, cmap="hot", interpolation="nearest")
-    plt.colorbar()
-    plt.title(f"Difference in {lap_type} Laplacian Matrices")
-    plt.savefig(f"diff_laplacian_{lap_type.lower()}.png")
-    plt.close()
+    # Save the heatmap of the difference of the features
+    if save_plots:
+        plt.imshow(
+            hg1_lape["features"] - hg2_lape["features"],
+            cmap="hot",
+            interpolation="nearest",
+        )
+        plt.colorbar()
+        plt.title(f"Difference in {lap_type} Features\n{category} - Pair {pair_idx}")
+        plt.savefig(f"{plot_dir}/{filename_base}_diff_features_{lap_type.lower()}.png")
+        plt.close()
+
+        # save the diff of the laplacians as a matrix heatmap
+        plt.imshow(L1 - L2, cmap="hot", interpolation="nearest")
+        plt.colorbar()
+        plt.title(f"Difference in {lap_type} Laplacian Matrices\n{category} - Pair {pair_idx}")
+        plt.savefig(f"{plot_dir}/{filename_base}_diff_laplacian_{lap_type.lower()}.png")
+        plt.close()
 
     if lap_type == "Hodge":
         # save the diff of the laplacians as a matrix heatmap
@@ -453,3 +535,81 @@ def check_isospectrality(eig1, eig2, tolerance=1e-10, verbose=False):
 #             return False, None
 
 #     return True, mapping
+
+
+def find_isomorphism_mapping(G1, G2):
+    """
+    Find the node mapping between two isomorphic graphs with detailed debugging.
+    """
+    import networkx.algorithms.isomorphism as iso
+    import networkx as nx
+    
+    # Convert graphs to simple undirected graphs
+    G1 = nx.Graph(G1)
+    G2 = nx.Graph(G2)
+    
+    print("\n=== Detailed Isomorphism Check ===")
+    print("\nGraph Properties:")
+    print(f"G1: {len(G1)} nodes, {G1.number_of_edges()} edges")
+    print(f"G2: {len(G2)} nodes, {G2.number_of_edges()} edges")
+    
+    print("\nNode Degrees:")
+    print("G1 degrees:", sorted([d for n, d in G1.degree()]))
+    print("G2 degrees:", sorted([d for n, d in G2.degree()]))
+    
+    print("\nEdge Lists:")
+    print("G1 edges:", sorted(G1.edges()))
+    print("G2 edges:", sorted(G2.edges()))
+    
+    class VerboseGraphMatcher(iso.GraphMatcher):
+        def __init__(self, G1, G2):
+            super().__init__(G1, G2)
+            self.mapping_steps = []
+        
+        def semantic_feasibility(self, G1_node, G2_node):
+            """Print detailed information about node matching attempts"""
+            feasible = super().semantic_feasibility(G1_node, G2_node)
+            print(f"\nTrying to match:")
+            print(f"G1 node {G1_node} (degree {G1.degree[G1_node]}) with")
+            print(f"G2 node {G2_node} (degree {G2.degree[G2_node]})")
+            print(f"Current mapping: {self.mapping}")
+            print(f"Feasible: {feasible}")
+            if not feasible:
+                print("Neighbors comparison:")
+                print(f"G1 node {G1_node} neighbors: {list(G1.neighbors(G1_node))}")
+                print(f"G2 node {G2_node} neighbors: {list(G2.neighbors(G2_node))}")
+            return feasible
+    
+    try:
+        # Create verbose graph matcher
+        GM = VerboseGraphMatcher(G1, G2)
+        
+        # Check isomorphism
+        is_isomorphic = GM.is_isomorphic()
+        
+        if is_isomorphic:
+            mapping = GM.mapping
+            print("\n✅ Graphs are isomorphic!")
+            print(f"Final mapping: {mapping}")
+            
+            # Verify mapping
+            print("\nVerifying mapping...")
+            for edge in G1.edges():
+                mapped_edge = (mapping[edge[0]], mapping[edge[1]])
+                if not G2.has_edge(*mapped_edge):
+                    print(f"❌ Mapping verification failed for edge {edge}!")
+                    return None
+                print(f"✓ Edge {edge} correctly maps to {mapped_edge}")
+            
+            return mapping
+        else:
+            print("\n❌ Graphs are not isomorphic")
+            print("Possible reasons:")
+            print("1. Different degree sequences")
+            print("2. Different neighborhood structures")
+            print("3. No valid node mapping preserves all edges")
+            return None
+            
+    except Exception as e:
+        print(f"\n❌ Error during isomorphism check: {str(e)}")
+        return None

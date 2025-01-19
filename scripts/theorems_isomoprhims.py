@@ -38,40 +38,37 @@ Here is what I can do: grab these graphs. Then make the hypergraphs as follow:
 turn triangles into hyperedges.
 
 House of graphs is a great place to find the graphs!
+
+TODO: 
+- turn this into a script that takes any two graphs and tells which encodings are the same and which are different.
 """
 
-import json
-import os
-import re
-import textwrap
-import itertools
+
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-from tabulate import tabulate
+
 
 import networkx as nx
 from encodings_hnns.encodings import HypergraphEncodings
+from encodings_hnns.check_encodings_same import reconstruct_matrix, check_isospectrality, checks_encodings, matrix_to_pmatrix
 
 
-# Save matrices in pmatrix format
-def matrix_to_pmatrix(matrix):
-    latex_str = "\\begin{pmatrix}\n"
-    for row in matrix:
-        latex_str += " & ".join([f"{x:.4f}" for x in row]) + " \\\\\n"
-    latex_str += "\\end{pmatrix}"
-    return latex_str
 
-
-def reconstruct_matrix(eigenvalues, eigenvectors):
-    """Reconstruct the matrix from the eigenvalues and eigenvectors"""
-    diagonal_matrix = np.diag(eigenvalues)
-    reconstructed_matrix = eigenvectors @ diagonal_matrix @ eigenvectors.T
-    return reconstructed_matrix
-
-
-def test_laplacian(hg1, hg2, lap_type, name1="Graph1", name2="Graph2"):
-    print(f"Testing Laplacian type: {lap_type}")
+def test_laplacian(hg1, hg2, lap_type, name1 : str = "Graph1", name2 : str = "Graph2", verbose : bool = False):
+    """
+    Args:
+        hg1, hg2: hypergraphs
+        lap_type: type of Laplacian to use
+        name1, name2: names of the graphs
+        verbose: whether to print verbose output
+    Returns:
+        hg1_lape, hg2_lape: LAPE encodings of the two graphs
+        L1, L2: Laplacian matrices of the two graphs
+        same: whether the two graphs are the same
+    TODO: to finish! Should be easy and fast now.
+    """
+    if verbose:
+        print(f"Testing Laplacian type: {lap_type}")
     # Initialize encoder
     encoder_shrikhande = HypergraphEncodings()
     encoder_rooke = HypergraphEncodings()
@@ -89,8 +86,12 @@ def test_laplacian(hg1, hg2, lap_type, name1="Graph1", name2="Graph2"):
         L2 = encoder_rooke.laplacian.normalized_laplacian
         Dv1 = encoder_shrikhande.laplacian.Dv
         Dv2 = encoder_rooke.laplacian.Dv
-        assert np.allclose(Dv1, 6*np.eye(Dv1.shape[0]), atol=1e-12, rtol=1e-12), "Dv is not the identity matrix"
-        assert np.allclose(Dv2, 6*np.eye(Dv2.shape[0]), atol=1e-12, rtol=1e-12), "Dv is not the identity matrix"
+        assert np.allclose(
+            Dv1, 6 * np.eye(Dv1.shape[0]), atol=1e-12, rtol=1e-12
+        ), "Dv is not the identity matrix"
+        assert np.allclose(
+            Dv2, 6 * np.eye(Dv2.shape[0]), atol=1e-12, rtol=1e-12
+        ), "Dv is not the identity matrix"
     elif lap_type == "RW":
         L1 = encoder_shrikhande.laplacian.rw_laplacian
         L2 = encoder_rooke.laplacian.rw_laplacian
@@ -104,18 +105,47 @@ def test_laplacian(hg1, hg2, lap_type, name1="Graph1", name2="Graph2"):
     eigenvalues_shrikhande, eigenvectors_shrikhande = np.linalg.eigh(L1)
     eigenvalues_rooke, eigenvectors_rooke = np.linalg.eigh(L2)
 
+    # print the eigenvalues
+    # print(f"Eigenvalues of Shrikhande Laplacian: {eigenvalues_shrikhande}")
+    # print(f"Eigenvalues of Rooke Laplacian: {eigenvalues_rooke}")
+    # assert they are in order. Smaller to bigger.
+    assert np.allclose(eigenvalues_shrikhande, np.sort(eigenvalues_shrikhande)), "Eigenvalues of Shrikhande Laplacian are not in order"
+    assert np.allclose(eigenvalues_rooke, np.sort(eigenvalues_rooke)), "Eigenvalues of Rooke Laplacian are not in order"
+
     if lap_type == "Normalized" or lap_type == "Hodge":
 
         # assert that L1 and L2 are symmetric
         assert np.allclose(L1, L1.T, atol=1e-12, rtol=1e-12), "L1 is not symmetric"
         assert np.allclose(L2, L2.T, atol=1e-12, rtol=1e-12), "L2 is not symmetric"
 
-        # print the min value in the eigenvectors
-        print(f"Min value in eigenvectors of Shrikhande: {np.min(eigenvectors_shrikhande)}")
-        print(f"Min value in eigenvectors of Rooke: {np.min(eigenvectors_rooke)}")
+        # Can already the min value, max value and other statistics
+        # to check wether the encodings are the same or not!!!!
+        # TODO!
+        min_shrikhande = np.min(eigenvectors_shrikhande)
+        min_rooke = np.min(eigenvectors_rooke)
+        if verbose:
+            # print the min value in the eigenvectors
+            print(
+                f"Min value in eigenvectors of Shrikhande: {min_shrikhande}"
+            )
+            print(f"Min value in eigenvectors of Rooke: {min_rooke}")
+        # ranks
+        rank_shrikhande = np.linalg.matrix_rank(eigenvectors_shrikhande)
+        rank_rooke = np.linalg.matrix_rank(eigenvectors_rooke)
         # print the rank of the eigenvectors
-        print(f"Rank of eigenvectors of Shrikhande: {np.linalg.matrix_rank(eigenvectors_shrikhande)}")
-        print(f"Rank of eigenvectors of Rooke: {np.linalg.matrix_rank(eigenvectors_rooke)}")
+        print(
+            f"Rank of eigenvectors of Shrikhande: {rank_shrikhande}"
+        )
+        print(
+            f"Rank of eigenvectors of Rooke: {rank_rooke}"
+        )
+        if rank_shrikhande != rank_rooke:
+            print("The two graphs have different encodings")
+            return hg1_lape, hg2_lape, L1, L2, False
+        if min_shrikhande != min_rooke:
+            print("The two graphs have different encodings")
+            return hg1_lape, hg2_lape, L1, L2, False
+
 
         # assert that the matrix of eigenvectors is orthonormal
         assert np.allclose(
@@ -131,32 +161,71 @@ def test_laplacian(hg1, hg2, lap_type, name1="Graph1", name2="Graph2"):
             rtol=1e-12,
         ), f"Eigenvectors of Rooke are not orthonormal. Difference: {eigenvectors_rooke.T @ eigenvectors_rooke - np.eye(eigenvectors_rooke.shape[0])}"
 
-        # Reconstructs the original matrix
-        reconstructed_matrix = reconstruct_matrix(
-            eigenvalues_shrikhande, eigenvectors_shrikhande
-        )
+        # Define matrices and their properties to check
+        matrices_to_check = [
+            ('Shrikhande', L1, eigenvalues_shrikhande, eigenvectors_shrikhande),
+            ('Rooke', L2, eigenvalues_rooke, eigenvectors_rooke)
+        ]
 
-        # Compare reconstructed matrix to the original matrix
-        if np.allclose(reconstructed_matrix, L1, atol=1e-12, rtol=1e-12):
-            print("Reconstructed matrix is close to the original matrix.")
-            print("Symmetric matrix. Expected for Hodge, normalized")
-        else:
-            print("Reconstructed matrix differs from the original matrix.")
-            print(
-                f"Reconstructed matrix - original matrix: {reconstructed_matrix - L1}"
-            )
-            assert False
+        # Store properties for comparison
+        properties = {name: {} for name, *_ in matrices_to_check}
 
-        # Reconstructs the original matrix
-        reconstructed_matrix = reconstruct_matrix(eigenvalues_rooke, eigenvectors_rooke)
+        # Check all properties for each matrix
+        for name, original_matrix, eigenvalues, eigenvectors in matrices_to_check:
+            # Check symmetry
+            assert np.allclose(original_matrix, original_matrix.T, atol=1e-12, rtol=1e-12), \
+                f"{name} matrix is not symmetric"
 
-        # Compare reconstructed matrix to the original matrix
-        if np.allclose(reconstructed_matrix, L2):
-            print("Reconstructed matrix is close to the original matrix.")
-            print("Symmetric matrix. Expected for Hodge, normalized")
-        else:
-            print("Reconstructed matrix differs from the original matrix.")
-            assert False
+            # Store basic properties
+            properties[name].update({
+                'min_eigenvector': np.min(eigenvectors),
+                'rank': np.linalg.matrix_rank(eigenvectors),
+                'norms': np.sort(np.linalg.norm(eigenvectors, axis=1))
+            })
+
+            if verbose:
+                print(f"\nProperties for {name}:")
+                print(f"Min value in eigenvectors: {properties[name]['min_eigenvector']}")
+                print(f"Rank of eigenvectors: {properties[name]['rank']}")
+                print(f"Sorted norms of eigenvectors: {properties[name]['norms']}")
+
+            # Check orthonormality
+            orthonormal_diff = eigenvectors @ eigenvectors.T - np.eye(eigenvectors.shape[0])
+            assert np.allclose(
+                eigenvectors @ eigenvectors.T,
+                np.eye(eigenvectors.shape[0]),
+                atol=1e-12,
+                rtol=1e-12
+            ), f"Eigenvectors of {name} are not orthonormal. Difference: {orthonormal_diff}"
+
+            # Check matrix reconstruction
+            reconstructed_matrix = reconstruct_matrix(eigenvalues, eigenvectors)
+            if np.allclose(reconstructed_matrix, original_matrix, atol=1e-12, rtol=1e-12):
+                print(f"{name} reconstructed matrix is close to the original matrix.")
+                print("Symmetric matrix. Expected for Hodge, normalized")
+            else:
+                print(f"{name} reconstructed matrix differs from the original matrix.")
+                print(f"Difference matrix:\n{reconstructed_matrix - original_matrix}")
+                max_diff = np.max(np.abs(reconstructed_matrix - original_matrix))
+                print(f"Maximum difference: {max_diff}")
+                assert False, f"{name} matrix reconstruction failed"
+
+        # Compare properties between graphs
+        for prop in ['min_eigenvector', 'rank']:
+            if properties['Shrikhande'][prop] != properties['Rooke'][prop]:
+                print(f"The two graphs have different encodings (different {prop})")
+                return hg1_lape, hg2_lape, L1, L2, False
+
+        # Compare norms
+        if not np.allclose(properties['Shrikhande']['norms'], 
+                          properties['Rooke']['norms'], 
+                          atol=1e-12, rtol=1e-12):
+            print("The two graphs have different encodings (different eigenvector norms)")
+            return hg1_lape, hg2_lape, L1, L2, False
+
+        print("\nComparison of eigenvector norms:")
+        for name in ['Shrikhande', 'Rooke']:
+            print(f"{name} Laplacian eigenvector norms: {properties[name]['norms']}")
 
     norms_shrikhande = np.linalg.norm(eigenvectors_shrikhande, axis=1)
     norms_rooke = np.linalg.norm(eigenvectors_rooke, axis=1)
@@ -251,76 +320,7 @@ def test_laplacian(hg1, hg2, lap_type, name1="Graph1", name2="Graph2"):
         hg1_lape["features"].shape == hg2_lape["features"].shape
     ), "The two LAPE encodings have different shapes"
     print("*" * 100)
-    return hg1_lape, hg2_lape, L1, L2
-
-
-def check_isospectrality(eig1, eig2, tolerance=1e-10, verbose=False):
-    """
-    Check if two graphs are isospectral by comparing their sorted eigenvalues.
-
-    Args:
-        eig1, eig2: Arrays of eigenvalues
-        tolerance: Numerical tolerance for floating point comparison
-
-    Returns:
-        bool: True if graphs are isospectral
-    """
-    # Sort eigenvalues and take real parts
-    eig1_sorted = np.sort(np.real(eig1))
-    eig2_sorted = np.sort(np.real(eig2))
-
-    # Check if arrays have same shape
-    if eig1_sorted.shape != eig2_sorted.shape:
-        return False
-
-    # Compare eigenvalues within tolerance
-    diff = np.abs(eig1_sorted - eig2_sorted)
-    max_diff = np.max(diff)
-
-    print(f"Maximum eigenvalue difference: {max_diff}")
-    if verbose:
-        print("\nSorted eigenvalues comparison:")
-        for i, (e1, e2) in enumerate(zip(eig1_sorted, eig2_sorted)):
-            print(f"λ{i+1}: {e1:.10f} vs {e2:.10f} (diff: {abs(e1-e2):.10f})")
-
-    return max_diff < tolerance
-
-
-def check_permutation_equivalence(matrix1, matrix2, tolerance=1e-15):
-    """
-    Check if two matrices can be made identical through row permutations.
-
-    Args:
-        matrix1, matrix2: numpy arrays of same shape
-        tolerance: Numerical tolerance for floating point comparison
-
-    Returns:
-        bool: True if matrices can be made identical through permutation
-        dict: Mapping of rows from matrix1 to matrix2 (if exists)
-    """
-    if matrix1.shape != matrix2.shape:
-        print(
-            f"The two matrices have different shapes: {matrix1.shape} and {matrix2.shape}"
-        )
-        return False, None
-
-    # Find the permutation mapping
-    mapping = {}
-    used_indices = set()
-
-    for i, row1 in enumerate(matrix1):
-        print(f"Row {i} of matrix1: {row1}")
-        found_match = False
-        for j, row2 in enumerate(matrix2):
-            if j not in used_indices and np.allclose(row1, row2, atol=tolerance):
-                mapping[i] = j
-                used_indices.add(j)
-                found_match = True
-                break
-        if not found_match:
-            return False, None
-
-    return True, mapping
+    return hg1_lape, hg2_lape, L1, L2, True
 
 
 def print_graph_properties(G):
@@ -342,80 +342,13 @@ def print_graph_properties(G):
     print("*" * 100)
 
 
-# Create a Shrikhande graph
-G_shrikhande = nx.read_graph6("shrikhande.g6")
-print_graph_properties(G_shrikhande)
-
-# Get and plot adjacency matrix as heatmap
-adj_matrix_shrikhande = nx.adjacency_matrix(G_shrikhande).todense()
-plt.figure(figsize=(8, 8))
-plt.imshow(adj_matrix_shrikhande, cmap="Blues")
-plt.colorbar()
-plt.title("Adjacency Matrix - Shrikhande Graph")
-plt.savefig("shrikhande_adjacency_heatmap.png")
-plt.clf()
-
-# Draw the graph
-# circular layout
-pos = nx.circular_layout(G_shrikhande)
-nx.draw(G_shrikhande, pos, with_labels=True)
-# save the graph figure
-plt.savefig("shrikhande_graph.png")
-# clear the figure
-plt.clf()
-# print and save the degree distribution
-degree_sequence = sorted([d for n, d in G_shrikhande.degree()], reverse=True)
-plt.hist(degree_sequence, bins=range(1, max(degree_sequence) + 1))
-plt.title("Degree Distribution")
-plt.xlabel("Degree")
-plt.ylabel("Frequency")
-plt.savefig("shrikhande_degree_distribution.png")
-# clear the figure
-plt.clf()
-
-# Do the same for Rooke graph
-G_rooke = nx.read_graph6("rook_graph.g6")
-print_graph_properties(G_rooke)
-
-# Get and plot adjacency matrix as heatmap
-adj_matrix_rooke = nx.adjacency_matrix(G_rooke).todense()
-plt.figure(figsize=(8, 8))
-plt.imshow(adj_matrix_rooke, cmap="Blues")
-plt.colorbar()
-plt.title("Adjacency Matrix - Rooke Graph")
-plt.savefig("rooke_adjacency_heatmap.png")
-plt.clf()
-
-# Draw the graph
-pos = nx.circular_layout(G_rooke)
-nx.draw(G_rooke, pos, with_labels=True)
-# Save the figure
-plt.savefig("rooke_graph.png")
-plt.clf()
-
-# print and save the degree distribution
-degree_sequence = sorted([d for n, d in G_rooke.degree()], reverse=True)
-plt.hist(degree_sequence, bins=range(1, max(degree_sequence) + 1))
-plt.title("Degree Distribution")
-plt.xlabel("Degree")
-plt.ylabel("Frequency")
-plt.savefig("rooke_degree_distribution.png")
-plt.clf()
-
-# Also plot the difference between the adjacency matrices
-plt.figure(figsize=(8, 8))
-plt.imshow(np.abs(adj_matrix_shrikhande - adj_matrix_rooke), cmap="hot")
-plt.colorbar()
-plt.title("Difference in Adjacency Matrices")
-plt.savefig("adjacency_difference_heatmap.png")
-plt.clf()
-
 
 # Using the relevant code, compute the encodings:
 
 
 def convert_nx_to_hypergraph_dict(G):
     """Convert NetworkX graph to hypergraph dictionary format."""
+    print(f"Graph: {G}")
     # Create edge dictionary where each edge is a hyperedge of size 2
     hyperedges = {f"e_{i}": list(edge) for i, edge in enumerate(G.edges())}
 
@@ -428,11 +361,8 @@ def convert_nx_to_hypergraph_dict(G):
     return {"hypergraph": hyperedges, "features": features, "labels": {}, "n": n}
 
 
-def compute_and_compare_encodings(G1, G2, name1="Graph1", name2="Graph2"):
+def compute_and_compare_encodings(hg1, hg2, name1="Graph1", name2="Graph2"):
     """Compute and compare encodings for two graphs."""
-    # Convert graphs to hypergraph format
-    hg1 = convert_nx_to_hypergraph_dict(G1)
-    hg2 = convert_nx_to_hypergraph_dict(G2)
 
     # Initialize encoder
     # not strictly necessary to have two encoders
@@ -442,90 +372,99 @@ def compute_and_compare_encodings(G1, G2, name1="Graph1", name2="Graph2"):
     # Compute different encodings
     print(f"\nComputing encodings for {name1} and {name2}:")
 
-    # Local degree profile
-    print("\n=== Local Degree Profile ===")
-    hg1_ldp = encoder_shrikhande.add_degree_encodings(hg1.copy(), verbose=False)
-    hg2_ldp = encoder_rooke.add_degree_encodings(hg2.copy(), verbose=False)
-    # assert that the two degree distributions are the same
-    assert np.all(
-        hg1_ldp["features"] == hg2_ldp["features"]
-    ), "The two degree distributions are not the same"
-    print(f"The two degree distributions are the same!")
-    print(f"\n{name1} LDP shape:", hg1_ldp["features"].shape)
-    print(f"{name2} LDP shape:", hg2_ldp["features"].shape)
+    # Define encodings to check with their parameters
+    encodings_to_check = [
+        ("LDP", "Local Degree Profile", True),
+        ("LCP-FRC", "Local Curvature Profile - FRC", True),
+        ("RWPE", "Random Walk Encodings", True),
+        ("LCP-ORC", "Local Curvature Profile - ORC", False),
+    ]
 
-    # Count unique features (element-wise)
-    # Count unique rows (node-wise)
-    unique_rows_1 = np.unique(hg1_ldp["features"], axis=0)
-    unique_rows_2 = np.unique(hg2_ldp["features"], axis=0)
-    print(f"\nUnique node feature vectors in {name1}:")
-    print(f"Number of unique rows: {unique_rows_1.shape[0]}")
-    print("Values:")
-    for i, row in enumerate(unique_rows_1):
-        print(f"Pattern {i+1}: {row}")
-        # Count how many nodes have this pattern
-        count = np.sum(np.all(hg1_ldp["features"] == row, axis=1))
-        print(f"Frequency: {count} nodes")
-
-    print(f"\nUnique node feature vectors in {name2}:")
-    print(f"Number of unique rows: {unique_rows_2.shape[0]}")
-    print("Values:")
-    for i, row in enumerate(unique_rows_2):
-        print(f"Pattern {i+1}: {row}")
-        # Count how many nodes have this pattern
-        count = np.sum(np.all(hg2_ldp["features"] == row, axis=1))
-        print(f"Frequency: {count} nodes")
-
-    # print the encodings
-    # print(f"Shrikhande LDP encodings: {hg1_ldp['features']}")
-    # print(f"Rooke LDP encodings: {hg2_ldp['features']}")
-
-    # Random Walk encodings
-    print("\n=== Random Walk Encodings ===")
-    # Initialize encoder
-    encoder_shrikhande = HypergraphEncodings()
-    encoder_rooke = HypergraphEncodings()
-    hg1_rw = encoder_shrikhande.add_randowm_walks_encodings(
-        hg1.copy(), rw_type="WE", verbose=False
-    )
-    hg2_rw = encoder_rooke.add_randowm_walks_encodings(
-        hg2.copy(), rw_type="WE", verbose=False
-    )
-    print(
-        f"Maximum difference: {np.max(np.abs(hg1_rw['features'] - hg2_rw['features']))}"
-    )
-
-    # assert that the two random walk distributions are the same
-    assert np.allclose(
-        hg1_rw["features"], hg2_rw["features"], rtol=1e-12, atol=1e-12
-    ), "The two random walk distributions differ beyond 1e-12 tolerance"
-    print(f"The two random walk distributions are the same!")
-    print(f"\n{name1} RW shape:", hg1_rw["features"].shape)
-    print(f"{name2} RW shape:", hg2_rw["features"].shape)
-
-    # print the encodings
-    if False:
-        print(f"Shrikhande RW encodings: {hg1_rw['features']}")
-        print(f"Rooke RW encodings: {hg2_rw['features']}")
+    # Check each encoding type
+    for encoding_type, description, should_be_same in encodings_to_check:
+        print(f"\n=== {description} ===")
+        checks_encodings(
+            encoding_type, 
+            should_be_same, 
+            hg1, 
+            hg2, 
+            encoder_shrikhande, 
+            encoder_rooke, 
+            name1, 
+            name2
+        )
 
     # Laplacian encodings
     print("\n=== Laplacian Encodings ===")
     # Test all three Laplacian types
     for lap_type in ["Normalized", "RW", "Hodge"]:
         print(f"Laplacian type: {lap_type}")
-        hg1_lape, hg2_lape, L1, L2 = test_laplacian(
+        hg1_lape, hg2_lape, L1, L2, same = test_laplacian(
             hg1.copy(), hg2.copy(), lap_type, name1="Shrikhande", name2="Rooke"
         )
 
-    return {
-        "lape": (hg1_lape["features"], hg2_lape["features"]),
-        "rw": (hg1_rw["features"], hg2_rw["features"]),
-    }
 
 
-hg_shrikhande = convert_nx_to_hypergraph_dict(G_shrikhande)
-hg_rooke = convert_nx_to_hypergraph_dict(G_rooke)
-compute_and_compare_encodings(G_shrikhande, G_rooke, name1="Shrikhande", name2="Rooke")
+# Create and process both graphs
+graphs = {
+    'Shrikhande': nx.read_graph6("shrikhande.g6"),
+    'Rooke': nx.read_graph6("rook_graph.g6")
+}
+
+# Convert graphs to hypergraph dictionaries
+hypergraphs = {
+    name: convert_nx_to_hypergraph_dict(G) 
+    for name, G in graphs.items()
+}
+
+# Now hypergraphs['Shrikhande'] and hypergraphs['Rooke'] contain the converted hypergraph dictionaries
+
+# Print properties and generate plots for each graph
+for name, G in graphs.items():
+    print(f"\nProcessing {name} graph:")
+    print_graph_properties(G)
+
+    # Get and plot adjacency matrix as heatmap
+    adj_matrix = nx.adjacency_matrix(G).todense()
+    plt.figure(figsize=(8, 8))
+    plt.imshow(adj_matrix, cmap="Blues")
+    plt.colorbar()
+    plt.title(f"Adjacency Matrix - {name} Graph")
+    plt.savefig(f"{name.lower()}_adjacency_heatmap.png")
+    plt.clf()
+
+    # Draw the graph with circular layout
+    pos = nx.circular_layout(G)
+    nx.draw(G, pos, with_labels=True)
+    plt.title(f"{name} Graph")
+    plt.savefig(f"{name.lower()}_graph.png")
+    plt.clf()
+
+    # Plot degree distribution
+    degree_sequence = sorted([d for n, d in G.degree()], reverse=True)
+    plt.hist(degree_sequence, bins=range(1, max(degree_sequence) + 1))
+    plt.title(f"Degree Distribution - {name} Graph")
+    plt.xlabel("Degree")
+    plt.ylabel("Frequency")
+    plt.savefig(f"{name.lower()}_degree_distribution.png")
+    plt.clf()
+
+# Plot difference between adjacency matrices
+plt.figure(figsize=(8, 8))
+plt.imshow(np.abs(nx.adjacency_matrix(graphs['Shrikhande']).todense() - 
+                  nx.adjacency_matrix(graphs['Rooke']).todense()), 
+           cmap="hot")
+plt.colorbar()
+plt.title("Difference in Adjacency Matrices (Shrikhande - Rooke)")
+plt.savefig("adjacency_difference_heatmap.png")
+plt.clf()
+
+
+compute_and_compare_encodings(hypergraphs['Shrikhande'], hypergraphs['Rooke'], name1="Shrikhande", name2="Rooke")
 
 # Then to do: use curvature to distinguish the two graphs.
 # Then augement as hypergraph and show that LAPE can distinguish the two graphs.
+
+
+# effect on U should just be swapping the rows
+# TODO: do Forman curvature

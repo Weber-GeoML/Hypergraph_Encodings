@@ -14,6 +14,8 @@ import numpy as np
 import torch
 from torch_geometric.data import Data
 from torch_geometric.utils import to_networkx
+# Compute the De matrices
+from encodings_hnns.laplacians import Laplacians
 
 
 def lift_to_hypergraph(graph) -> dict:
@@ -72,10 +74,12 @@ def lift_to_hypergraph(graph) -> dict:
     # Get number of nodes
     n = graph.num_nodes
     
-    # Extract node features if they exist, otherwise create empty feature lists
-    features = graph.x.cpu().numpy().tolist() if hasattr(graph, 'x') else [[] for _ in range(n)]
-    # Extract node labels if they exist, otherwise create default labels
-    labels = graph.y.cpu().tolist() if hasattr(graph, 'y') else [0 for _ in range(n)]
+    # Extract node features if they exist, otherwise create empty feature arrays
+    features = graph.x.cpu().numpy() if hasattr(graph, 'x') else np.zeros((n, 1))
+    # Extract node labels if they exist, otherwise create default label array
+    labels = graph.y.cpu().numpy() if hasattr(graph, 'y') else np.zeros(n, dtype=int)
+
+    print(f"The hypergraph is {hypergraph}")
     
     # Create final dataset dictionary with all components
     dataset : dict = {
@@ -157,43 +161,119 @@ def lift_and_plot_graphs():
     # Lift both graphs to hypergraphs
     shrikhande_hyper = lift_to_hypergraph(shrikhande_pyg)
     rooke_hyper = lift_to_hypergraph(rooke_pyg)
+
     
+    # For Shrikhande graph
+    # initialize the Laplacians:
+    laplacian_shrikhande = Laplacians(shrikhande_hyper)
+    laplacian_shrikhande.compute_edge_degrees()
+    laplacian_shrikhande.compute_node_degrees()
+    De_shrikhande = laplacian_shrikhande.De
+    Dv_shrikhande = laplacian_shrikhande.Dv
+    
+    # For Rooke graph
+    laplacian_rooke = Laplacians(rooke_hyper)
+    assert laplacian_rooke.Dv is None
+    assert laplacian_rooke.De is None
+    laplacian_rooke.compute_edge_degrees()
+    laplacian_rooke.compute_node_degrees()
+    De_rooke = laplacian_rooke.De
+    Dv_rooke = laplacian_rooke.Dv
+    
+    print("\nShrikhande hypergraph matrices:")
+    print("De (edge degrees):")
+    print(De_shrikhande)
+    print("\nDv (vertex degrees):")
+    print(Dv_shrikhande)
+    
+    print("\nRooke hypergraph matrices:")
+    print("De (edge degrees):")
+    print(De_rooke)
+    print("\nDv (vertex degrees):")
+    print(Dv_rooke)
+
     # Plot Shrikhande graph and its hypergraph
-    plt.figure(figsize=(15, 7))
+    plt.figure(figsize=(20, 7))
     plt.suptitle("Shrikhande Graph", fontsize=16)
     
     # Original graph
-    plt.subplot(121)
+    plt.subplot(131)
     pos = nx.circular_layout(shrikhande)
     nx.draw(shrikhande, pos, with_labels=True, node_color='lightblue', 
             node_size=500, font_size=12, font_weight='bold')
     plt.title("Original Graph")
     
-    # Shrikhande hypergraph
-    plt.subplot(122)
+    # Bipartite representation
+    plt.subplot(132)
     H_shrikhande = hnx.Hypergraph(shrikhande_hyper['hypergraph'])
-    hnx.draw(H_shrikhande, with_node_labels=True, with_edge_labels=False)
+    BH = H_shrikhande.bipartite()
+    top = set(n for n, d in BH.nodes(data=True) if d['bipartite'] == 0)
+    pos = nx.bipartite_layout(BH, top)
+    nx.draw(BH, pos, 
+           with_labels=True,
+           node_color=['lightblue' if node in top else 'lightgreen' for node in BH.nodes()],
+           node_size=500,
+           font_size=12,
+           font_weight='bold')
+    plt.title("Bipartite Representation")
+    
+    # Hypergraph representation
+    plt.subplot(133)
+    pos = nx.circular_layout(shrikhande)
+    hnx.draw(H_shrikhande, 
+             pos=pos,
+             with_node_labels=True, 
+             with_edge_labels=True,
+             edges_kwargs={
+                 'edgecolors': 'blue',
+                 'facecolors': 'lightblue',
+                 'alpha': 0.3,
+                 'linewidth': 2,
+             })
     plt.title(f"Hypergraph Representation\n({len(shrikhande_hyper['hypergraph'])} hyperedges)")
     
     plt.tight_layout()
     plt.savefig('shrikhande_lifting.png', bbox_inches='tight', dpi=300)
     plt.close()
     
-    # Plot Rooke graph and its hypergraph
-    plt.figure(figsize=(15, 7))
+    # Plot Rooke graph and its representations
+    plt.figure(figsize=(20, 7))
     plt.suptitle("Rooke Graph", fontsize=16)
     
     # Original graph
-    plt.subplot(121)
+    plt.subplot(131)
     pos = nx.circular_layout(rooke)
     nx.draw(rooke, pos, with_labels=True, node_color='lightblue', 
             node_size=500, font_size=12, font_weight='bold')
     plt.title("Original Graph")
     
-    # Rooke hypergraph
-    plt.subplot(122)
+    # Bipartite representation
+    plt.subplot(132)
     H_rooke = hnx.Hypergraph(rooke_hyper['hypergraph'])
-    hnx.draw(H_rooke, with_node_labels=True, with_edge_labels=False)
+    BH = H_rooke.bipartite()
+    top = set(n for n, d in BH.nodes(data=True) if d['bipartite'] == 0)
+    pos = nx.bipartite_layout(BH, top)
+    nx.draw(BH, pos, 
+           with_labels=True,
+           node_color=['lightblue' if node in top else 'lightgreen' for node in BH.nodes()],
+           node_size=500,
+           font_size=12,
+           font_weight='bold')
+    plt.title("Bipartite Representation of the lifted hypergraph")
+    
+    # Hypergraph representation
+    plt.subplot(133)
+    pos = nx.circular_layout(rooke)
+    hnx.draw(H_rooke, 
+             pos=pos,
+             with_node_labels=True, 
+             with_edge_labels=True,
+             edges_kwargs={
+                 'edgecolors': 'blue',
+                 'facecolors': 'lightblue',
+                 'alpha': 0.3,
+                 'linewidth': 2,
+             })
     plt.title(f"Hypergraph Representation\n({len(rooke_hyper['hypergraph'])} hyperedges)")
     
     plt.tight_layout()
