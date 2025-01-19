@@ -1,3 +1,8 @@
+"""
+This script is used to analyse the BREC dataset.
+It is used to compare the encodings of the graphs in the BREC dataset.
+"""
+
 import torch
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -73,6 +78,7 @@ def analyze_graph_pair(data1, data2, pair_idx, category, is_isomorphic):
     # Convert PyG data to NetworkX graphs
     G1 = to_networkx(data1, to_undirected=True)
     G2 = to_networkx(data2, to_undirected=True)
+    assert not is_isomorphic, "All pairs in BREC are non-isomorphic"
     
     # Store the node mapping if graphs are isomorphic
     node_mapping = None
@@ -115,6 +121,7 @@ def compare_encodings(hg1, hg2, pair_idx, category, is_isomorphic, level="graph"
     """Compare encodings between two (hyper)graphs"""
     encoder1 = HypergraphEncodings()
     encoder2 = HypergraphEncodings()
+    assert not is_isomorphic, "All pairs in BREC are non-isomorphic"
     
     # Define encodings to check
     encodings_to_check = [
@@ -126,6 +133,8 @@ def compare_encodings(hg1, hg2, pair_idx, category, is_isomorphic, level="graph"
     
     output_dir = f'results/{level}_level'
     os.makedirs(output_dir, exist_ok=True)
+
+    print(f"Output directory: {output_dir}")
     
     with open(f'{output_dir}/pair_{pair_idx}_{category.lower()}.txt', 'w') as f:
         f.write(f"Analysis for pair {pair_idx} ({category}) - {level} level\n")
@@ -165,34 +174,6 @@ def compare_encodings(hg1, hg2, pair_idx, category, is_isomorphic, level="graph"
             f.write(f"Result: {'Same' if same else 'Different'}\n")
 
 
-def plot_matched_encodings(encoding1, encoding2, ax1, ax2, title=""):
-    """
-    Plot two encodings, attempting to match their row orderings if possible.
-    
-    Args:
-        encoding1, encoding2: numpy arrays of shape (n, d)
-        ax1, ax2: matplotlib axes for plotting
-        title: title for the plots
-    """
-    is_match, permuted, perm = find_encoding_match(encoding1, encoding2)
-    
-    if is_match:
-        im1 = ax1.imshow(permuted)
-        im2 = ax2.imshow(encoding2)
-        ax1.set_title(f"{title}\nGraph A (Permuted)")
-    else:
-        im1 = ax1.imshow(encoding1)
-        im2 = ax2.imshow(encoding2)
-        ax1.set_title(f"{title}\nGraph A (Original)")
-    
-    ax2.set_title("Graph B")
-    
-    # Add colorbars
-    plt.colorbar(im1, ax=ax1)
-    plt.colorbar(im2, ax=ax2)
-    
-    return is_match
-
 def main():
     create_output_dirs()
     dataset = BRECDataset()
@@ -209,6 +190,7 @@ def main():
     for category, (start, end) in part_dict.items():
         print(f"\nProcessing {category} category...")
         for pair_idx in range(start, end):
+            print(f"Processing pair {pair_idx}...")
             # Get the pair of graphs
             graph1 = dataset[pair_idx * 2]
             graph2 = dataset[pair_idx * 2 + 1]

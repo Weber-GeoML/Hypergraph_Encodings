@@ -1,3 +1,8 @@
+"""
+This script is used to plot the BREC dataset.
+This is a small example of how to plot the graphs in the BREC dataset.
+"""
+
 import torch
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv

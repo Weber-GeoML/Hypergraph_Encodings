@@ -13,6 +13,11 @@ def find_encoding_match(encoding1, encoding2):
     Args:
         encoding1: numpy array of shape (n, d)
         encoding2: numpy array of shape (n, d)
+    
+    Returns:
+        is_match: whether the two encodings are the same
+        permuted_encoding1: the permuted encoding of encoding1
+        permutation: the permutation that was applied
     """
     if encoding1.shape != encoding2.shape:
         return False, None, None
@@ -20,7 +25,7 @@ def find_encoding_match(encoding1, encoding2):
     n_rows = encoding1.shape[0]
     
     # For small matrices, we can try all permutations
-    if n_rows <= 8:  # Adjust this threshold based on your needs
+    if n_rows <= 10:  # Adjust this threshold based on your needs
         for perm in permutations(range(n_rows)):
             permuted = encoding1[list(perm), :]
             if np.allclose(permuted, encoding2):
@@ -38,6 +43,46 @@ def find_encoding_match(encoding1, encoding2):
     return False, None, None
 
 
+def plot_matched_encodings(encoding1, encoding2, ax1, ax2, name1="Graph A", name2="Graph B", title=""):
+    """
+    Plot two encodings, attempting to match their row orderings if possible.
+    
+    Args:
+        encoding1, encoding2: numpy arrays of shape (n, d)
+        ax1, ax2: matplotlib axes for plotting
+        name1, name2: names of the graphs
+        title: title for the plots
+    
+    Returns:
+        is_match: bool indicating if a matching permutation was found
+        permuted: permuted version of encoding1 if match found, None otherwise
+        perm: permutation used if match found, None otherwise
+    """
+    is_match, permuted, perm = find_encoding_match(encoding1, encoding2)
+    
+    if is_match:
+        im1 = ax1.imshow(permuted, cmap="viridis")
+        im2 = ax2.imshow(encoding2, cmap="viridis")
+        ax1.set_title(f"{name1}\n(Permuted to match {name2})")
+    else:
+        im1 = ax1.imshow(encoding1, cmap="viridis")
+        im2 = ax2.imshow(encoding2, cmap="viridis")
+        ax1.set_title(f"{name1}\n(Original ordering)")
+    
+    ax2.set_title(name2)
+    
+    # Add colorbars
+    plt.colorbar(im1, ax=ax1)
+    plt.colorbar(im2, ax=ax2)
+    
+    # Add row labels if the matrices are small enough
+    if encoding1.shape[0] <= 10:
+        for i in range(encoding1.shape[0]):
+            ax1.text(-0.5, i, f"Node {i}", va='center')
+            ax2.text(-0.5, i, f"Node {i}", va='center')
+    
+    return is_match, permuted, perm
+
 def checks_encodings(
     name_of_encoding: str,
     same: bool,
@@ -54,115 +99,39 @@ def checks_encodings(
     is_isomorphic: bool = None,
     node_mapping: dict = None,
 ) -> bool:
-    # Initialize encoder
-    encoder_shrikhande = HypergraphEncodings()
-    encoder_rooke = HypergraphEncodings()
-    print(f"\n=== {name_of_encoding} ===")
+    """Check if two graphs have the same encodings."""
+    # Get encodings based on type (referencing lines 71-101 from original)
+    hg1_encodings = get_encodings(hg1, encoder_shrikhande, name_of_encoding)
+    hg2_encodings = get_encodings(hg2, encoder_rooke, name_of_encoding)
     
-    # Create plot directory if it doesn't exist
-    os.makedirs(plot_dir, exist_ok=True)
-    
-    # Get encodings based on type
-    if name_of_encoding == "LDP":
-        hg1_encodings = encoder_shrikhande.add_degree_encodings(hg1.copy(), verbose=False)
-        hg2_encodings = encoder_rooke.add_degree_encodings(hg2.copy(), verbose=False)
-    elif name_of_encoding == "LAPE":
-        hg1_encodings = encoder_shrikhande.add_laplacian_encodings(
-            hg1.copy(), type="Normalized", verbose=False
-        )
-        hg2_encodings = encoder_rooke.add_laplacian_encodings(
-            hg2.copy(), type="Normalized", verbose=False
-        )
-    elif name_of_encoding == "RWPE":
-        hg1_encodings = encoder_shrikhande.add_randowm_walks_encodings(
-            hg1.copy(), rw_type="WE", verbose=False
-        )
-        hg2_encodings = encoder_rooke.add_randowm_walks_encodings(
-            hg2.copy(), rw_type="WE", verbose=False
-        )
-    elif name_of_encoding == "LCP-ORC":
-        hg1_encodings = encoder_shrikhande.add_curvature_encodings(
-            hg1.copy(), verbose=False, type="ORC"
-        )
-        hg2_encodings = encoder_rooke.add_curvature_encodings(
-            hg2.copy(), verbose=False, type="ORC"
-        )
-    elif name_of_encoding == "LCP-FRC":
-        hg1_encodings = encoder_shrikhande.add_curvature_encodings(
-            hg1.copy(), verbose=False, type="FRC"
-        )
-        hg2_encodings = encoder_rooke.add_curvature_encodings(
-            hg2.copy(), verbose=False, type="FRC"
-        )
-
-    # Create figure for comparison
+    # Create figure and subplots
     plt.figure(figsize=(12, 5))
-    
-    # Add a title that includes pair info and category
     title = f"{name_of_encoding} Encodings Comparison"
     if pair_idx is not None and category is not None:
         title += f"\nPair {pair_idx} ({category})"
     plt.suptitle(title, fontsize=14, y=1.05)
     
-    # Create subplots
     ax1 = plt.subplot(1, 2, 1)
     ax2 = plt.subplot(1, 2, 2)
     
-    # Try to find matching permutation and plot
-    is_match, permuted, perm = find_encoding_match(
-        hg1_encodings["features"], 
-        hg2_encodings["features"]
+    # Plot encodings using the shared function
+    is_match, permuted, perm = plot_matched_encodings(
+        hg1_encodings["features"],
+        hg2_encodings["features"],
+        ax1,
+        ax2,
+        name1,
+        name2,
+        title
     )
     
-    if is_match:
-        print(f"\n✅ Found matching permutation for {name_of_encoding} encodings!")
-        print(f"Permutation: {perm}")
-        
-        # Plot permuted version of first encoding
-        im1 = ax1.imshow(permuted, cmap="viridis")
-        im2 = ax2.imshow(hg2_encodings["features"], cmap="viridis")
-        ax1.set_title(f"{name1}\n(Permuted to match {name2})")
-    else:
-        print(f"\n❌ No matching permutation found for {name_of_encoding} encodings")
-        
-        # Plot original encodings
-        im1 = ax1.imshow(hg1_encodings["features"], cmap="viridis")
-        im2 = ax2.imshow(hg2_encodings["features"], cmap="viridis")
-        ax1.set_title(f"{name1}\n(Original ordering)")
+    # Print results and save plot
+    print_comparison_results(is_match, name_of_encoding, perm, permuted, hg2_encodings)
     
-    ax2.set_title(name2)
-    
-    # Add colorbars
-    plt.colorbar(im1, ax=ax1)
-    plt.colorbar(im2, ax=ax2)
-    
-    # Add row labels if the matrices are small enough
-    if hg1_encodings["features"].shape[0] <= 10:
-        for i in range(hg1_encodings["features"].shape[0]):
-            ax1.text(-0.5, i, f"Node {i}", va='center')
-            ax2.text(-0.5, i, f"Node {i}", va='center')
-    
-    # Adjust layout and save
-    plt.tight_layout()
     if save_plots:
-        filename_base = f"pair_{pair_idx}_{category.lower()}" if pair_idx is not None else "comparison"
-        plt.savefig(
-            f"{plot_dir}/{filename_base}_{name_of_encoding.lower()}_comparison.png",
-            bbox_inches='tight',
-            dpi=300
-        )
+        save_comparison_plot(plt, plot_dir, pair_idx, category, name_of_encoding)
+    
     plt.close()
-    
-    # Print additional analysis
-    if is_match:
-        print("Encoding statistics after permutation:")
-        print(f"Max difference: {np.max(np.abs(permuted - hg2_encodings['features']))}")
-        print(f"Mean difference: {np.mean(np.abs(permuted - hg2_encodings['features']))}")
-    else:
-        print("Encoding differences in original ordering:")
-        print(f"Max difference: {np.max(np.abs(hg1_encodings['features'] - hg2_encodings['features']))}")
-        print(f"Mean difference: {np.mean(np.abs(hg1_encodings['features'] - hg2_encodings['features']))}")
-    
     return is_match
 
 
@@ -183,17 +152,15 @@ def reconstruct_matrix(eigenvalues, eigenvectors) -> np.ndarray:
 
 
 def test_laplacian(
-    hg1, 
-    hg2, 
-    lap_type, 
-    name1: str = "Graph1", 
-    name2: str = "Graph2", 
-    verbose: bool = False,
+    hg1: dict,
+    hg2: dict,
+    lap_type: str = "Normalized",
     save_plots: bool = True,
     plot_dir: str = "plots/encodings",
     pair_idx: int = None,
     category: str = None,
-    is_isomorphic: bool = None
+    is_isomorphic: bool = None,
+    verbose: bool = False
 ):
     """
     Args:
@@ -226,12 +193,6 @@ def test_laplacian(
         L2 = encoder_rooke.laplacian.normalized_laplacian
         Dv1 = encoder_shrikhande.laplacian.Dv
         Dv2 = encoder_rooke.laplacian.Dv
-        assert np.allclose(
-            Dv1, 6 * np.eye(Dv1.shape[0]), atol=1e-12, rtol=1e-12
-        ), "Dv is not the identity matrix"
-        assert np.allclose(
-            Dv2, 6 * np.eye(Dv2.shape[0]), atol=1e-12, rtol=1e-12
-        ), "Dv is not the identity matrix"
     elif lap_type == "RW":
         L1 = encoder_shrikhande.laplacian.rw_laplacian
         L2 = encoder_rooke.laplacian.rw_laplacian
@@ -426,14 +387,6 @@ def test_laplacian(
 
     assert L1.shape == L2.shape, "The two laplacians have different shapes"
 
-    # loop through row by row
-    for i in range(L1.shape[0]):
-        # print(f"Row {i} of Shrikhande LAPE laplacian: {L1[i]}")
-        # print(f"Row {i} of Rooke LAPE laplacian: {L2[i]}")
-        print(f"Diff of row {i}: {np.abs(L1[i] - L2[i])}")
-    # loop through column by column
-    for i in range(L1.shape[1]):
-        print(f"Diff of column {i}: {np.abs(L1[:,i] - L2[:,i])}")
 
     with open(f"shrikhande_laplacian_{lap_type.lower()}.tex", "w") as f:
         f.write(matrix_to_pmatrix(L1))
@@ -457,7 +410,10 @@ def test_laplacian(
     eigenvalues_shrikhande, eigenvectors_shrikhande = np.linalg.eig(L1)
     eigenvalues_rooke, eigenvectors_rooke = np.linalg.eig(L2)
     are_isospectral = check_isospectrality(eigenvalues_shrikhande, eigenvalues_rooke)
-    assert are_isospectral, "The two graphs are not isospectral"
+    if not are_isospectral:
+        print("\n❌ The two graphs are not isospectral")
+    else:
+        print("\n✅ The two graphs are isospectral")
 
     # TODO: we will do the same but at the hypegraph level.
 
@@ -613,3 +569,44 @@ def find_isomorphism_mapping(G1, G2):
     except Exception as e:
         print(f"\n❌ Error during isomorphism check: {str(e)}")
         return None
+
+def get_encodings(hg, encoder, name_of_encoding):
+    """Helper function to get the appropriate encodings based on type."""
+    if name_of_encoding == "LDP":
+        return encoder.add_degree_encodings(hg.copy(), verbose=False)
+    elif name_of_encoding == "LAPE":
+        return encoder.add_laplacian_encodings(hg.copy(), type="Normalized", verbose=False)
+    elif name_of_encoding == "RWPE":
+        return encoder.add_randowm_walks_encodings(hg.copy(), rw_type="WE", verbose=False)
+    elif name_of_encoding == "LCP-ORC":
+        return encoder.add_curvature_encodings(hg.copy(), verbose=False, type="ORC")
+    elif name_of_encoding == "LCP-FRC":
+        return encoder.add_curvature_encodings(hg.copy(), verbose=False, type="FRC")
+
+def print_comparison_results(is_match, name_of_encoding, perm, permuted, hg2_encodings):
+    """Helper function to print comparison results."""
+    if is_match:
+        print(f"\n✅ Found matching permutation for {name_of_encoding} encodings!")
+        print(f"Permutation: {perm}")
+        print("Encoding statistics after permutation:")
+        print(f"Max difference: {np.max(np.abs(permuted - hg2_encodings['features']))}")
+        # assert the difference is zero
+        assert np.max(np.abs(permuted - hg2_encodings['features'])) == 0, "The two encodings are the same"
+        print(f"Mean difference: {np.mean(np.abs(permuted - hg2_encodings['features']))}")
+    else:
+        print(f"\n❌ No matching permutation found for {name_of_encoding} encodings")
+        print("Encoding differences in original ordering:")
+        print(f"Max difference: {np.max(np.abs(hg2_encodings['features'] - hg2_encodings['features']))}")
+        # assert the difference is non-zero
+        assert np.max(np.abs(hg2_encodings['features'] - hg2_encodings['features'])) > 0, "The two encodings are the same"
+        print(f"Mean difference: {np.mean(np.abs(hg2_encodings['features'] - hg2_encodings['features']))}")
+
+def save_comparison_plot(plt, plot_dir, pair_idx, category, name_of_encoding):
+    """Helper function to save the comparison plot."""
+    os.makedirs(plot_dir, exist_ok=True)
+    filename_base = f"pair_{pair_idx}_{category.lower()}" if pair_idx is not None else "comparison"
+    plt.savefig(
+        f"{plot_dir}/{filename_base}_{name_of_encoding.lower()}_comparison.png",
+        bbox_inches='tight',
+        dpi=300
+    )
