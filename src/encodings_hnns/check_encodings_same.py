@@ -103,13 +103,14 @@ def plot_matched_encodings(encoding1, encoding2, ax1, ax2, ax3, name1="Graph A",
     is_direct_match, permuted, perm = find_encoding_match(encoding1, encoding2)
 
     print("**-"*20)
-    print("We are also checking up to scaling the encodings")
-    is_same_up_to_scaling, scaling_factor, perm_up_to_scaling, permuted_up_to_scaling = check_encodings_same_up_to_scaling(encoding1, encoding2, verbose=False)
-    if is_same_up_to_scaling and not np.isclose(scaling_factor, 1.0, rtol=1e-10):
-        # Only print if there's actually a non-trivial scaling
-        print("⛔️ The encodings are the same up to scaling")
-        print(f"The scaling factor is {scaling_factor}")
-    print("**-"*20)
+    if not is_direct_match:
+        print(f"We are also checking up to scaling for {title}")
+        is_same_up_to_scaling, scaling_factor, perm_up_to_scaling, permuted_up_to_scaling = check_encodings_same_up_to_scaling(encoding1, encoding2, verbose=False)
+        if is_same_up_to_scaling and not np.isclose(scaling_factor, 1.0, rtol=1e-10):
+            # Only print if there's actually a non-trivial scaling
+            print("⛔️ The encodings are the same up to scaling")
+            print(f"The scaling factor is {scaling_factor}")
+        print("**-"*20)
     
     if is_direct_match:
         im1 = ax1.imshow(permuted, cmap="viridis")
@@ -210,6 +211,11 @@ def checks_encodings(
     
     # Create figure and axes
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
+
+    # The name_of_encoding might have been modified to include k
+    modified_name = name_of_encoding
+    if name_of_encoding in ["RWPE", "LAPE-RW"]:
+        modified_name = f"{name_of_encoding}-k{k}"
     
     if name_of_encoding.startswith("LAPE-"):
         # Handle Laplacian encodings
@@ -293,6 +299,13 @@ def checks_encodings(
             "Hypergraph"
         )
         
+        # Check for scaled match before using it
+        is_same_up_to_scaling, scaling_factor, _, _ = check_encodings_same_up_to_scaling(
+            eigenvectors1,
+            eigenvectors2,
+            verbose=False
+        )
+        
         # Print results and save plot
         print_comparison_results(is_match, name_of_encoding, perm, permuted, 
                                {"features": eigenvectors1}, {"features": eigenvectors2})
@@ -332,7 +345,7 @@ def checks_encodings(
         # Store results for eigenvalues and eigenvectors
         comparison_result["eigenvalues"] = {"is_isospectral": are_isospectral}
         comparison_result["eigenvectors"] = create_comparison_result(
-            is_match, 
+            is_match,
             is_same_up_to_scaling,
             scaling_factor if is_same_up_to_scaling else None
         )
@@ -343,13 +356,9 @@ def checks_encodings(
         hg1_encodings = get_encodings(hg1, encoder_shrikhande, name_of_encoding, k=k)
         hg2_encodings = get_encodings(hg2, encoder_rooke, name_of_encoding, k=k)
         
-        # The name_of_encoding might have been modified to include k
-        modified_name = name_of_encoding
-        if name_of_encoding in ["RWPE", "LAPE-RW"]:
-            modified_name = f"{name_of_encoding}-k{k}"
         
         # Plot and get match results
-        is_direct_match, _, _ = plot_matched_encodings(
+        is_direct_match, permuted, perm = plot_matched_encodings(
             hg1_encodings["features"],
             hg2_encodings["features"],
             ax1, ax2, ax3,
@@ -364,6 +373,10 @@ def checks_encodings(
             hg2_encodings["features"],
             verbose=False
         )
+
+        # Print results 
+        print_comparison_results(is_direct_match, name_of_encoding, perm, permuted, 
+                               {"features": hg1_encodings["features"]}, {"features": hg2_encodings["features"]})
         
         comparison_result["features"] = create_comparison_result(
             is_direct_match,
