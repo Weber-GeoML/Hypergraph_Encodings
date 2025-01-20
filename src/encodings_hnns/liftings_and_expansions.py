@@ -41,7 +41,8 @@ def lift_to_hypergraph(graph, verbose=True) -> dict:
     
     # Find all maximal cliques of size 3 or larger
     cliques = [clique for clique in nx.find_cliques(G) if len(clique) >= 3]
-    print(f"The number of cliques of size 3 or larger is {len(cliques)}")
+    if verbose:
+        print(f"The number of cliques of size 3 or larger is {len(cliques)}")
     if verbose:
         print(f"Found {len(cliques)} cliques")
         print(f"The cliques are {cliques}")
@@ -74,11 +75,14 @@ def lift_to_hypergraph(graph, verbose=True) -> dict:
     
     # Add remaining edges as size-2 hyperedges
     for edge in remaining_edges:
-        print(f"The edge {edge} is not in any clique")
+        if verbose:
+            print(f"The edge {edge} is not in any clique")
         hypergraph[f'he_{hyperedge_id}'] = list(edge)
         hyperedge_id += 1
 
-    print(f"The number of hyperedges is {len(hypergraph)}")
+
+    if verbose:
+        print(f"The number of hyperedges is {len(hypergraph)}")
     assert len(hypergraph) == hyperedge_id
     
     # Get number of nodes

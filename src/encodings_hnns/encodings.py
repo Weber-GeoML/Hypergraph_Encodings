@@ -325,7 +325,7 @@ class HypergraphEncodings:
         rw_type: str = "EN",
         normalized: bool = True,
         dataset_name: str | None = None,
-        k: int = 20,
+        k: int = 20, # to vary!
     ) -> dict:
         """Adds encodings based on Laplacians
 

@@ -82,7 +82,6 @@ def plot_hypergraph_pair(G1, G2, hg1, hg2, pair_idx, category, is_isomorphic, ou
     # Row 2: Hypergraph visualizations
     # Plot first hypergraph
     plt.subplot(423)
-    print(hg1['hypergraph'])
     H1 = hnx.Hypergraph(hg1['hypergraph'])
     hnx.draw(H1, 
             pos=pos1,
@@ -219,12 +218,19 @@ def plot_graph_pair(graph1, graph2, pair_idx, category, is_isomorphic, output_di
     degrees1 = [d for n, d in graph1.degree()]
     degrees2 = [d for n, d in graph2.degree()]
     max_degree = max(max(degrees1), max(degrees2))
-    bins = range(min(min(degrees1), min(degrees2)), max_degree + 2)  # +2 to include max degree
+    min_degree = min(min(degrees1), min(degrees2))
+    bins = range(min_degree, max_degree + 2)  # +2 to include max degree
     
-    # Plot first histogram
-    plt.hist(degrees1, bins=bins, 
-            alpha=0.7, color='lightblue', rwidth=0.8,
-            label='Graph A')
+    # Set the width and positions for the bars
+    width = 0.35  # Width of the bars
+    x = np.array(list(bins[:-1]))  # Bar positions for graph1
+    
+    # Create the bars with offset positions
+    plt.bar(x - width/2, np.histogram(degrees1, bins=bins)[0], 
+            width, alpha=0.7, color='lightblue', label='Graph A')
+    plt.bar(x + width/2, np.histogram(degrees2, bins=bins)[0], 
+            width, alpha=0.7, color='lightpink', label='Graph B')
+    
     plt.title(f"Degree Distribution\n({len(graph1.nodes())} total nodes)")
     plt.xlabel('Degree')
     plt.ylabel('Frequency')
@@ -439,17 +445,20 @@ def analyze_graph_pair(data1, data2, pair_idx, category, is_isomorphic):
     
     # Compare graph-level encodings
     print(f"\nAnalyzing pair {pair_idx} ({category}):")
+    print("\n")
     compare_encodings(hg1, hg2, pair_idx, category, is_isomorphic, "graph", node_mapping)
 
     del hg1, hg2
 
-    print('*-'*100)
+    print('*-'*25)
+    print('*-'*25)
     print(f"Analyzing pair {pair_idx} ({category}): at the hypergraph level")
-    print('*-'*100)
+    print('*-'*25)
+    print('*-'*25)
     
     # Lift to hypergraphs
-    hg1_lifted = lift_to_hypergraph(data1)
-    hg2_lifted = lift_to_hypergraph(data2)
+    hg1_lifted = lift_to_hypergraph(data1, verbose=False)
+    hg2_lifted = lift_to_hypergraph(data2, verbose=False)
 
     plot_hypergraph_pair(G1, G2, hg1_lifted, hg2_lifted, pair_idx, category, is_isomorphic, 'plots/hypergraph_pairs')
     
@@ -471,12 +480,12 @@ def compare_encodings(hg1, hg2, pair_idx, category, is_isomorphic, level="graph"
     
     # Define encodings to check
     encodings_to_check = [
-        # ("LDP", "Local Degree Profile", True),
-        # ("LCP-FRC", "Local Curvature Profile - FRC", True),
-        # ("RWPE", "Random Walk Encodings", True),
-        # ("LCP-ORC", "Local Curvature Profile - ORC", False),
-        # ("LAPE-Normalized", "Normalized Laplacian", True),
-        # ("LAPE-RW", "Random Walk Laplacian", True),
+        ("LDP", "Local Degree Profile", True),
+        ("LCP-FRC", "Local Curvature Profile - FRC", True),
+        ("RWPE", "Random Walk Encodings", True),
+        ("LCP-ORC", "Local Curvature Profile - ORC", False),
+        ("LAPE-Normalized", "Normalized Laplacian", True),
+        ("LAPE-RW", "Random Walk Laplacian", True),
         ("LAPE-Hodge", "Hodge Laplacian", True),
     ]
     
