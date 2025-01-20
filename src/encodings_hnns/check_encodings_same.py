@@ -220,6 +220,7 @@ def checks_encodings(
     if name_of_encoding.startswith("LAPE-"):
         # Handle Laplacian encodings
         lap_type = name_of_encoding.split("-")[1]  # Get Normalized, RW, or Hodge
+        print(f"Computing Laplacian for {lap_type}")
         # Get Laplacian matrices and features
         hg1_lape, L1 = compute_laplacian(hg1, lap_type)
         hg2_lape, L2 = compute_laplacian(hg2, lap_type)
@@ -273,19 +274,7 @@ def checks_encodings(
             print("\nComparison of eigenvector norms:")
             for name in ['Graph A', 'Graph B']:
                 print(f"{name} Laplacian eigenvector norms: {properties[name]['norms']}")
-        
-        # Create figure and subplots
-        plt.figure(figsize=(18, 5))
-        title = f"{name_of_encoding} Comparison"
-        if pair_idx is not None and category is not None:
-            title += f"\nPair {pair_idx} ({category})"
-        plt.suptitle(title, fontsize=14, y=1.05)
-        
-        # Create three subplots
-        ax1 = plt.subplot(1, 3, 1)
-        ax2 = plt.subplot(1, 3, 2)
-        ax3 = plt.subplot(1, 3, 3)
-        
+
         # Try to find matching permutation for eigenvectors
         is_match, permuted, perm = plot_matched_encodings(
             eigenvectors1,
@@ -295,43 +284,39 @@ def checks_encodings(
             ax3,
             name1,
             name2,
-            title,
+            modified_name,
             "Hypergraph"
         )
         
-        # Check for scaled match before using it
+        # Check for scaled match
         is_same_up_to_scaling, scaling_factor, _, _ = check_encodings_same_up_to_scaling(
             eigenvectors1,
             eigenvectors2,
             verbose=False
         )
         
-        # Print results and save plot
+        # Print results
         print_comparison_results(is_match, name_of_encoding, perm, permuted, 
                                {"features": eigenvectors1}, {"features": eigenvectors2})
         
-        if save_plots:
-            save_comparison_plot(plt, plot_dir, pair_idx, category, name_of_encoding)
-            
-            # Save additional plots
-            # Features difference plot
-            plt.figure()
-            plt.imshow(hg1_lape["features"] - hg2_lape["features"], cmap="Blues")
-            plt.colorbar()
-            plt.title(f"Difference in {lap_type} Features\n{category} - Pair {pair_idx}")
-            save_comparison_plot(plt, plot_dir, pair_idx, category, f"{name_of_encoding}_features")
-            plt.close()
-            
-            # Laplacian matrices difference plot
-            plt.figure()
-            plt.imshow(L1 - L2, cmap="Blues")
-            plt.colorbar()
-            plt.title(f"Difference in {lap_type} Laplacian Matrices\n{category} - Pair {pair_idx}")
-            save_comparison_plot(plt, plot_dir, pair_idx, category, f"{name_of_encoding}_matrices")
-            plt.close()
-            
         
-        plt.close()
+        # if save_plots:
+        #     # Additional plots
+        #     # Features difference plot
+        #     plt.figure(figsize=(8, 6))
+        #     plt.imshow(hg1_lape["features"] - hg2_lape["features"], cmap="Blues")
+        #     plt.colorbar()
+        #     plt.title(f"Difference in {lap_type} Features\n{category} - Pair {pair_idx}")
+        #     save_comparison_plot(plt, plot_dir, pair_idx, category, f"{name_of_encoding}_features")
+        #     plt.close()
+            
+        #     # Laplacian matrices difference plot
+        #     plt.figure(figsize=(8, 6))
+        #     plt.imshow(L1 - L2, cmap="Blues")
+        #     plt.colorbar()
+        #     plt.title(f"Difference in {lap_type} Laplacian Matrices\n{category} - Pair {pair_idx}")
+        #     save_comparison_plot(plt, plot_dir, pair_idx, category, f"{name_of_encoding}_matrices")
+        #     plt.close()
         
         # Check isospectrality
         are_isospectral = check_isospectrality(eigenvalues1, eigenvalues2)
@@ -384,10 +369,11 @@ def checks_encodings(
             scaling_factor if is_scaled_match else None
         )
     
-    # Save plot if requested
+    # Save plot if requested - This will handle both LAPE and non-LAPE cases
     if save_plots:
+        plt.tight_layout()
         save_comparison_plot(plt, plot_dir, pair_idx, category, modified_name)
-    plt.close()
+    plt.close()  # Only close the figure once at the end
     
     return comparison_result
 
@@ -569,7 +555,15 @@ def print_comparison_results(is_match, name_of_encoding, perm, permuted, hg1_enc
             print(f"\n")
 
 def save_comparison_plot(plt, plot_dir, pair_idx, category, name_of_encoding):
-    """Helper function to save the comparison plot."""
+    """Helper function to save the comparison plot.
+    
+    Args:
+        plt: matplotlib plot
+        plot_dir: directory to save the plot
+        pair_idx: index of the pair
+        category: category of the pair
+        name_of_encoding: name of the encoding
+    """
     os.makedirs(plot_dir, exist_ok=True)
     filename_base = f"pair_{pair_idx}_{category.lower()}" if pair_idx is not None else "comparison"
     plt.savefig(
