@@ -526,7 +526,7 @@ def get_encodings(hg, encoder, name_of_encoding, k=1):
     if name_of_encoding == "LDP":
         return encoder.add_degree_encodings(hg.copy(), verbose=False)
     elif name_of_encoding == "LAPE":
-        return encoder.add_laplacian_encodings(hg.copy(), type="Normalized", verbose=False)
+        return encoder.add_laplacian_encodings(hg.copy(), type="Normalized", verbose=False, use_same_sign=True)
     elif name_of_encoding == "RWPE":
         # Add k to the name for random walks
         name_of_encoding = f"RWPE-k{k}"
@@ -536,13 +536,13 @@ def get_encodings(hg, encoder, name_of_encoding, k=1):
     elif name_of_encoding == "LCP-FRC":
         return encoder.add_curvature_encodings(hg.copy(), verbose=False, type="FRC")
     elif name_of_encoding == "LAPE-Normalized":
-        return encoder.add_laplacian_encodings(hg.copy(), type="Normalized", verbose=False)
+        return encoder.add_laplacian_encodings(hg.copy(), type="Normalized", verbose=False, use_same_sign=True)
     elif name_of_encoding == "LAPE-RW":
         # Add k to the name for random walk Laplacian
         name_of_encoding = f"LAPE-RW-k{k}"
         return encoder.add_laplacian_encodings(hg.copy(), type="RW", verbose=False, k=k)
     elif name_of_encoding == "LAPE-Hodge":
-        return encoder.add_laplacian_encodings(hg.copy(), type="Hodge", verbose=False)
+        return encoder.add_laplacian_encodings(hg.copy(), type="Hodge", verbose=False, use_same_sign=True)
     
     return None
 
@@ -599,7 +599,7 @@ def compute_laplacian(hg, lap_type):
         encoder.laplacian.compute_hodge_laplacian()
         L = encoder.laplacian.hodge_laplacian_down
     
-    hg_lape = encoder.add_laplacian_encodings(hg.copy(), type=lap_type, verbose=False)
+    hg_lape = encoder.add_laplacian_encodings(hg.copy(), type=lap_type, verbose=False, use_same_sign=True)
     return hg_lape, L
 
 def check_encodings_same_up_to_scaling(encoding1, encoding2, verbose=True):

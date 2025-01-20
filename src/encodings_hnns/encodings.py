@@ -326,6 +326,7 @@ class HypergraphEncodings:
         normalized: bool = True,
         dataset_name: str | None = None,
         k: int = 20, # to vary!
+        use_same_sign : bool = False,
     ) -> dict:
         """Adds encodings based on Laplacians
 
@@ -440,7 +441,8 @@ class HypergraphEncodings:
             # 2^k different possibilities
             sign: int = random.choice([-1, 1])
             # for rook and shrikhande, we use the same sign
-            # sign = 1
+            if use_same_sign:
+                sign = 1
 
             features_augmented = hypergraph["features"]
 

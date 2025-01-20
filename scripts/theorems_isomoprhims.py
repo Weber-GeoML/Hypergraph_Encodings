@@ -74,10 +74,10 @@ def test_laplacian(hg1, hg2, lap_type, name1 : str = "Graph1", name2 : str = "Gr
     encoder_rooke = HypergraphEncodings()
 
     hg1_lape = encoder_shrikhande.add_laplacian_encodings(
-        hg1.copy(), type=lap_type, verbose=False
+        hg1.copy(), type=lap_type, verbose=False, use_same_sign=True
     )
     hg2_lape = encoder_rooke.add_laplacian_encodings(
-        hg2.copy(), type=lap_type, verbose=False
+        hg2.copy(), type=lap_type, verbose=False, use_same_sign=True
     )
 
     # Get the appropriate Laplacian matrix based on type

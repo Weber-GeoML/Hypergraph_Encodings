@@ -229,11 +229,9 @@ def test_add_degree_encodings(
 #     """
 #     hgencodings: HypergraphEncodings = HypergraphEncodings()
 #     toy_hypergraph_with_features = hgencodings.add_laplacian_encodings(
-#         toy_hypergraph_with_features
+#         toy_hypergraph_with_features, use_same_sign=True
 #     )
-#     assert_array_equal(
-#         toy_hypergraph_with_features["features"].shape[0] == 6
-#     ), f"the shape is {toy_hypergraph_with_features['features'].shape[0]}"
+#     assert toy_hypergraph_with_features["features"].shape[0] == 6, f"the shape is {toy_hypergraph_with_features['features'].shape[0]}"
 
 
 def test_compute_hyperedges(toy_hypergraph, hyperedges) -> None:
