@@ -168,7 +168,10 @@ class HypergraphEncodings:
                 elif not normalized:
                     # hypergraph["features"][node].reshape(-1, 1)
                     stacked_features = np.hstack(
-                        ([hypergraph["features"][node]], ld_vals)
+                        (
+                            hypergraph["features"][node].reshape(-1, 1),
+                            ld_vals,
+                        )
                     )
                 if verbose:
                     print(f"The stacked features are \n {stacked_features}")
@@ -300,7 +303,10 @@ class HypergraphEncodings:
                 elif not normalized:
                     #
                     padded_features[node] = np.hstack(
-                        ([hypergraph["features"][node]], rc_vals)
+                        (
+                            hypergraph["features"][node].reshape(-1, 1),
+                            rc_vals,
+                        )
                     )
             hypergraph["features"] = padded_features
             assert (
@@ -484,7 +490,10 @@ class HypergraphEncodings:
                         )
                 elif not normalized:
                     stacked_features = np.hstack(
-                        ([hypergraph["features"][node]], laplacian_vals)
+                        (
+                            hypergraph["features"][node].reshape(-1, 1),
+                            laplacian_vals,
+                        )
                     )
                 if verbose:
                     print(f"The stacked features are {stacked_features}")
@@ -628,7 +637,10 @@ class HypergraphEncodings:
                         )
                 elif not normalized:
                     stacked_features = np.hstack(
-                        ([hypergraph["features"][node]], laplacian_vals)
+                        (
+                            hypergraph["features"][node].reshape(-1, 1),
+                            laplacian_vals,
+                        )
                     )
                 padded_features[node] = stacked_features
                 i += 1

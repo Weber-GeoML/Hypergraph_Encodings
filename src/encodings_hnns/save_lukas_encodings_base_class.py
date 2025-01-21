@@ -1,23 +1,10 @@
-"""File used to save the encodings for lukas
-
-Will just save in the same format Lukas provided to me.ie a list of dict
-And now the "features" field of every dict will have been updated with the features
-
-"""
-
 import inspect
 import multiprocessing as mp
 import os
 import pickle
 import warnings
 
-# import hypernetx as hnx
 import numpy as np
-
-# necessary for pickle.load
-import scipy.sparse as sp
-import torch
-from tqdm import tqdm
 
 from encodings_hnns.encodings import HypergraphEncodings
 from encodings_hnns.laplacians import DisconnectedError
@@ -25,83 +12,8 @@ from encodings_hnns.laplacians import DisconnectedError
 warnings.simplefilter("ignore")
 
 
-def _convert_to_hypergraph(dataset: torch.Tensor) -> dict:
-    """Converts a single graph to hypergraph format.
-
-    THIS IS SPECIFICALLY FOR THE LRGB DATASETS
-
-    Args:
-        dataset: Single graph data
-
-    Returns:
-        Dictionary containing hypergraph data
-    """
-    X = dataset[0]  # node features
-    print(f"X shape: {X.shape}")
-    edge_attr = dataset[1]  # edge features
-    print(f"edge_attr shape: {edge_attr.shape}")
-    edge_index = dataset[2]  # connectivity
-    print(f"edge_index shape: {edge_index.shape}")
-    y = dataset[3]  # labels
-    print(f"y shape: {y.shape}")
-
-    # Convert to hypergraph format
-    hypergraph = {}
-    for i in range(edge_index.shape[1]):
-        # Create hyperedge from each edge
-        hypergraph[f"e_{i}"] = edge_index[:, i].tolist()
-
-    return {
-        "hypergraph": hypergraph,
-        "features": X.numpy(),
-        "labels": y.numpy() if isinstance(y, torch.Tensor) else y,
-        "n": X.shape[0],
-    }
-
-
-def load_and_convert_lrgb_datasets(base_path: str, dataset_name: str) -> list:
-    """Loads and converts LRGB datasets into the required format.
-
-    THIS IS SPECIFICALLY FOR THE LRGB DATASETS
-
-    Args:
-        base_path:
-            Path to the LRGB datasets directory
-        dataset_name:
-            Name of the dataset (e.g., 'peptidesstruct')
-
-    Returns:
-        List of converted Data objects
-    """
-    print(f"Loading {dataset_name} from {base_path}...")
-    # Load train, val, and test sets
-    train_data = torch.load(os.path.join(base_path, dataset_name, "train.pt"))
-    val_data = torch.load(os.path.join(base_path, dataset_name, "val.pt"))
-    test_data = torch.load(os.path.join(base_path, dataset_name, "test.pt"))
-
-    print(f"Train data length: {len(train_data)}")
-    print(f"Val data length: {len(val_data)}")
-    print(f"Test data length: {len(test_data)}")
-    # print the first few elements
-    if False:
-        print(f"Train data first few elements: {train_data[:5]}")
-        print(f"Val data first few elements: {val_data[:5]}")
-        print(f"Test data first few elements: {test_data[:5]}")
-    print("*" * 100)
-    print(f"the type is {type(train_data[0])}")
-    print("*" * 100)
-    print(train_data[0])
-    print(len(train_data[0]))
-    # Convert all datasets
-    converted_data = []
-    for dataset in [train_data, val_data, test_data]:
-        for i in range(len(dataset)):
-            converted_data.append(_convert_to_hypergraph(dataset[i]))
-    return converted_data
-
-
-class encodings_saver(object):
-    """Parses data"""
+class EncodingsSaverBase(object):
+    """Base class for computing and saving encodings"""
 
     def __init__(self, data: str) -> None:
         """Initialises the data directory
@@ -109,32 +21,20 @@ class encodings_saver(object):
         Arguments:
             data:
                 coauthorship/cocitation
-            dataset:
-                cora/dblp/acm for coauthorship and cora/citeseer/pubmed for cocitation
         """
 
         current = os.path.dirname(
             os.path.abspath(inspect.getfile(inspect.currentframe()))
         )
         current = os.path.dirname(os.path.dirname(current))
-        # Makes the path
-        if data == "coauthorship" or data == "cocitation":
-            self.d: str = os.path.join(current, "data", data)
-        else:
-            self.d: str = os.path.join(current, "data", data)
+        # Makes the paths
+        self.d: str = os.path.join(current, "data", data)
+        self.individual_files_dir = os.path.join(self.d, "individual_files")
+
+        # Create individual_files directory if it doesn't exist
+        os.makedirs(self.individual_files_dir, exist_ok=True)
+
         self.data = data
-
-    def compute_encodings(self):
-        """Returns a dataset specific function to compute the
-        encodings on the data added by Lukas
-
-        Returns:
-            TODO
-        """
-
-        name: str = "_compute_encodings"
-        function = getattr(self, name, lambda: {})
-        return function()
 
     def _process_hypergraph(
         self,
@@ -161,18 +61,26 @@ class encodings_saver(object):
         if verbose:
             print(f"The file is {lukas_file}")
             print(f"The count is {count}")
+            print(f"Features shape: {hg['features'].shape}")
+            print(f"Labels shape: {hg['labels'].shape}")
+
         # construct the hypergraph object in the same way we are used to
         hypergraph: dict = hg["hypergraph"]
         features: np.ndarray = hg["features"]
+        if isinstance(features, np.ndarray):
+            if len(features.shape) == 1:
+                features = features.reshape(-1, 1)
+        else:
+            features = np.array(features).reshape(-1, 1)
         all_nodes: list = sorted(
             set(node for hyperedge in hypergraph.values() for node in hyperedge)
         )
         if verbose:
             print(f"we have {len(all_nodes)} nodes")
-        features_shapes = features.shape
-        if verbose:
-            print(f"The features have shape {features.shape}")
+
         labels: np.ndarray = hg["labels"]
+        if len(labels.shape) == 1:
+            labels = labels.reshape(-1, 1)
         dataset: dict = {
             "hypergraph": hypergraph,
             "features": features,
@@ -193,6 +101,12 @@ class encodings_saver(object):
                 hgencodings = HypergraphEncodings()
                 k_rw = 20
                 dataset_copy = dataset.copy()
+                if verbose:
+                    print(f"Computing {random_walk_type} random walk encodings...")
+                    print(f"Input features shape: {dataset_copy['features'].shape}")
+
+                features_shapes = dataset_copy["features"].shape
+
                 dataset_copy = hgencodings.add_randowm_walks_encodings(
                     dataset_copy,
                     rw_type=random_walk_type,
@@ -237,7 +151,7 @@ class encodings_saver(object):
             list_hgs_lape_hodge.append(dataset_copy)
             list_hgs_lape_normalized.append(dataset_copy)
         try:
-            for curvature_type in ["ORC", "FRC"]:
+            for curvature_type in ["FRC"]:  # turn ORC off for cluster
                 hgencodings = HypergraphEncodings()
                 dataset_copy = dataset.copy()
                 dataset_copy = hgencodings.add_curvature_encodings(
@@ -287,7 +201,7 @@ class encodings_saver(object):
                 f"{lukas_file}_with_encodings_{encoding_type}_count_{count}.pickle"
             )
             with open(
-                os.path.join(self.d, "individual_files", save_file), "wb"
+                os.path.join(self.individual_files_dir, save_file), "wb"
             ) as handle:
                 pickle.dump(encoding_list, handle)
 
@@ -431,63 +345,3 @@ class encodings_saver(object):
         #     list_hgs_frc,
         #     list_hgs_ldp,
         # )
-
-    def _compute_encodings(self, verbose: bool = False) -> dict:
-        """Computes the encodings on the data
-
-        Args:
-            verbose:
-                whether to print more messages
-        """
-
-        list_files: list[str] = [
-            "proteins_hypergraphs",
-            "enzymes_hypergraphs",
-            "mutag_hypergraphs",
-            "imdb_hypergraphs",
-            "collab_hypergraphs",
-            "reddit_hypergraphs",
-        ]
-
-        all_results: dict = {}
-
-        for lukas_file in list_files:
-            results = self._process_file(lukas_file)
-            all_results[lukas_file] = results
-
-        return all_results
-
-
-# Run
-if __name__ == "__main__":
-    lukas = False
-    if lukas:
-        data_type = "hypergraph_classification_datasets"
-        # dataset_name = "reddit_hypergraphs"  # does not matter
-
-        # Creates an instance of the encodings_saver class
-        encodings_saver_instance = encodings_saver(data_type)
-        # parse calls load_data
-        parsed_data = encodings_saver_instance.compute_encodings()
-
-    cluster = True
-    if cluster:
-        base_path = "/n/holyscratch01/mweber_lab/lrgb_datasets"
-        datasets = [
-            "peptidesstruct",
-        ]
-
-    for dataset_name in datasets:
-        print(f"Processing {dataset_name}...")
-        converted_dataset = load_and_convert_lrgb_datasets(base_path, dataset_name)
-
-        assert False
-
-        # Save the converted dataset
-        save_path = os.path.join("data", "graph_classification_datasets")
-        os.makedirs(save_path, exist_ok=True)
-
-        save_file = os.path.join(save_path, f"{dataset_name}_hypergraphs.pickle")
-        with open(save_file, "wb") as handle:
-            pickle.dump(converted_dataset, handle)
-        print(f"Saved {len(converted_dataset)} graphs to {save_file}")
