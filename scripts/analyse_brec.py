@@ -11,10 +11,8 @@ from encodings_hnns.liftings_and_expansions import lift_to_hypergraph
 from brec_analysis.utils_for_brec import create_output_dirs, convert_nx_to_hypergraph_dict, nx_to_pyg
 from brec_analysis.plotting_graphs_and_hgraphs_for_brec import plot_graph_pair, plot_hypergraph_pair
 from brec_analysis.compare_encodings_wrapper import compare_encodings_wrapper
-from brec_analysis.encodings_to_check import ENCODINGS_TO_CHECK
 from brec_analysis.match_status import MatchStatus
 import json
-from pathlib import Path
 
 def analyze_graph_pair(
     data1: Data, data2: Data, pair_idx: int|str, category: str, is_isomorphic: bool

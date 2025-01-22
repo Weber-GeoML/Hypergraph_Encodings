@@ -19,7 +19,6 @@ from brec_analysis.plotting_encodings_for_brec import (
     save_comparison_plot,
 )
 from brec_analysis.printers_and_loggers import print_comparison_results
-from brec_analysis.utils_for_brec import create_comparison_result
 from encodings_hnns.encodings import HypergraphEncodings
 
 # TODO: clean up
