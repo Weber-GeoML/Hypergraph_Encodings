@@ -86,13 +86,16 @@ def create_summary_plots(all_results, out_dir):
     final_trains = [
         params["final_train_acc"] for params in all_results["params"].values()
     ]
-    final_vals = [params["final_val_acc"] for params in all_results["params"].values()]
+    final_vals = [
+        params["final_val_acc"] for params in all_results["params"].values()
+    ]
     final_tests = [
         params["final_test_acc"] for params in all_results["params"].values()
     ]
 
     plt.boxplot(
-        [final_trains, final_vals, final_tests], labels=["Train", "Validation", "Test"]
+        [final_trains, final_vals, final_tests],
+        labels=["Train", "Validation", "Test"],
     )
     plt.title("Distribution of Final Accuracies")
     plt.ylabel("Accuracy (%)")
@@ -105,7 +108,8 @@ def create_summary_plots(all_results, out_dir):
     # Calculate mean and std for each metric
     def get_stats(accs_dict):
         padded_accs = [
-            accs + [accs[-1]] * (max_epochs - len(accs)) for accs in accs_dict.values()
+            accs + [accs[-1]] * (max_epochs - len(accs))
+            for accs in accs_dict.values()
         ]
         return np.mean(padded_accs, axis=0), np.std(padded_accs, axis=0)
 
@@ -114,11 +118,15 @@ def create_summary_plots(all_results, out_dir):
     test_mean, test_std = get_stats(all_results["test_accs"])
 
     plt.plot(epochs, train_mean, "b-", label="Train")
-    plt.fill_between(epochs, train_mean - train_std, train_mean + train_std, alpha=0.2)
+    plt.fill_between(
+        epochs, train_mean - train_std, train_mean + train_std, alpha=0.2
+    )
     plt.plot(epochs, val_mean, "g-", label="Validation")
     plt.fill_between(epochs, val_mean - val_std, val_mean + val_std, alpha=0.2)
     plt.plot(epochs, test_mean, "r-", label="Test")
-    plt.fill_between(epochs, test_mean - test_std, test_mean + test_std, alpha=0.2)
+    plt.fill_between(
+        epochs, test_mean - test_std, test_mean + test_std, alpha=0.2
+    )
 
     plt.title("Average Learning Curves (with std)")
     plt.xlabel("Epoch")
@@ -182,7 +190,10 @@ out_dir_components = [
 # Add transformer details if enabled
 if args.do_transformer:
     out_dir_components.extend(
-        [f"transformer_{args.transformer_version}", f"depth_{args.transformer_depth}"]
+        [
+            f"transformer_{args.transformer_version}",
+            f"depth_{args.transformer_depth}",
+        ]
     )
 
 # Add encoding details if enabled
@@ -208,19 +219,27 @@ if out_dir.exists():
 out_dir.makedirs_p()
 
 # Configure loggers
-baselogger = get_logger("base logger", f"{out_dir}/logging.log", not args.nostdout)
-resultlogger = get_logger("result logger", f"{out_dir}/result.log", not args.nostdout)
+baselogger = get_logger(
+    "base logger", f"{out_dir}/logging.log", not args.nostdout
+)
+resultlogger = get_logger(
+    "result logger", f"{out_dir}/result.log", not args.nostdout
+)
 baselogger.info(args)
 resultlogger.info(args)
 
 
 # Determine which dataset file to load based on config
-dataset_name = args.dataset_hypergraph_classification.lower()  # Convert to lowercase
+dataset_name = (
+    args.dataset_hypergraph_classification.lower()
+)  # Convert to lowercase
 base_path = "data/hypergraph_classification_datasets"
 
 if args.add_encodings_hg_classification:
     # Construct encoding suffix based on config
-    encoding_type = args.encodings.lower()  # e.g., ("rw" "lcp" "laplacian" "ldp"
+    encoding_type = (
+        args.encodings.lower()
+    )  # e.g., ("rw" "lcp" "laplacian" "ldp"
 
     if encoding_type == "rw":
         encoding_suffix = f"with_encodings_{encoding_type}_{args.random_walk_type.upper()}"  # EE, EN, or WE
@@ -275,7 +294,9 @@ for dataset_path in dataset_paths:
 
         # Add dataset validation
         if not isinstance(current_dataset, list):
-            print(f"Warning: Dataset should be a list, got {type(current_dataset)}")
+            print(
+                f"Warning: Dataset should be a list, got {type(current_dataset)}"
+            )
             continue
 
         if not current_dataset[0].get("features") is not None:
@@ -327,8 +348,12 @@ print(f"Number of unique labels: {len(unique_labels)}")
 print(f"Unique labels: {sorted(unique_labels)}")
 
 # Calculate average nodes and edges
-avg_nodes = sum(hg["features"].shape[0] for hg in current_dataset) / num_hypergraphs
-avg_edges = sum(len(hg["hypergraph"]) for hg in current_dataset) / num_hypergraphs
+avg_nodes = (
+    sum(hg["features"].shape[0] for hg in current_dataset) / num_hypergraphs
+)
+avg_edges = (
+    sum(len(hg["hypergraph"]) for hg in current_dataset) / num_hypergraphs
+)
 
 print("\nHypergraph Statistics:")
 print(f"Average nodes per hypergraph: {avg_nodes:.2f}")
@@ -375,7 +400,9 @@ print(f"Y type: {Y.dtype}")
 print(f"Y: \n {Y}")
 
 # When calculating number of classes
-nclass = len(np.unique(np.concatenate([hg["labels"] for hg in current_dataset])))
+nclass = len(
+    np.unique(np.concatenate([hg["labels"] for hg in current_dataset]))
+)
 print(f"Number of unique classes: {nclass}")
 
 # _, train_idx, test_idx = load(args)
@@ -410,7 +437,9 @@ for seed in range(1, 9):
     out_dir.makedirs_p()
 
     for run in tqdm(range(1, args.n_runs + 1), desc="Training runs"):
-        train_idx, temp_idx = train_test_split(indices, test_size=0.3, random_state=2)
+        train_idx, temp_idx = train_test_split(
+            indices, test_size=0.3, random_state=2
+        )
         baselogger.info(f"\n--- Starting run {run}/{args.n_runs} ---")
         run_dir = out_dir / f"{run}"
         run_dir.makedirs_p()
@@ -588,7 +617,9 @@ for seed in range(1, 9):
             "nlayer": nlayer,
             "dataset": dataset_name,
             "encodings": (
-                args.encodings if args.add_encodings_hg_classification else "none"
+                args.encodings
+                if args.add_encodings_hg_classification
+                else "none"
             ),
             "transformer": args.do_transformer,
             "final_train_acc": train_accs_history[-1],
@@ -651,7 +682,9 @@ if len(overlap) > 0:
 
 # Debug label shapes
 print("\nLabel debug:")
-print(f"Original Y shape: {np.stack([hg['labels'] for hg in current_dataset]).shape}")
+print(
+    f"Original Y shape: {np.stack([hg['labels'] for hg in current_dataset]).shape}"
+)
 Y = torch.from_numpy(np.stack([hg["labels"] for hg in current_dataset]))
 print(f"Tensor Y shape before squeeze: {Y.shape}")
 print(f"Tensor Y shape after squeeze: {Y.squeeze().shape}")

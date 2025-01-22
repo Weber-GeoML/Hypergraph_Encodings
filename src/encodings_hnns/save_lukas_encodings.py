@@ -205,9 +205,7 @@ class encodings_saver(object):
         }
 
         for encoding_type, encoding_list in encoding_map.items():
-            save_file = (
-                f"{lukas_file}_with_encodings_{encoding_type}_count_{count}.pickle"
-            )
+            save_file = f"{lukas_file}_with_encodings_{encoding_type}_count_{count}.pickle"
             with open(
                 os.path.join(self.d, "individual_files", save_file), "wb"
             ) as handle:
@@ -248,7 +246,9 @@ class encodings_saver(object):
         with open(os.path.join(self.d, f"{lukas_file}.pickle"), "rb") as handle:
             # list of hypergraphs
             hypergraphs: list[dict] = pickle.load(handle)
-            print(f"The file {lukas_file} contains {len(hypergraphs)} hypergraphs")
+            print(
+                f"The file {lukas_file} contains {len(hypergraphs)} hypergraphs"
+            )
             results = []
             with mp.Pool() as pool:
                 for count, hg in enumerate(hypergraphs):
@@ -262,9 +262,16 @@ class encodings_saver(object):
 
         # Retrieve and accumulate results
         for result in results:
-            (rw_EE, rw_EN, rw_WE, lape_hodge, lape_normalized, orc, frc, ldp) = (
-                result.get()
-            )
+            (
+                rw_EE,
+                rw_EN,
+                rw_WE,
+                lape_hodge,
+                lape_normalized,
+                orc,
+                frc,
+                ldp,
+            ) = result.get()
 
             list_hgs_rw_EE.extend(rw_EE)
             list_hgs_rw_EN.extend(rw_EN)
@@ -288,7 +295,9 @@ class encodings_saver(object):
         }
 
         for encoding_type, encoding_list in accumulated_encodings.items():
-            combined_file = f"{lukas_file}_with_encodings_{encoding_type}.pickle"
+            combined_file = (
+                f"{lukas_file}_with_encodings_{encoding_type}.pickle"
+            )
             with open(os.path.join(self.d, combined_file), "wb") as handle:
                 pickle.dump(encoding_list, handle)
                 print(f"Saved combined encodings to {combined_file}")

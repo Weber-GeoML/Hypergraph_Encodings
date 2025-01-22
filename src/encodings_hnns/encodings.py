@@ -29,7 +29,9 @@ class HypergraphEncodings:
         self.hyperedges: None | dict = None
         self.laplacian: None | Laplacians = None
 
-    def compute_hyperedges(self, hypergraph: dict, verbose: bool = False) -> None:
+    def compute_hyperedges(
+        self, hypergraph: dict, verbose: bool = False
+    ) -> None:
         """Computes a dictionary called hyperedges.
 
         The dictionary contains as keys the nodes,
@@ -48,7 +50,9 @@ class HypergraphEncodings:
         it for eg FRC, we can reuse it for ORC.
         """
         if verbose:
-            print(f"The hypergraph has {len(hypergraph['hypergraph'])} (hyper)edges")
+            print(
+                f"The hypergraph has {len(hypergraph['hypergraph'])} (hyper)edges"
+            )
 
         # for each node, get the hyperedges it belongs to
         # keys are node, values are hyperedges name the node belongs to
@@ -142,7 +146,9 @@ class HypergraphEncodings:
             padded_features = np.zeros(target_shape)
 
             # Copies the original features into the new padded array
-            padded_features[:, : features_augmented.shape[1]] = features_augmented
+            padded_features[:, : features_augmented.shape[1]] = (
+                features_augmented
+            )
 
             # turn the degree profile into a np.matrix and stack it with the features
             # loops through node
@@ -275,7 +281,9 @@ class HypergraphEncodings:
             padded_features = np.zeros(target_shape)
 
             # Copies the original features into the new padded array
-            padded_features[:, : features_augmented.shape[1]] = features_augmented
+            padded_features[:, : features_augmented.shape[1]] = (
+                features_augmented
+            )
 
             # turn the RC profile into a np.matrix and stack it with the features
             if len(hypergraph["features"]) == 0:
@@ -408,8 +416,12 @@ class HypergraphEncodings:
                     type=rw_type, verbose=verbose
                 )
                 if verbose:
-                    print(f"The RW laplacian is \n {self.laplacian.rw_laplacian}")
-                eigenvalues, eigenvectors = np.linalg.eig(self.laplacian.rw_laplacian)
+                    print(
+                        f"The RW laplacian is \n {self.laplacian.rw_laplacian}"
+                    )
+                eigenvalues, eigenvectors = np.linalg.eig(
+                    self.laplacian.rw_laplacian
+                )
 
             # TODO: take the real part of the eigenvalues/eigenvectors
             # put a flag to catch if it larger than 10e-3 (imaginary part)
@@ -459,7 +471,9 @@ class HypergraphEncodings:
             padded_features = np.zeros(target_shape)
 
             # Copies the original features into the new padded array
-            padded_features[:, : features_augmented.shape[1]] = features_augmented
+            padded_features[:, : features_augmented.shape[1]] = (
+                features_augmented
+            )
 
             # turn the FRC profile into a np.matrix and stack it with the features
             if len(hypergraph["features"]) == 0:
@@ -467,7 +481,9 @@ class HypergraphEncodings:
                 raise NotImplementedError
             i = 0
             for node in self.hyperedges.keys():
-                first_try: bool = False  # this was when we used the whole eigenvectors
+                first_try: bool = (
+                    False  # this was when we used the whole eigenvectors
+                )
                 new_method: bool = True
                 if first_try:
                     # use the ith eigenvector
@@ -480,7 +496,9 @@ class HypergraphEncodings:
                     print(
                         f"The hypergraph features for node {node} are \n {hypergraph['features'][node]}"
                     )
-                    print(f"We add the Laplacian based encoding:\n {laplacian_vals}")
+                    print(
+                        f"We add the Laplacian based encoding:\n {laplacian_vals}"
+                    )
                 # this assumes that the features are present
                 if normalized:
                     try:
@@ -565,7 +583,9 @@ class HypergraphEncodings:
             # gives probability of going from i to j
             if verbose:
                 print(f"We are doing a {rw_type} rw")
-            laplacian.compute_random_walk_laplacian(type=rw_type, verbose=verbose)
+            laplacian.compute_random_walk_laplacian(
+                type=rw_type, verbose=verbose
+            )
             num_nodes: int = len(self.hyperedges.keys())
             all_nodes: list = sorted(
                 set(
@@ -578,7 +598,9 @@ class HypergraphEncodings:
                 len(all_nodes) == num_nodes
             ), f"We have {len(all_nodes)} vs {num_nodes}"
             try:
-                rw_matrix: np.ndarray = -laplacian.rw_laplacian + np.eye(num_nodes)
+                rw_matrix: np.ndarray = -laplacian.rw_laplacian + np.eye(
+                    num_nodes
+                )
             except:
                 print(self.hyperedges.keys())
                 assert False
@@ -609,7 +631,9 @@ class HypergraphEncodings:
             padded_features = np.zeros(target_shape)
 
             # Copies the original features into the new padded array
-            padded_features[:, : features_augmented.shape[1]] = features_augmented
+            padded_features[:, : features_augmented.shape[1]] = (
+                features_augmented
+            )
 
             if len(hypergraph["features"]) == 0:
                 print("Will be implemented")
@@ -667,7 +691,14 @@ if __name__ == "__main__":
             "green": [3, 5, 6],
             "blue": [4, 5],
         },
-        "features": {1: [[1]], 2: [[1]], 3: [[1]], 4: [[1]], 5: [[1]], 6: [[1]]},
+        "features": {
+            1: [[1]],
+            2: [[1]],
+            3: [[1]],
+            4: [[1]],
+            5: [[1]],
+            6: [[1]],
+        },
         "labels": {},
         "n": 6,
     }
@@ -688,23 +719,31 @@ if __name__ == "__main__":
     hg = hgcurvaturprofile.add_randowm_walks_encodings(hg, verbose=False)
     # k is 20 so the features are shape n by 21
     assert hg["features"].shape[0] == hg["n"]
-    assert hg["features"].shape[1] == 21, f"The shape is {hg['features'].shape[1]}"
+    assert (
+        hg["features"].shape[1] == 21
+    ), f"The shape is {hg['features'].shape[1]}"
 
     # 21 + 6 makes 27
     # becuase we have already added features
     hg = hgcurvaturprofile.add_degree_encodings(hg, verbose=True)
     assert hg["features"].shape[0] == hg["n"]
-    assert hg["features"].shape[1] == 27, f"The shape is {hg['features'].shape[1]}"
+    assert (
+        hg["features"].shape[1] == 27
+    ), f"The shape is {hg['features'].shape[1]}"
 
     # 27+6 makes 33
     hg = hgcurvaturprofile.add_laplacian_encodings(hg, verbose=True)
     assert hg["features"].shape[0] == hg["n"]
-    assert hg["features"].shape[1] == 33, f"The shape is {hg['features'].shape[1]}"
+    assert (
+        hg["features"].shape[1] == 33
+    ), f"The shape is {hg['features'].shape[1]}"
 
     # 33 plus 5 makes 38
     hg = hgcurvaturprofile.add_curvature_encodings(hg, True)
     assert hg["features"].shape[0] == hg["n"]
-    assert hg["features"].shape[1] == 38, f"The shape is {hg['features'].shape[1]}"
+    assert (
+        hg["features"].shape[1] == 38
+    ), f"The shape is {hg['features'].shape[1]}"
 
     # hg = hgcurvaturprofile.add_laplacian_encodings(hg)
     hg = hgcurvaturprofile.add_randowm_walks_encodings(hg)

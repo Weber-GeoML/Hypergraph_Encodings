@@ -124,7 +124,14 @@ class HyperGraphConvolution(Module):
         return AHW + b
 
     def __repr__(self):
-        return self.__class__.__name__ + " (" + str(self.a) + " -> " + str(self.b) + ")"
+        return (
+            self.__class__.__name__
+            + " ("
+            + str(self.a)
+            + " -> "
+            + str(self.b)
+            + ")"
+        )
 
 
 class SparseMM(torch.autograd.Function):
@@ -198,7 +205,12 @@ def Laplacian(V, E, X, m):
             for mediator in hyperedge:
                 if mediator != Se and mediator != Ie:
                     edges.extend(
-                        [[Se, mediator], [Ie, mediator], [mediator, Se], [mediator, Ie]]
+                        [
+                            [Se, mediator],
+                            [Ie, mediator],
+                            [mediator, Se],
+                            [mediator, Ie],
+                        ]
                     )
                     weights = update(Se, Ie, mediator, weights, c)
         else:

@@ -24,20 +24,27 @@ from encodings_hnns.liftings_and_expansions import lift_to_hypergraph
 
 def create_output_dirs() -> None:
     """Create output directories for plots and results"""
-    dirs = ["plots/graph_pairs", "plots/hypergraph_pairs", "plots/encodings", "results"]
+    dirs = [
+        "plots/graph_pairs",
+        "plots/hypergraph_pairs",
+        "plots/encodings",
+        "results",
+    ]
     for dir_name in dirs:
         os.makedirs(dir_name, exist_ok=True)
 
 
-def create_comparison_table(stats1 : dict, stats2 : dict) -> tuple[list[str], list[str]]:
+def create_comparison_table(
+    stats1: dict, stats2: dict
+) -> tuple[list[str], list[str]]:
     """Create comparison table with differences highlighted in red.
-    
+
     Args:
-        stats1 (dict): 
+        stats1 (dict):
             Statistics for the first graph.
-        stats2 (dict): 
+        stats2 (dict):
             Statistics for the second graph.
-    
+
     Returns:
         tuple[list[str], list[str]]: A tuple containing the table text and colors.
     """
@@ -67,26 +74,33 @@ def create_comparison_table(stats1 : dict, stats2 : dict) -> tuple[list[str], li
 
 
 def plot_hypergraph_pair(
-    G1 : nx.Graph, G2 : nx.Graph, hg1 : dict, hg2 : dict, pair_idx : str, category : str, is_isomorphic : bool, output_dir : str
+    G1: nx.Graph,
+    G2: nx.Graph,
+    hg1: dict,
+    hg2: dict,
+    pair_idx: str,
+    category: str,
+    is_isomorphic: bool,
+    output_dir: str,
 ):
     """Plot comparison of two hypergraphs with their bipartite representations.
-    
+
     Args:
-        G1 (nx.Graph): 
+        G1 (nx.Graph):
             The first graph.
-        G2 (nx.Graph): 
+        G2 (nx.Graph):
             The second graph.
-        hg1 (dict): 
+        hg1 (dict):
             The first hypergraph.
-        hg2 (dict): 
+        hg2 (dict):
             The second hypergraph.
-        pair_idx (str): 
+        pair_idx (str):
             The index of the pair.
-        category (str): 
+        category (str):
             The category of the pair.
-        is_isomorphic (bool): 
+        is_isomorphic (bool):
             Whether the graphs are isomorphic.
-        output_dir (str): 
+        output_dir (str):
             The directory to save the plots.
     """
     # Create figure with 4x2 subplot grid (increased height for new row)
@@ -127,13 +141,25 @@ def plot_hypergraph_pair(
     # Plot first hypergraph
     plt.subplot(423)
     H1 = hnx.Hypergraph(hg1["hypergraph"])
-    hnx.draw(H1, pos=pos1, with_node_labels=True, with_edge_labels=False, convex=False)
+    hnx.draw(
+        H1,
+        pos=pos1,
+        with_node_labels=True,
+        with_edge_labels=False,
+        convex=False,
+    )
     plt.title(f"Hypergraph A\n({len(hg1['hypergraph'])} hyperedges)")
 
     # Plot second hypergraph
     plt.subplot(424)
     H2 = hnx.Hypergraph(hg2["hypergraph"])
-    hnx.draw(H2, pos=pos2, with_node_labels=True, with_edge_labels=False, convex=False)
+    hnx.draw(
+        H2,
+        pos=pos2,
+        with_node_labels=True,
+        with_edge_labels=False,
+        convex=False,
+    )
     plt.title(f"Hypergraph B\n({len(hg2['hypergraph'])} hyperedges)")
 
     # Row 3: Bipartite representations
@@ -147,7 +173,8 @@ def plot_hypergraph_pair(
         pos1,
         with_labels=True,
         node_color=[
-            "lightblue" if node in top1 else "lightgreen" for node in BH1.nodes()
+            "lightblue" if node in top1 else "lightgreen"
+            for node in BH1.nodes()
         ],
         node_size=500,
         font_size=12,
@@ -165,7 +192,8 @@ def plot_hypergraph_pair(
         pos2,
         with_labels=True,
         node_color=[
-            "lightblue" if node in top2 else "lightgreen" for node in BH2.nodes()
+            "lightblue" if node in top2 else "lightgreen"
+            for node in BH2.nodes()
         ],
         node_size=500,
         font_size=12,
@@ -241,7 +269,11 @@ def plot_hypergraph_pair(
         ],
     ]
     plt.text(
-        0.1, 0.5, "\n".join(stats_text), fontsize=12, transform=plt.gca().transAxes
+        0.1,
+        0.5,
+        "\n".join(stats_text),
+        fontsize=12,
+        transform=plt.gca().transAxes,
     )
 
     plt.tight_layout()
@@ -253,21 +285,28 @@ def plot_hypergraph_pair(
     plt.close()
 
 
-def plot_graph_pair(graph1 : nx.Graph, graph2 : nx.Graph, pair_idx : str, category : str, is_isomorphic : bool, output_dir : str) -> None:
+def plot_graph_pair(
+    graph1: nx.Graph,
+    graph2: nx.Graph,
+    pair_idx: str,
+    category: str,
+    is_isomorphic: bool,
+    output_dir: str,
+) -> None:
     """Plot a pair of graphs side by side with graph statistics and degree distributions.
-    
+
     Args:
-        graph1 (nx.Graph): 
+        graph1 (nx.Graph):
             The first graph.
-        graph2 (nx.Graph): 
+        graph2 (nx.Graph):
                 The second graph.
-        pair_idx (str): 
+        pair_idx (str):
             The index of the pair.
-        category (str): 
+        category (str):
             The category of the pair.
-        is_isomorphic (bool): 
+        is_isomorphic (bool):
             Whether the graphs are isomorphic.
-        output_dir (str): 
+        output_dir (str):
             The directory to save the plots.
     """
     # Create figure with 3x2 subplot grid (added row for adjacency matrices)
@@ -280,7 +319,9 @@ def plot_graph_pair(graph1 : nx.Graph, graph2 : nx.Graph, pair_idx : str, catego
     # Plot first graph
     ax1 = plt.subplot(3, 2, 1)
     pos1 = nx.spring_layout(graph1)
-    plt.title(f"Graph A\n{len(graph1.nodes())} nodes, {len(graph1.edges())} edges")
+    plt.title(
+        f"Graph A\n{len(graph1.nodes())} nodes, {len(graph1.edges())} edges"
+    )
     nx.draw(
         graph1,
         pos1,
@@ -294,7 +335,9 @@ def plot_graph_pair(graph1 : nx.Graph, graph2 : nx.Graph, pair_idx : str, catego
     # Plot second graph
     ax2 = plt.subplot(3, 2, 2)
     pos2 = nx.spring_layout(graph2)
-    plt.title(f"Graph B\n{len(graph2.nodes())} nodes, {len(graph2.edges())} edges")
+    plt.title(
+        f"Graph B\n{len(graph2.nodes())} nodes, {len(graph2.edges())} edges"
+    )
     nx.draw(
         graph2,
         pos2,
@@ -360,7 +403,12 @@ def plot_graph_pair(graph1 : nx.Graph, graph2 : nx.Graph, pair_idx : str, catego
 
     # Plot second histogram
     ax3.hist(
-        degrees2, bins=bins, alpha=0.7, color="lightpink", rwidth=0.8, label="Graph B"
+        degrees2,
+        bins=bins,
+        alpha=0.7,
+        color="lightpink",
+        rwidth=0.8,
+        label="Graph B",
     )
 
     # Add text with exact counts for Graph B
@@ -406,7 +454,9 @@ def plot_graph_pair(graph1 : nx.Graph, graph2 : nx.Graph, pair_idx : str, catego
             "Number of components": nx.number_connected_components(G),
             "Is planar": nx.is_planar(G),
             # Centrality measures (averaged over nodes)
-            "Avg betweenness": np.mean(list(nx.betweenness_centrality(G).values())),
+            "Avg betweenness": np.mean(
+                list(nx.betweenness_centrality(G).values())
+            ),
             "Avg closeness": np.mean(list(nx.closeness_centrality(G).values())),
             "Avg eigenvector": np.mean(
                 list(nx.eigenvector_centrality_numpy(G).values())
@@ -561,11 +611,13 @@ def plot_graph_pair(graph1 : nx.Graph, graph2 : nx.Graph, pair_idx : str, catego
     plt.close()
 
 
-def analyze_graph_pair(data1 : Data, data2 : Data, pair_idx : str, category : str, is_isomorphic : bool) -> None:
+def analyze_graph_pair(
+    data1: Data, data2: Data, pair_idx: str, category: str, is_isomorphic: bool
+) -> None:
     """Analyze a pair of graphs: plot them and compare their encodings"""
     # Convert PyG data to NetworkX graphs
     G1 = to_networkx(data1, to_undirected=True)
-    G2 = to_networkx(data2, to_undirected=True) 
+    G2 = to_networkx(data2, to_undirected=True)
     assert not is_isomorphic, "All pairs in BREC are non-isomorphic"
 
     # store the Asjacency matrix plots and their difference
@@ -586,7 +638,9 @@ def analyze_graph_pair(data1 : Data, data2 : Data, pair_idx : str, category : st
 
     # Plot original graphs
     # in graph space
-    plot_graph_pair(G1, G2, pair_idx, category, is_isomorphic, "plots/graph_pairs")
+    plot_graph_pair(
+        G1, G2, pair_idx, category, is_isomorphic, "plots/graph_pairs"
+    )
 
     # Convert to hypergraph dictionaries
     # THESE ARE STILL GRAPHS!!!
@@ -635,17 +689,28 @@ def analyze_graph_pair(data1 : Data, data2 : Data, pair_idx : str, category : st
     )
 
 
-def convert_nx_to_hypergraph_dict(G : nx.Graph) -> dict:
+def convert_nx_to_hypergraph_dict(G: nx.Graph) -> dict:
     """Convert NetworkX graph to hypergraph dictionary format"""
     hyperedges = {f"e_{i}": list(edge) for i, edge in enumerate(G.edges())}
     n = G.number_of_nodes()
     features = torch.empty((n, 0))
-    return {"hypergraph": hyperedges, "features": features, "labels": {}, "n": n}
+    return {
+        "hypergraph": hyperedges,
+        "features": features,
+        "labels": {},
+        "n": n,
+    }
 
 
 def compare_encodings(
-    hg1 : Data, hg2 : Data, pair_idx : str, category : str, is_isomorphic : bool, level : str="graph", node_mapping : dict | None=None
-)-> None:
+    hg1: Data,
+    hg2: Data,
+    pair_idx: str,
+    category: str,
+    is_isomorphic: bool,
+    level: str = "graph",
+    node_mapping: dict | None = None,
+) -> None:
     """Compare encodings between two (hyper)graphs"""
     encoder1 = HypergraphEncodings()
     encoder2 = HypergraphEncodings()
@@ -707,11 +772,14 @@ def main() -> None:
     # Convert to PyG Data objects
     def nx_to_pyg(G):
         edge_index = torch.tensor(
-            [[e[0] for e in G.edges()], [e[1] for e in G.edges()]], dtype=torch.long
+            [[e[0] for e in G.edges()], [e[1] for e in G.edges()]],
+            dtype=torch.long,
         )
         x = torch.ones((G.number_of_nodes(), 1), dtype=torch.float)
         y = torch.zeros(G.number_of_nodes(), dtype=torch.long)
-        return Data(x=x, y=y, edge_index=edge_index, num_nodes=G.number_of_nodes())
+        return Data(
+            x=x, y=y, edge_index=edge_index, num_nodes=G.number_of_nodes()
+        )
 
     rook_data = nx_to_pyg(rook)
     shrikhande_data = nx_to_pyg(shrikhande)
@@ -748,7 +816,9 @@ def main() -> None:
             is_isomorphic = False
 
             # Analyze the pair
-            analyze_graph_pair(graph1, graph2, pair_idx, category, is_isomorphic)
+            analyze_graph_pair(
+                graph1, graph2, pair_idx, category, is_isomorphic
+            )
 
 
 if __name__ == "__main__":

@@ -194,7 +194,11 @@ def fetch_data(
                 assert (
                     shape_before[1] != shape_after[1]
                 ), f"The shape are {shape_before} and {shape_after}"
-            X, Y, G = dataset["features"], dataset["labels"], dataset["hypergraph"]
+            X, Y, G = (
+                dataset["features"],
+                dataset["labels"],
+                dataset["hypergraph"],
+            )
 
             # normalize everything here (features and encodings, if added)
             # node features in sparse representation
@@ -257,7 +261,11 @@ def fetch_data(
                     shape_before[1] != shape_after[1]
                 ), f"The shape are {shape_before} and {shape_after}"
             # encodings are unormalized
-            X, Y, G = dataset["features"], dataset["labels"], dataset["hypergraph"]
+            X, Y, G = (
+                dataset["features"],
+                dataset["labels"],
+                dataset["hypergraph"],
+            )
             # node features in sparse representation
             X = sp.csr_matrix(X, dtype=np.float32)
             X = torch.FloatTensor(np.array(X.todense()))
@@ -306,7 +314,10 @@ def initialise(
     if unseen is not None:
         unseen = set(unseen)
         # remove unseen nodes
-        for e, vs in G.items():  # loops through edges and the vertices they contain
+        for (
+            e,
+            vs,
+        ) in G.items():  # loops through edges and the vertices they contain
             G[e] = list(set(vs) - unseen)
 
     if args.add_self_loop:
@@ -333,9 +344,13 @@ def initialise(
     for e, vs in G.items():
         indices += vs  # the corresponding row indice, as nodes are rows
         # this keep tracks of the non-zero elements in the final matrix H
-        data += [1] * len(vs)  # extend data by adding as many '1's as there are vs
+        data += [1] * len(
+            vs
+        )  # extend data by adding as many '1's as there are vs
         # the matrix H only contain 1s!
-        indptr.append(len(indices))  # keep track of the number of vertices in each edge
+        indptr.append(
+            len(indices)
+        )  # keep track of the number of vertices in each edge
         # this is just used to tell use where column begin and start in data
 
     # csc_matrix((data, indices, indptr), [shape=(M, N)])
@@ -368,7 +383,9 @@ def initialise(
     # indptr = [0, 2, 4, 6]
     # N, M = 4, 3  # Shape of the matrix (4 rows, 3 columns)
     # H = sp.csc_matrix((data, indices, indptr), shape=(N, M), dtype=int).tocsr()
-    H = sp.csc_matrix((data, indices, indptr), shape=(N, M), dtype=int).tocsr()  # V x E
+    H = sp.csc_matrix(
+        (data, indices, indptr), shape=(N, M), dtype=int
+    ).tocsr()  # V x E
     print(f"H is \n {H}")  # this is just the incidence matrix
 
     # Calculate the degree of each vertex (degV) by summing the values

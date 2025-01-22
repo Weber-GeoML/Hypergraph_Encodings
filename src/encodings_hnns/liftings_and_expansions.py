@@ -186,12 +186,15 @@ def lift_and_plot_graphs():
     def nx_to_pyg(G):
         # Get edge index
         edge_index = torch.tensor(
-            [[e[0] for e in G.edges()], [e[1] for e in G.edges()]], dtype=torch.long
+            [[e[0] for e in G.edges()], [e[1] for e in G.edges()]],
+            dtype=torch.long,
         )
         # Add dummy features and labels
         x = torch.ones((G.number_of_nodes(), 1), dtype=torch.float)
         y = torch.zeros(G.number_of_nodes(), dtype=torch.long)
-        return Data(x=x, y=y, edge_index=edge_index, num_nodes=G.number_of_nodes())
+        return Data(
+            x=x, y=y, edge_index=edge_index, num_nodes=G.number_of_nodes()
+        )
 
     shrikhande_pyg = nx_to_pyg(shrikhande)
     rooke_pyg = nx_to_pyg(rooke)
@@ -204,7 +207,9 @@ def lift_and_plot_graphs():
     print(
         f"The number of hyperedges in Shrikhande is {len(shrikhande_hyper['hypergraph'])}"
     )
-    print(f"The number of hyperedges in Rooke is {len(rooke_hyper['hypergraph'])}")
+    print(
+        f"The number of hyperedges in Rooke is {len(rooke_hyper['hypergraph'])}"
+    )
 
     # For Shrikhande graph
     # initialize the Laplacians:
@@ -332,7 +337,11 @@ def lift_and_plot_graphs():
     plt.subplot(133)
     pos = nx.circular_layout(rooke)
     hnx.draw(
-        H_rooke, pos=pos, with_node_labels=True, with_edge_labels=False, convex=False
+        H_rooke,
+        pos=pos,
+        with_node_labels=True,
+        with_edge_labels=False,
+        convex=False,
     )
     plt.title(
         f"Hypergraph Representation\n({len(rooke_hyper['hypergraph'])} hyperedges)"

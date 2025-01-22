@@ -38,7 +38,12 @@ def load(args) -> tuple[dict[dict, np.matrix, np.ndarray, int], list, list]:
     Dir, _ = os.path.split(current)
     Dir = os.path.dirname(os.path.dirname(Dir))
     file: str = os.path.join(
-        Dir, "data", args.data, args.dataset, "splits", str(args.split) + ".pickle"
+        Dir,
+        "data",
+        args.data,
+        args.dataset,
+        "splits",
+        str(args.split) + ".pickle",
     )
 
     if not os.path.isfile(file):

@@ -176,7 +176,8 @@ class MessagePassing(torch.nn.Module):
                     )
                 if self.att:
                     torch.nn.init.xavier_uniform_(
-                        self.att_weight.view(-1, 1), gain=self.initialization_gain
+                        self.att_weight.view(-1, 1),
+                        gain=self.initialization_gain,
                     )
             case "xavier_normal":
                 if self.weight is not None:
@@ -185,7 +186,8 @@ class MessagePassing(torch.nn.Module):
                     )
                 if self.att:
                     torch.nn.init.xavier_normal_(
-                        self.att_weight.view(-1, 1), gain=self.initialization_gain
+                        self.att_weight.view(-1, 1),
+                        gain=self.initialization_gain,
                     )
             case _:
                 raise ValueError(
@@ -358,8 +360,12 @@ class MessagePassing(torch.nn.Module):
         x_message = x_message.index_select(-2, self.source_index_j)
 
         if self.att:
-            attention_values = self.attention(x_source=x_source, x_target=x_target)
-            neighborhood_values = torch.multiply(neighborhood_values, attention_values)
+            attention_values = self.attention(
+                x_source=x_source, x_target=x_target
+            )
+            neighborhood_values = torch.multiply(
+                neighborhood_values, attention_values
+            )
 
         x_message = neighborhood_values.view(-1, 1) * x_message
         return self.aggregate(x_message)
@@ -401,7 +407,9 @@ class Conv(MessagePassing):
         aggr_norm: bool = False,
         update_func: Literal["relu", "sigmoid", None] = None,
         att: bool = False,
-        initialization: Literal["xavier_uniform", "xavier_normal"] = "xavier_uniform",
+        initialization: Literal[
+            "xavier_uniform", "xavier_normal"
+        ] = "xavier_uniform",
         initialization_gain: float = 1.414,
         with_linear_transform: bool = True,
     ) -> None:

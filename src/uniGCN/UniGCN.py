@@ -76,7 +76,10 @@ class UniSAGEConv(nn.Module):
 
     def __repr__(self):
         return "{}({}, {}, heads={})".format(
-            self.__class__.__name__, self.in_channels, self.out_channels, self.heads
+            self.__class__.__name__,
+            self.in_channels,
+            self.out_channels,
+            self.heads,
         )
 
     def forward(
@@ -100,7 +103,9 @@ class UniSAGEConv(nn.Module):
         X = self.W(X)
 
         Xve = X[vertex]  # [nnz, C]
-        Xe = scatter(Xve, edges, dim=0, reduce=self.args.first_aggregate)  # [E, C]
+        Xe = scatter(
+            Xve, edges, dim=0, reduce=self.args.first_aggregate
+        )  # [E, C]
 
         Xev = Xe[edges]  # [nnz, C]
         Xv = scatter(
@@ -122,7 +127,13 @@ class UniSAGEConv(nn.Module):
 class UniGINConv(nn.Module):
 
     def __init__(
-        self, args, in_channels, out_channels, heads=8, dropout=0.0, negative_slope=0.2
+        self,
+        args,
+        in_channels,
+        out_channels,
+        heads=8,
+        dropout=0.0,
+        negative_slope=0.2,
     ):
         super().__init__()
         self.W = nn.Linear(in_channels, heads * out_channels, bias=False)
@@ -137,7 +148,10 @@ class UniGINConv(nn.Module):
 
     def __repr__(self):
         return "{}({}, {}, heads={})".format(
-            self.__class__.__name__, self.in_channels, self.out_channels, self.heads
+            self.__class__.__name__,
+            self.in_channels,
+            self.out_channels,
+            self.heads,
         )
 
     def forward(
@@ -160,7 +174,9 @@ class UniGINConv(nn.Module):
         X = self.W(X)
 
         Xve = X[vertex]  # [nnz, C]
-        Xe = scatter(Xve, edges, dim=0, reduce=self.args.first_aggregate)  # [E, C]
+        Xe = scatter(
+            Xve, edges, dim=0, reduce=self.args.first_aggregate
+        )  # [E, C]
 
         Xev = Xe[edges]  # [nnz, C]
         Xv = scatter(Xev, vertex, dim=0, reduce="sum", dim_size=N)  # [N, C]
@@ -208,7 +224,9 @@ class UniGCNConv(nn.Module):
         # in_features: size of each input sample
         # out_features: size of each output sample
         self.W = nn.Linear(
-            in_features=in_channels, out_features=heads * out_channels, bias=False
+            in_features=in_channels,
+            out_features=heads * out_channels,
+            bias=False,
         )
         self.heads: int = heads
         self.in_channels: int = in_channels
@@ -219,7 +237,10 @@ class UniGCNConv(nn.Module):
 
     def __repr__(self):
         return "{}({}, {}, heads={})".format(
-            self.__class__.__name__, self.in_channels, self.out_channels, self.heads
+            self.__class__.__name__,
+            self.in_channels,
+            self.out_channels,
+            self.heads,
         )
 
     def forward(
@@ -363,7 +384,13 @@ class UniGCNConv(nn.Module):
 class UniGCNConv2(nn.Module):
 
     def __init__(
-        self, args, in_channels, out_channels, heads=8, dropout=0.0, negative_slope=0.2
+        self,
+        args,
+        in_channels,
+        out_channels,
+        heads=8,
+        dropout=0.0,
+        negative_slope=0.2,
     ):
         super().__init__()
         self.W = nn.Linear(in_channels, heads * out_channels, bias=True)
@@ -376,7 +403,10 @@ class UniGCNConv2(nn.Module):
 
     def __repr__(self):
         return "{}({}, {}, heads={})".format(
-            self.__class__.__name__, self.in_channels, self.out_channels, self.heads
+            self.__class__.__name__,
+            self.in_channels,
+            self.out_channels,
+            self.heads,
         )
 
     def forward(self, X, vertex, edges):
@@ -390,7 +420,9 @@ class UniGCNConv2(nn.Module):
         # v3: X -> AX -> norm -> AXW
 
         Xve = X[vertex]  # [nnz, C]
-        Xe = scatter(Xve, edges, dim=0, reduce=self.args.first_aggregate)  # [E, C]
+        Xe = scatter(
+            Xve, edges, dim=0, reduce=self.args.first_aggregate
+        )  # [E, C]
 
         Xe = Xe * degE
 
@@ -440,7 +472,10 @@ class UniGATConv(nn.Module):
 
     def __repr__(self):
         return "{}({}, {}, heads={})".format(
-            self.__class__.__name__, self.in_channels, self.out_channels, self.heads
+            self.__class__.__name__,
+            self.in_channels,
+            self.out_channels,
+            self.heads,
         )
 
     def reset_parameters(self) -> None:
@@ -471,7 +506,9 @@ class UniGATConv(nn.Module):
         X = X0.view(N, H, C)
 
         Xve = X[vertex]  # [nnz, H, C]
-        Xe = scatter(Xve, edges, dim=0, reduce=self.args.first_aggregate)  # [E, H, C]
+        Xe = scatter(
+            Xve, edges, dim=0, reduce=self.args.first_aggregate
+        )  # [E, H, C]
 
         alpha_e = (Xe * self.att_e).sum(-1)  # [E, H, 1]
         a_ev = alpha_e[edges]
@@ -542,7 +579,13 @@ class UniGNN(nn.Module):
         self.convs = nn.ModuleList(
             [Conv(args, nfeat, nhid, heads=nhead, dropout=args.attn_drop)]
             + [
-                Conv(args, nhid * nhead, nhid, heads=nhead, dropout=args.attn_drop)
+                Conv(
+                    args,
+                    nhid * nhead,
+                    nhid,
+                    heads=nhead,
+                    dropout=args.attn_drop,
+                )
                 for _ in range(nlayer - 2)
             ]
         )
@@ -572,7 +615,9 @@ class UniGNN(nn.Module):
         """
 
         X = self.input_drop(X)
-        for conv in self.convs:  # note that we loop for as many layers as specified
+        for (
+            conv
+        ) in self.convs:  # note that we loop for as many layers as specified
             X_orig = X.clone()  # Create copy of original X
             X = conv(X, V, E)
             X = self.act(X)
@@ -787,7 +832,9 @@ class UniGNN(nn.Module):
                                 * feature_dim,  # Standard transformer uses 4x
                                 dropout=self.args.dropout,
                                 batch_first=True,
-                            ).to(device)
+                            ).to(
+                                device
+                            )
 
                             # Stack multiple transformer layers
                             self.transformer = nn.TransformerEncoder(
@@ -866,7 +913,9 @@ class UniGCNIIConv(nn.Module):
         degV = self.args.degV
 
         Xve = X[vertex]  # [nnz, C]
-        Xe = scatter(Xve, edges, dim=0, reduce=self.args.first_aggregate)  # [E, C]
+        Xe = scatter(
+            Xve, edges, dim=0, reduce=self.args.first_aggregate
+        )  # [E, C]
 
         Xe = Xe * degE
 
