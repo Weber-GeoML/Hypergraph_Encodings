@@ -32,10 +32,14 @@ def print_comparison_results(
         print(f"\n✅ Found matching permutation for {name_of_encoding}!")
         print(f"Permutation: {perm}")
         print("Statistics after permutation:")
-        print(f"Max difference: {np.max(np.abs(permuted - hg2_encodings['features']))}")
-        print(
-            f"Mean difference: {np.mean(np.abs(permuted - hg2_encodings['features']))}"
-        )
+        max_diff= np.max(np.abs(permuted - hg2_encodings['features']))
+        # print(f"Max difference: {max_diff}")
+        assert np.isclose(max_diff, 0)
+        mean_diff = np.mean(np.abs(permuted - hg2_encodings['features']))
+        # print(
+        #     f"Mean difference: {mean_diff}"
+        # )
+        assert np.isclose(mean_diff, 0)
     else:
         print(f"\n❌ No matching permutation found for {name_of_encoding}")
         print("Differences in original ordering:")

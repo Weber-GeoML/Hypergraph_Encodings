@@ -10,6 +10,7 @@ from itertools import permutations
 import numpy as np
 
 
+
 def find_encoding_match(
     encoding1: np.ndarray, encoding2: np.ndarray, verbose: bool = True
 ) -> tuple[bool, np.ndarray, tuple[int, ...]]:
@@ -114,7 +115,7 @@ def find_encoding_match(
 
 
 def check_encodings_same_up_to_scaling(
-    encoding1: np.ndarray, encoding2: np.ndarray, verbose: bool = True
+    encoding1: np.ndarray, encoding2: np.ndarray, verbose: bool = False
 ) -> tuple[bool, float, np.ndarray, np.ndarray]:
     """
     Check if two encodings are equivalent under row permutations and scaling.

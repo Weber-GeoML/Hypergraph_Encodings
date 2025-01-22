@@ -34,8 +34,8 @@ def get_encodings(
     elif name_of_encoding == "RWPE":
         # Add k to the name for random walks
         name_of_encoding = f"RWPE-k{k_rwpe}"
-        print(f"Adding random walk encodings with k={k_rwpe} for {name_of_encoding}")
-        print(f"features: \n {hg['features']}")
+        # print(f"Adding random walk encodings with k={k_rwpe} for {name_of_encoding}")
+        # print(f"features: \n {hg['features']}")
         return encoder.add_randowm_walks_encodings(
             hg.copy(), rw_type="WE", verbose=False, k=k_rwpe
         )

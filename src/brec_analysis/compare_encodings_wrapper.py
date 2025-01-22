@@ -6,7 +6,7 @@ from torch_geometric.data import Data
 
 from brec_analysis.check_encodings_same import checks_encodings
 from encodings_hnns.encodings import HypergraphEncodings
-
+from brec_analysis.encodings_to_check import ENCODINGS_TO_CHECK
 
 def compare_encodings_wrapper(
     hg1: Data,
@@ -51,24 +51,14 @@ def compare_encodings_wrapper(
     }
 
     # TODO: here I want to loop through different values of k. 2, 3, 4, 20.
-    # Define encodings to check
-    encodings_to_check = [
-        ("LDP", "Local Degree Profile"),
-        ("LCP-FRC", "Local Curvature Profile - FRC"),
-        ("RWPE", "Random Walk Encodings"),
-        ("LCP-ORC", "Local Curvature Profile - ORC"),
-        ("LAPE-Normalized", "Normalized Laplacian"),
-        ("LAPE-RW", "Random Walk Laplacian"),
-        ("LAPE-Hodge", "Hodge Laplacian"),
-    ]
 
-    for encoding_type, description in encodings_to_check:
+    for encoding_type, description in ENCODINGS_TO_CHECK:
         encoding_result = checks_encodings(
             name_of_encoding=encoding_type,
             hg1=hg1,
             hg2=hg2,
-            encoder_shrikhande=encoder1,
-            encoder_rooke=encoder2,
+            encoder_number_one=encoder1,
+            encoder_number_two=encoder2,
             name1="Graph A",
             name2="Graph B",
             save_plots=True,

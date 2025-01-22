@@ -3,7 +3,7 @@
 import os
 
 import matplotlib.pyplot as plt
-
+import numpy as np
 
 def save_comparison_plot(
     plt: plt.Axes,
@@ -45,9 +45,6 @@ def plot_matched_encodings(
     perm: tuple[int, ...],
     encoding1: np.ndarray,
     encoding2: np.ndarray,
-    ax1: plt.Axes,
-    ax2: plt.Axes,
-    ax3: plt.Axes,
     name1: str = "Graph A",
     name2: str = "Graph B",
     title: str = "",
@@ -76,6 +73,9 @@ def plot_matched_encodings(
         perm:
             the permutation that was applied
     """
+
+    # Create figure and axes
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
 
     if is_direct_match:
         vmin = min(np.min(permuted), np.min(encoding2))

@@ -112,6 +112,7 @@ class ORC:
         dispersion: str = "UnweightedClique",
         alpha: float = 0,
         aggregation_type: str = "Mean",
+        verbose: bool = False,
     ) -> None:
         """Computes the ORC for hypergraphs.
 
@@ -211,9 +212,11 @@ class ORC:
                 stats = data[1]
 
             self.node_curvature_edges = stats["node_curvature_edges"]
-            print(f"The node curvatures are \n {stats['node_curvature_neighborhood']}")
+            if verbose:
+                print(f"The node curvatures are \n {stats['node_curvature_neighborhood']}")
             self.node_curvature_neighborhood = stats["node_curvature_neighborhood"]
-            print(f"The edge curvatures are \n {stats['edge_curvature']}")
+            if verbose:
+                print(f"The edge curvatures are \n {stats['edge_curvature']}")
             self.edge_curvature = {
                 key: stats["edge_curvature"][i]
                 for i, key in enumerate(self.hypergraph["hypergraph"])
