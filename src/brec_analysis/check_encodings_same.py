@@ -17,8 +17,8 @@ from brec_analysis.match_encodings import (
     check_encodings_same_up_to_scaling,
     find_encoding_match,
 )
-from brec_analysis.plotting_encodings_for_brec import save_comparison_plot
 from brec_analysis.utils_for_brec import create_comparison_result
+from brec_analysis.plotting_encodings_for_brec import save_comparison_plot
 from encodings_hnns.encodings import HypergraphEncodings
 from encodings_hnns.laplacians import Laplacians
 
@@ -159,6 +159,7 @@ def plot_matched_encodings(
     plt.suptitle(title, y=1.05)
 
     return is_direct_match, permuted, perm
+
 
 
 def checks_encodings(
@@ -367,9 +368,7 @@ def checks_encodings(
             print(f"features: \n {hg2_encodings['features']}")
 
             # Plot and get match results
-            is_direct_match, permuted, perm = find_encoding_match(
-                hg1_encodings["features"], hg2_encodings["features"]
-            )
+            is_direct_match, permuted, perm = find_encoding_match(hg1_encodings["features"], hg2_encodings["features"])
             plot_matched_encodings(
                 is_direct_match,
                 permuted,
@@ -418,9 +417,7 @@ def checks_encodings(
             print(f"Encoding name: {name_of_encoding}")
 
         # Plot and get match results
-        is_direct_match, permuted, perm = find_encoding_match(
-            hg1_encodings["features"], hg2_encodings["features"]
-        )
+        is_direct_match, permuted, perm = find_encoding_match(hg1_encodings["features"], hg2_encodings["features"])
         plot_matched_encodings(
             is_direct_match,
             permuted,
@@ -469,7 +466,7 @@ def checks_encodings(
 
 
 def get_encodings(
-    hg: Data, encoder: HypergraphEncodings, name_of_encoding: str, k: int = 1
+    hg: Data, encoder: HypergraphEncodings, name_of_encoding: str, k_rwpe: int = 1, k_lape: int = 1
 ) -> dict:
     """Helper function to get the appropriate encodings based on type.
 
@@ -480,8 +477,10 @@ def get_encodings(
             the encoder
         name_of_encoding:
             the name of the encoding
-        k:
-            the k value for the encoding
+        k_rwpe:
+            the k value for the random walk encodings
+        k_lape:
+            the k value for the Laplacian encodings
 
     Returns:
         the encodings
@@ -492,11 +491,11 @@ def get_encodings(
         # Add k to the name for random walks
         # TODO: fix two things. First, there are ones that should not be there.
         # TODO Two: pass in k through the all pipeline
-        name_of_encoding = f"RWPE-k{k}"
-        print(f"Adding random walk encodings with k={k} for {name_of_encoding}")
+        name_of_encoding = f"RWPE-k{k_rwpe}"
+        print(f"Adding random walk encodings with k={k_rwpe} for {name_of_encoding}")
         print(f"features: \n {hg['features']}")
         return encoder.add_randowm_walks_encodings(
-            hg.copy(), rw_type="WE", verbose=False, k=k
+            hg.copy(), rw_type="WE", verbose=False, k=k_rwpe
         )
     elif name_of_encoding == "LCP-ORC":
         return encoder.add_curvature_encodings(hg.copy(), verbose=False, type="ORC")
@@ -508,8 +507,8 @@ def get_encodings(
         )
     elif name_of_encoding == "LAPE-RW":
         # Add k to the name for random walk Laplacian
-        name_of_encoding = f"LAPE-RW-k{k}"
-        return encoder.add_laplacian_encodings(hg.copy(), type="RW", verbose=False, k=k)
+        name_of_encoding = f"LAPE-RW-k{k_lape}"
+        return encoder.add_laplacian_encodings(hg.copy(), type="RW", verbose=False, k=k_lape)
     elif name_of_encoding == "LAPE-Hodge":
         return encoder.add_laplacian_encodings(
             hg.copy(), type="Hodge", verbose=False, use_same_sign=True

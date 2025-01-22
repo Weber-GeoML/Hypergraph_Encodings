@@ -9,6 +9,32 @@ from torch_geometric.data import Data
 from encodings_hnns.encodings import HypergraphEncodings
 from encodings_hnns.laplacians import Laplacians
 
+def compute_laplacian(hg, lap_type: str):
+    """Compute Laplacian matrix for a given hypergraph."""
+    encoder = HypergraphEncodings()
+
+    # Initialize the encoder with hyperedges
+    encoder.compute_hyperedges(hg, verbose=False)
+
+    # Initialize and compute the Laplacian
+    encoder.laplacian = Laplacians(hg)
+
+    if lap_type == "Normalized":
+        encoder.laplacian.compute_normalized_laplacian()
+        L = encoder.laplacian.normalized_laplacian
+    elif lap_type == "RW":
+        encoder.laplacian.compute_random_walk_laplacian(verbose=False)
+        L = encoder.laplacian.rw_laplacian
+    elif lap_type == "Hodge":
+        encoder.laplacian.compute_boundary()  # Need to compute boundary first
+        encoder.laplacian.compute_hodge_laplacian()
+        L = encoder.laplacian.hodge_laplacian_down
+
+    hg_lape = encoder.add_laplacian_encodings(
+        hg.copy(), type=lap_type, verbose=False, use_same_sign=True
+    )
+    del encoder
+    return hg_lape, L
 
 def reconstruct_matrix(eigenvalues, eigenvectors) -> np.ndarray:
     """Reconstruct the matrix from the eigenvalues and eigenvectors"""
