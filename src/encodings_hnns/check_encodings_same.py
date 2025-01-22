@@ -9,7 +9,7 @@ from encodings_hnns.encodings import HypergraphEncodings
 from encodings_hnns.laplacians import Laplacians
 
 
-def find_encoding_match(encoding1, encoding2, verbose=True):
+def find_encoding_match(encoding1, encoding2, verbose : bool =True):
     """
     Check if two encodings are equivalent under row permutations.
     Returns (is_match, permuted_encoding1, permutation) if found, (False, None, None) if not.
@@ -103,25 +103,30 @@ def find_encoding_match(encoding1, encoding2, verbose=True):
 
 
 def plot_matched_encodings(
-    encoding1,
-    encoding2,
-    ax1,
-    ax2,
-    ax3,
-    name1="Graph A",
-    name2="Graph B",
-    title="",
-    graph_type="Graph",
+    encoding1 : np.ndarray,
+    encoding2 : np.ndarray,
+    ax1 : plt.Axes,
+    ax2 : plt.Axes,
+    ax3 : plt.Axes,
+    name1 : str = "Graph A",
+    name2 : str = "Graph B",
+    title : str = "",
+    graph_type : str = "Graph",
 ):
     """
     Plot two encodings and their difference, attempting to match their row orderings if possible.
 
     Args:
-        encoding1, encoding2: numpy arrays of shape (n, d)
-        ax1, ax2, ax3: matplotlib axes for plotting
-        name1, name2: names of the graphs
-        title: title for the plots
-        graph_type: string indicating "Graph" or "Hypergraph"
+        encoding1, encoding2: 
+            numpy arrays of shape (n, d)
+        ax1, ax2, ax3: 
+            matplotlib axes for plotting
+        name1, name2: 
+            names of the graphs
+        title: 
+            title for the plots
+        graph_type: 
+            string indicating "Graph" or "Hypergraph"
     """
     is_direct_match, permuted, perm = find_encoding_match(encoding1, encoding2)
 
@@ -224,7 +229,7 @@ def plot_matched_encodings(
     return is_direct_match, permuted, perm
 
 
-def create_comparison_result(is_direct_match, is_scaled_match, scaling_factor=None):
+def create_comparison_result(is_direct_match : bool, is_scaled_match : bool, scaling_factor : float | None= None):
     """Create a standardized comparison result dictionary"""
     if is_direct_match:
         return {"status": "MATCH", "scaling_factor": 1.0}
@@ -238,8 +243,8 @@ def checks_encodings(
     same: bool,
     hg1,
     hg2,
-    encoder_shrikhande,
-    encoder_rooke,
+    encoder_shrikhande : HypergraphEncodings,
+    encoder_rooke : HypergraphEncodings,
     name1: str = "Graph A",
     name2: str = "Graph B",
     save_plots: bool = True,
@@ -645,7 +650,7 @@ def find_isomorphism_mapping(G1, G2):
         return None
 
 
-def get_encodings(hg, encoder, name_of_encoding, k=1):
+def get_encodings(hg : Data, encoder : HypergraphEncodings, name_of_encoding : str, k : int=1):
     """Helper function to get the appropriate encodings based on type."""
     if name_of_encoding == "LDP":
         return encoder.add_degree_encodings(hg.copy(), verbose=False)
@@ -680,7 +685,7 @@ def get_encodings(hg, encoder, name_of_encoding, k=1):
 
 
 def print_comparison_results(
-    is_match, name_of_encoding, perm, permuted, hg1_encodings, hg2_encodings
+    is_match : bool, name_of_encoding : str, perm : np.ndarray, permuted : np.ndarray, hg1_encodings : dict, hg2_encodings : dict
 ):
     """Helper function to print comparison results."""
     # Check if we're dealing with Laplacian encodings
@@ -712,15 +717,20 @@ def print_comparison_results(
             print("\n")
 
 
-def save_comparison_plot(plt, plot_dir, pair_idx, category, name_of_encoding):
+def save_comparison_plot(plt : plt.Axes, plot_dir : str, pair_idx : str, category : str, name_of_encoding : str):
     """Helper function to save the comparison plot.
 
     Args:
-        plt: matplotlib plot
-        plot_dir: directory to save the plot
-        pair_idx: index of the pair
-        category: category of the pair
-        name_of_encoding: name of the encoding
+        plt: 
+            matplotlib plot
+        plot_dir: 
+            directory to save the plot
+        pair_idx: 
+            index of the pair
+        category: 
+            category of the pair
+        name_of_encoding: 
+            name of the encoding
     """
     os.makedirs(plot_dir, exist_ok=True)
     filename_base = (
@@ -733,7 +743,7 @@ def save_comparison_plot(plt, plot_dir, pair_idx, category, name_of_encoding):
     )
 
 
-def compute_laplacian(hg, lap_type):
+def compute_laplacian(hg, lap_type : str):
     """Compute Laplacian matrix for a given hypergraph."""
     encoder = HypergraphEncodings()
 
@@ -761,7 +771,7 @@ def compute_laplacian(hg, lap_type):
     return hg_lape, L
 
 
-def check_encodings_same_up_to_scaling(encoding1, encoding2, verbose=True):
+def check_encodings_same_up_to_scaling(encoding1, encoding2, verbose : bool=True):
     """
     Check if two encodings are equivalent under row permutations and scaling.
 
@@ -864,7 +874,7 @@ def check_encodings_same_up_to_scaling(encoding1, encoding2, verbose=True):
     return False, None, None, None
 
 
-def analyze_graph_pair(data1, data2, pair_idx, category, is_isomorphic):
+def analyze_graph_pair(graph1, graph2, pair_idx : str, category : str, is_isomorphic : bool):
     """Analyze a pair of graphs and store comparison results"""
     results = {
         "pair_idx": pair_idx,
@@ -873,6 +883,9 @@ def analyze_graph_pair(data1, data2, pair_idx, category, is_isomorphic):
         "graph_level": {},
         "hypergraph_level": {},
     }
+
+    encoder1 = HypergraphEncodings()
+    encoder2 = HypergraphEncodings()
 
     # List of encodings to check
     k_dependent_encodings = ["RWPE", "LAPE-RW"]
@@ -899,8 +912,8 @@ def analyze_graph_pair(data1, data2, pair_idx, category, is_isomorphic):
         results["graph_level"][encoding] = checks_encodings(
             base_encoding,
             True,
-            data1,
-            data2,
+            graph1,
+            graph2,
             encoder1,
             encoder2,
             graph_type="Graph",
