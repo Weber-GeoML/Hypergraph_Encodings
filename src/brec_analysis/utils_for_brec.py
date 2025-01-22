@@ -5,6 +5,7 @@ import os
 import networkx as nx
 import numpy as np
 import torch
+from torch_geometric.data import Data
 
 
 def create_output_dirs() -> None:
@@ -17,6 +18,25 @@ def create_output_dirs() -> None:
     ]
     for dir_name in dirs:
         os.makedirs(dir_name, exist_ok=True)
+
+
+# Convert to PyG Data objects
+def nx_to_pyg(G: nx.Graph) -> Data:
+    """Convert NetworkX graph to PyG Data object.
+
+    Args:
+        G:
+            the NetworkX graph to convert
+
+    Returns:
+        the PyG Data object
+    """
+    edge_index = torch.tensor(
+        [[e[0] for e in G.edges()], [e[1] for e in G.edges()]], dtype=torch.long
+    )
+    x = torch.empty((G.number_of_nodes(), 0), dtype=torch.float)  # Empty features
+    y = torch.zeros(G.number_of_nodes(), dtype=torch.long)
+    return Data(x=x, y=y, edge_index=edge_index, num_nodes=G.number_of_nodes())
 
 
 def convert_nx_to_hypergraph_dict(G: nx.Graph) -> dict:
@@ -77,8 +97,43 @@ def create_comparison_table(stats1: dict, stats2: dict) -> tuple[list[str], list
     return table_text, colors
 
 
+def create_comparison_result(
+    is_direct_match: bool,
+    is_scaled_match: bool,
+    scaling_factor: float | None = None,
+) -> dict:
+    """Create a standardized comparison result dictionary
+
+    Args:
+        is_direct_match:
+            whether the encodings are the same
+        is_scaled_match:
+            whether the encodings are the same up to scaling
+        scaling_factor:
+            the scaling factor if the encodings are the same up to scaling
+
+    Returns:
+        result:
+            a dictionary with the comparison result
+    """
+    if is_direct_match:
+        return {"status": "MATCH", "scaling_factor": 1.0}
+    elif is_scaled_match:
+        return {"status": "SCALED_MATCH", "scaling_factor": scaling_factor}
+    return {"status": "NO_MATCH", "scaling_factor": None}
+
+
 # Save matrices in pmatrix format
-def matrix_to_pmatrix(matrix) -> str:
+def matrix_to_pmatrix(matrix: np.ndarray) -> str:
+    """Save matrices in pmatrix format
+
+    Args:
+        matrix:
+            the matrix to save
+
+    Returns:
+        the matrix in pmatrix format
+    """
     latex_str = "\\begin{pmatrix}\n"
     for row in matrix:
         latex_str += " & ".join([f"{x:.4f}" for x in row]) + " \\\\\n"

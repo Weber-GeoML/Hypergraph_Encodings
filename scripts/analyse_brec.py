@@ -13,26 +13,21 @@ import torch
 from brec.dataset import BRECDataset
 from torch_geometric.data import Data
 from torch_geometric.utils import to_networkx
-
+from encodings_hnns.liftings_and_expansions import lift_to_hypergraph
+from encodings_hnns.encodings import HypergraphEncodings
 from brec_analysis.check_encodings_same import (
     checks_encodings,
     find_isomorphism_mapping,
 )
-from brec_analysis.plotting_for_brec import plot_graph_pair, plot_hypergraph_pair
-from brec_analysis.utils_for_brec import (
-    convert_nx_to_hypergraph_dict,
-    create_comparison_table,
-    create_output_dirs,
-)
-from encodings_hnns.encodings import HypergraphEncodings
-from encodings_hnns.liftings_and_expansions import lift_to_hypergraph
-
+from brec_analysis.utils_for_brec import create_output_dirs, create_comparison_table, convert_nx_to_hypergraph_dict, nx_to_pyg
+from brec_analysis.plotting_graphs_and_hgraphs_for_brec import plot_graph_pair, plot_hypergraph_pair
+from brec_analysis.compare_encodings_wrapper import compare_encodings_wrapper
 
 def analyze_graph_pair(
-    data1: Data, data2: Data, pair_idx: int | str, category: str, is_isomorphic: bool
-) -> None:
+    data1: Data, data2: Data, pair_idx: int|str, category: str, is_isomorphic: bool
+) -> dict:
     """Analyze a pair of graphs: plot them and compare their encodings
-
+    
     Args:
         data1 (Data):
             The first graph.
@@ -68,7 +63,9 @@ def analyze_graph_pair(
 
     # Plot original graphs
     # in graph space
-    plot_graph_pair(G1, G2, pair_idx, category, is_isomorphic, "plots/graph_pairs")
+    plot_graph_pair(
+        G1, G2, pair_idx, category, is_isomorphic, "plots/graph_pairs"
+    )
 
     # Convert to hypergraph dictionaries
     # THESE ARE STILL GRAPHS!!!
@@ -78,7 +75,7 @@ def analyze_graph_pair(
     # Compare graph-level encodings
     print(f"\nAnalyzing pair {pair_idx} ({category}):")
     print("\n")
-    compare_encodings(
+    results = compare_encodings_wrapper(
         hg1, hg2, pair_idx, category, is_isomorphic, "graph", node_mapping
     )
 
@@ -106,7 +103,7 @@ def analyze_graph_pair(
     )
 
     # Compare hypergraph-level encodings
-    compare_encodings(
+    results = compare_encodings_wrapper(
         hg1_lifted,
         hg2_lifted,
         pair_idx,
@@ -116,120 +113,69 @@ def analyze_graph_pair(
         node_mapping,
     )
 
-
-def compare_encodings(
-    hg1: Data,
-    hg2: Data,
-    pair_idx: str,
-    category: str,
-    is_isomorphic: bool,
-    level: str = "graph",
-    node_mapping: dict | None = None,
-) -> None:
-    """Compare encodings between two (hyper)graphs"""
-    encoder1 = HypergraphEncodings()
-    encoder2 = HypergraphEncodings()
-    assert not is_isomorphic, "All pairs in BREC are non-isomorphic"
-
-    # Define encodings to check
-    encodings_to_check = [
-        ("LDP", "Local Degree Profile", True),
-        ("LCP-FRC", "Local Curvature Profile - FRC", True),
-        ("RWPE", "Random Walk Encodings", True),
-        ("LCP-ORC", "Local Curvature Profile - ORC", False),
-        ("LAPE-Normalized", "Normalized Laplacian", True),
-        ("LAPE-RW", "Random Walk Laplacian", True),
-        ("LAPE-Hodge", "Hodge Laplacian", True),
-    ]
-
-    output_dir = f"results/{level}_level"
-    os.makedirs(output_dir, exist_ok=True)
-
-    print(f"Output directory: {output_dir}")
-
-    with open(f"{output_dir}/pair_{pair_idx}_{category.lower()}.txt", "w") as f:
-        f.write(f"Analysis for pair {pair_idx} ({category}) - {level} level\n")
-        f.write(f"Isomorphic: {is_isomorphic}\n\n")
-
-        for encoding_type, description, should_be_same in encodings_to_check:
-            f.write(f"\n=== {description} ===\n")
-            result = checks_encodings(
-                name_of_encoding=encoding_type,
-                same=should_be_same,
-                hg1=hg1,
-                hg2=hg2,
-                encoder_shrikhande=encoder1,
-                encoder_rooke=encoder2,
-                name1="Graph A",
-                name2="Graph B",
-                save_plots=True,
-                plot_dir=f"plots/encodings/{level}/{pair_idx}",
-                pair_idx=pair_idx,
-                category=category,
-                is_isomorphic=is_isomorphic,
-                node_mapping=node_mapping,
-                graph_type=level,
-            )
-            f.write(f"Result: {'Same' if result else 'Different'}\n")
-
+    return results
 
 def main() -> None:
+    """Main function to analyse the BREC dataset"""
     create_output_dirs()
     dataset = BRECDataset()
+    
+    # Create a single results file
+    results_file = "results/all_comparisons.txt"
+    
+    with open(results_file, "w") as f:
+        # First analyze Rook and Shrikhande graphs
+        print("\nAnalyzing Rook and Shrikhande graphs...")
 
-    # First analyze Rook and Shrikhande graphs
-    print("\nAnalyzing Rook and Shrikhande graphs...")
+        # Load the graphs
+        rook = nx.read_graph6("rook_graph.g6")
+        shrikhande = nx.read_graph6("shrikhande.g6")
 
-    # Load the graphs
-    rook = nx.read_graph6("rook_graph.g6")
-    shrikhande = nx.read_graph6("shrikhande.g6")
+        rook_data = nx_to_pyg(rook)
+        shrikhande_data = nx_to_pyg(shrikhande)
 
-    # Convert to PyG Data objects
-    def nx_to_pyg(G):
-        edge_index = torch.tensor(
-            [[e[0] for e in G.edges()], [e[1] for e in G.edges()]], dtype=torch.long
+        # Analyze as a special pair
+        print("Analyzing Rook vs Shrikhande")
+        special_results = analyze_graph_pair(
+            rook_data,
+            shrikhande_data,
+            pair_idx="rook_vs_shrikhande",
+            category="Special",
+            is_isomorphic=False,
         )
-        x = torch.empty((G.number_of_nodes(), 0), dtype=torch.float)  # Empty features
-        y = torch.zeros(G.number_of_nodes(), dtype=torch.long)
-        return Data(x=x, y=y, edge_index=edge_index, num_nodes=G.number_of_nodes())
+        write_results(f, special_results)
+        
+        # Then continue with BREC dataset analysis
+        part_dict: dict[str, tuple[int, int]] = {
+            "Basic": (0, 60),
+            "Regular": (60, 160),
+            "Extension": (160, 260),
+            "CFI": (260, 360),
+            "4-Vertex_Condition": (360, 380),
+            "Distance_Regular": (380, 400),
+        }
 
-    rook_data = nx_to_pyg(rook)
-    shrikhande_data = nx_to_pyg(shrikhande)
+        # Process BREC dataset
+        for category, (start, end) in part_dict.items():
+            print(f"\nProcessing {category} category...")
+            for pair_idx in range(start, end):
+                results = analyze_graph_pair(
+                    dataset[pair_idx * 2],
+                    dataset[pair_idx * 2 + 1],
+                    pair_idx,
+                    category,
+                    is_isomorphic=False,
+                )
+                write_results(f, results)
 
-    # Analyze as a special pair
-    print("Analyzing Rook vs Shrikhande")
-    analyze_graph_pair(
-        rook_data,
-        shrikhande_data,
-        pair_idx="rook_vs_shrikhande",
-        category="Special",
-        is_isomorphic=False,
-    )
-
-    # Then continue with BREC dataset analysis
-    part_dict: dict[str, tuple[int, int]] = {
-        "Basic": (0, 60),
-        "Regular": (60, 160),
-        "Extension": (160, 260),
-        "CFI": (260, 360),
-        "4-Vertex_Condition": (360, 380),
-        "Distance_Regular": (380, 400),
-    }
-
-    for category, (start, end) in part_dict.items():
-        print(f"\nProcessing {category} category...")
-        for pair_idx in range(start, end):
-            print(f"Processing pair {pair_idx}...")
-            # Get the pair of graphs
-            graph1 = dataset[pair_idx * 2]
-            graph2 = dataset[pair_idx * 2 + 1]
-
-            # All pairs in BREC are non-isomorphic
-            is_isomorphic = False
-
-            # Analyze the pair
-            analyze_graph_pair(graph1, graph2, pair_idx, category, is_isomorphic)
-
+def write_results(f, results: dict) -> None:
+    """Write results for a pair to the file."""
+    f.write(f"\nAnalysis for pair {results['pair_idx']} ({results['category']}) - {results['level']} level\n")
+    f.write(f"Isomorphic: {results['is_isomorphic']}\n\n")
+    
+    for encoding_type, result in results["encodings"].items():
+        f.write(f"\n=== {result['description']} ===\n")
+        f.write(f"Result: {'Same' if result['is_same'] else 'Different'}\n")
 
 if __name__ == "__main__":
     main()

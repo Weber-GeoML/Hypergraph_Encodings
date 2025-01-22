@@ -18,11 +18,15 @@ from brec_analysis.match_encodings import (
     find_encoding_match,
 )
 from brec_analysis.plotting_encodings_for_brec import save_comparison_plot
+from brec_analysis.utils_for_brec import create_comparison_result
 from encodings_hnns.encodings import HypergraphEncodings
 from encodings_hnns.laplacians import Laplacians
 
 
 def plot_matched_encodings(
+    is_direct_match: bool,
+    permuted: np.ndarray,
+    perm: tuple[int, ...],
     encoding1: np.ndarray,
     encoding2: np.ndarray,
     ax1: plt.Axes,
@@ -56,7 +60,6 @@ def plot_matched_encodings(
         perm:
             the permutation that was applied
     """
-    is_direct_match, permuted, perm = find_encoding_match(encoding1, encoding2)
 
     print("**-" * 20)
     if not is_direct_match:
@@ -144,6 +147,7 @@ def plot_matched_encodings(
     elif is_same_up_to_scaling:
         match_status.append(r"${ \bf [SCALED\ MATCH]}$")
         scale_info = f" (scaled by {scaling_factor:.2e})"
+        match_status.append(scale_info)
     else:
         match_status.append(r"${\bf [NO\ MATCH]}$")
 
@@ -157,22 +161,8 @@ def plot_matched_encodings(
     return is_direct_match, permuted, perm
 
 
-def create_comparison_result(
-    is_direct_match: bool,
-    is_scaled_match: bool,
-    scaling_factor: float | None = None,
-):
-    """Create a standardized comparison result dictionary"""
-    if is_direct_match:
-        return {"status": "MATCH", "scaling_factor": 1.0}
-    elif is_scaled_match:
-        return {"status": "SCALED_MATCH", "scaling_factor": scaling_factor}
-    return {"status": "NO_MATCH", "scaling_factor": None}
-
-
 def checks_encodings(
     name_of_encoding: str,
-    same: bool,
     hg1,
     hg2,
     encoder_shrikhande: HypergraphEncodings,
@@ -277,7 +267,11 @@ def checks_encodings(
                 )
 
         # Try to find matching permutation for eigenvectors
-        is_match, permuted, perm = plot_matched_encodings(
+        is_match, permuted, perm = find_encoding_match(eigenvectors1, eigenvectors2)
+        plot_matched_encodings(
+            is_match,
+            permuted,
+            perm,
             eigenvectors1,
             eigenvectors2,
             ax1,
@@ -373,7 +367,13 @@ def checks_encodings(
             print(f"features: \n {hg2_encodings['features']}")
 
             # Plot and get match results
-            is_direct_match, permuted, perm = plot_matched_encodings(
+            is_direct_match, permuted, perm = find_encoding_match(
+                hg1_encodings["features"], hg2_encodings["features"]
+            )
+            plot_matched_encodings(
+                is_direct_match,
+                permuted,
+                perm,
                 hg1_encodings["features"],
                 hg2_encodings["features"],
                 ax1,
@@ -418,7 +418,13 @@ def checks_encodings(
             print(f"Encoding name: {name_of_encoding}")
 
         # Plot and get match results
-        is_direct_match, permuted, perm = plot_matched_encodings(
+        is_direct_match, permuted, perm = find_encoding_match(
+            hg1_encodings["features"], hg2_encodings["features"]
+        )
+        plot_matched_encodings(
+            is_direct_match,
+            permuted,
+            perm,
             hg1_encodings["features"],
             hg2_encodings["features"],
             ax1,
@@ -587,7 +593,6 @@ def print_comparison_results(
 
 #         results["graph_level"][encoding] = checks_encodings(
 #             base_encoding,
-#             True,
 #             graph1,
 #             graph2,
 #             encoder1,
@@ -608,7 +613,6 @@ def print_comparison_results(
 
 #         results["hypergraph_level"][encoding] = checks_encodings(
 #             base_encoding,
-#             True,
 #             data1_lifted,
 #             data2_lifted,
 #             encoder1,
