@@ -16,7 +16,6 @@ from brec_analysis.match_encodings import (
 from brec_analysis.plotting_encodings_for_brec import save_comparison_plot
 from brec_analysis.utils_for_brec import create_comparison_result
 from encodings_hnns.encodings import HypergraphEncodings
-from encodings_hnns.laplacians import Laplacians
 
 
 def plot_matched_encodings(

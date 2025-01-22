@@ -3,21 +3,10 @@
 Note: pairs in BREC are not isomorphic.
 """
 
-from itertools import permutations
 
-import matplotlib.pyplot as plt
 import networkx as nx
 import networkx.algorithms.isomorphism as iso
-import numpy as np
-from torch_geometric.data import Data
 
-from brec_analysis.laplacians_specific_functions import (
-    check_isospectrality,
-    reconstruct_matrix,
-)
-from brec_analysis.plotting_encodings_for_brec import save_comparison_plot
-from encodings_hnns.encodings import HypergraphEncodings
-from encodings_hnns.laplacians import Laplacians
 
 
 def find_isomorphism_mapping(G1, G2):

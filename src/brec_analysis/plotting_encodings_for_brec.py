@@ -3,13 +3,7 @@
 import os
 
 import matplotlib.pyplot as plt
-import networkx as nx
-import networkx.algorithms.isomorphism as iso
-import numpy as np
-from torch_geometric.data import Data
 
-from encodings_hnns.encodings import HypergraphEncodings
-from encodings_hnns.laplacians import Laplacians
 
 
 def save_comparison_plot(
