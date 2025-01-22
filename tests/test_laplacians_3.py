@@ -36,7 +36,6 @@ def toy_graph() -> dict[str, dict | int]:
     return hg
 
 
-
 @pytest.fixture
 def boundary() -> np.ndarray:
     """Returns the boundary matrix"""
@@ -45,7 +44,6 @@ def boundary() -> np.ndarray:
     )
 
     return matrix_np
-
 
 
 @pytest.fixture
@@ -62,12 +60,13 @@ def degree_v() -> np.ndarray:
     )
     return D_v
 
+
 @pytest.fixture
 def degree_v_inverse() -> np.ndarray:
     """Returns the inverse of the degree (vertices) matrix"""
     D_v: np.ndarray = np.array(
         [
-            [1/4, 0, 0, 0, 0],
+            [1 / 4, 0, 0, 0, 0],
             [0, 1, 0, 0, 0],
             [0, 0, 1, 0, 0],
             [0, 0, 0, 1, 0],
@@ -94,9 +93,10 @@ def ngbors() -> OrderedDict:
 @pytest.fixture
 def degree_e() -> np.ndarray:
     """Returns the degree (edge) matrix"""
-    d_e: np.ndarray = np.array([[2, 0, 0, 0], [0, 2, 0, 0], [0, 0, 2, 0], [0, 0, 0, 2]])
+    d_e: np.ndarray = np.array(
+        [[2, 0, 0, 0], [0, 2, 0, 0], [0, 0, 2, 0], [0, 0, 0, 2]]
+    )
     return d_e
-
 
 
 @pytest.fixture
@@ -123,24 +123,23 @@ def hodge_laplacian_down() -> np.ndarray:
     return l_down
 
 
-
 @pytest.fixture
 def normalized_laplacian() -> np.ndarray:
     """Returns the normalized Laplacian,
     which coincides with the simple graph Laplacian up to a factor of 1/2
     (Zhou: Learning with Hypergraphs: Clustering,
     Classification, and Embedding)"""
-    # So I computed the simple graph Laplacian 
+    # So I computed the simple graph Laplacian
     Delta = np.array(
         [
-            [1, -1/2, -1/2, -1/2, -1/2],
-            [-1/2, 1, 0, 0, 0],
-            [-1/2, 0 , 1, 0, 0],
-            [-1/2, 0, 0, 1, 0],
-            [-1/2, 0, 0, 0, 1],
+            [1, -1 / 2, -1 / 2, -1 / 2, -1 / 2],
+            [-1 / 2, 1, 0, 0, 0],
+            [-1 / 2, 0, 1, 0, 0],
+            [-1 / 2, 0, 0, 1, 0],
+            [-1 / 2, 0, 0, 0, 1],
         ]
     )
-    return (1/2)*Delta
+    return (1 / 2) * Delta
 
 
 @pytest.fixture
@@ -148,9 +147,9 @@ def rw_laplacian() -> np.ndarray:
     """Returns the rw Laplacian, EE"""
     rw_laplacian: np.ndarray = np.array(
         [
-            [1, -1/4, -1/4, -1/4, -1/4],
+            [1, -1 / 4, -1 / 4, -1 / 4, -1 / 4],
             [-1, 1, 0, 0, 0],
-            [-1, 0 , 1, 0, 0],
+            [-1, 0, 1, 0, 0],
             [-1, 0, 0, 1, 0],
             [-1, 0, 0, 0, 1],
         ]
@@ -163,9 +162,9 @@ def rw_laplacian_EN() -> np.ndarray:
     """Returns the rw Laplacian, EN"""
     L_EN_alpha_0: np.ndarray = np.array(
         [
-            [1, -1/4, -1/4, -1/4, -1/4],
+            [1, -1 / 4, -1 / 4, -1 / 4, -1 / 4],
             [-1, 1, 0, 0, 0],
-            [-1, 0 , 1, 0, 0],
+            [-1, 0, 1, 0, 0],
             [-1, 0, 0, 1, 0],
             [-1, 0, 0, 0, 1],
         ]
@@ -173,21 +172,19 @@ def rw_laplacian_EN() -> np.ndarray:
     return L_EN_alpha_0
 
 
-
 @pytest.fixture
 def rw_laplacian_WE() -> np.ndarray:
     """Returns the rw Laplacian, WE"""
     L_WE_alpha_0 = np.array(
         [
-            [1, -1/4, -1/4, -1/4, -1/4],
+            [1, -1 / 4, -1 / 4, -1 / 4, -1 / 4],
             [-1, 1, 0, 0, 0],
-            [-1, 0 , 1, 0, 0],
+            [-1, 0, 1, 0, 0],
             [-1, 0, 0, 1, 0],
             [-1, 0, 0, 0, 1],
         ]
     )
     return L_WE_alpha_0
-
 
 
 def test_compute_boundary(toy_graph, boundary) -> None:
@@ -223,7 +220,6 @@ def test_compute_hodge_laplacian(
     assert_array_equal(laplacian.hodge_laplacian_up, hodge_laplacian_up)
 
 
-
 def test_compute_node_degree(toy_graph, degree_v) -> None:
     """Test for compute_edge_degree
 
@@ -254,7 +250,6 @@ def test_compute_node_degree_bis(toy_graph, degree_v_inverse) -> None:
     assert_array_equal(np.linalg.inv(laplacian.Dv), degree_v_inverse)
 
 
-
 def test_compute_edge_degree(toy_graph, degree_e) -> None:
     """Test for compute_edge_degree
 
@@ -270,9 +265,6 @@ def test_compute_edge_degree(toy_graph, degree_e) -> None:
     assert_array_equal(laplacian.De, degree_e)
 
 
-
-
-
 def test_compute_normalized_laplacian(toy_graph, normalized_laplacian) -> None:
     """Test for compute_normalized_laplacian
 
@@ -286,7 +278,9 @@ def test_compute_normalized_laplacian(toy_graph, normalized_laplacian) -> None:
     laplacian: Laplacians = Laplacians(toy_graph)
     laplacian.compute_normalized_laplacian()
 
-    assert_allclose(laplacian.normalized_laplacian, normalized_laplacian, atol=1e-8), f"The normalized laplacian is {laplacian.normalized_laplacian} and the expected is {normalized_laplacian}. The inverse of D_v is {np.linalg.inv(laplacian.Dv)}"
+    assert_allclose(
+        laplacian.normalized_laplacian, normalized_laplacian, atol=1e-8
+    ), f"The normalized laplacian is {laplacian.normalized_laplacian} and the expected is {normalized_laplacian}. The inverse of D_v is {np.linalg.inv(laplacian.Dv)}"
 
 
 def test_compute_random_walk_laplacian_EE(toy_graph, rw_laplacian) -> None:
@@ -349,5 +343,3 @@ def test_compute_random_walk_laplacian_WE(toy_graph, rw_laplacian_WE) -> None:
     laplacian: Laplacians = Laplacians(toy_graph)
     laplacian.compute_random_walk_laplacian(type="WE")
     assert_allclose(laplacian.rw_laplacian, rw_laplacian_WE, atol=1e-8)
-
-

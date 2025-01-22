@@ -13,12 +13,12 @@ import warnings
 
 # import hypernetx as hnx
 import numpy as np
-# necessary for pickle.load
-import scipy.sparse as sp
-from tqdm import tqdm
 
 from encodings_hnns.encodings import HypergraphEncodings
 from encodings_hnns.laplacians import DisconnectedError
+
+# necessary for pickle.load
+
 
 warnings.simplefilter("ignore")
 
@@ -263,9 +263,16 @@ class encodings_saver(object):
 
         # Retrieve and accumulate results
         for result in results:
-            (rw_EE, rw_EN, rw_WE, lape_hodge, lape_normalized, orc, frc, ldp) = (
-                result.get()
-            )
+            (
+                rw_EE,
+                rw_EN,
+                rw_WE,
+                lape_hodge,
+                lape_normalized,
+                orc,
+                frc,
+                ldp,
+            ) = result.get()
 
             list_hgs_rw_EE.extend(rw_EE)
             list_hgs_rw_EN.extend(rw_EN)

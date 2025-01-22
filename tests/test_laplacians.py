@@ -138,7 +138,12 @@ def node_ldp_3() -> dict[int, list[float]]:
 def boundary() -> np.ndarray:
     """Returns the boundary matrix"""
     matrix_np: np.ndarray = np.array(
-        [[1, 1, 1, 0, 0, 0], [0, 1, 1, 0, 0, 0], [0, 0, 1, 0, 1, 1], [0, 0, 0, 1, 1, 0]]
+        [
+            [1, 1, 1, 0, 0, 0],
+            [0, 1, 1, 0, 0, 0],
+            [0, 0, 1, 0, 1, 1],
+            [0, 0, 0, 1, 1, 0],
+        ]
     )
 
     return matrix_np.T
@@ -283,7 +288,9 @@ def ngbors_not_inclusive_3() -> OrderedDict:
 @pytest.fixture
 def degree_e() -> np.ndarray:
     """Returns the degree (edge) matrix"""
-    d_e: np.ndarray = np.array([[3, 0, 0, 0], [0, 2, 0, 0], [0, 0, 3, 0], [0, 0, 0, 2]])
+    d_e: np.ndarray = np.array(
+        [[3, 0, 0, 0], [0, 2, 0, 0], [0, 0, 3, 0], [0, 0, 0, 2]]
+    )
     return d_e
 
 
@@ -505,16 +512,17 @@ def hypergraph_adjacency() -> np.ndarray:
     # green: [3, 5, 6]
     # blue: [4, 5]
     # records how many edges are two pairs of nodes in together
-    adj = np.array([
-        [0, 1, 1, 0, 0, 0],
-        [1, 0, 2, 0, 0, 0],
-        [1, 2, 0, 0, 1, 1],
-        [0, 0, 0, 0, 1, 0],
-        [0, 0, 1, 1, 0, 1],
-        [0, 0, 1, 0, 1, 0]
-    ])
+    adj = np.array(
+        [
+            [0, 1, 1, 0, 0, 0],
+            [1, 0, 2, 0, 0, 0],
+            [1, 2, 0, 0, 1, 1],
+            [0, 0, 0, 0, 1, 0],
+            [0, 0, 1, 1, 0, 1],
+            [0, 0, 1, 0, 1, 0],
+        ]
+    )
     return adj
-
 
 
 def test_compute_boundary(toy_hypergraph, boundary) -> None:
@@ -751,7 +759,9 @@ def test_compute_edge_degree_3(toy_hypergraph_3, degree_e_3) -> None:
     assert_array_equal(laplacian.De, degree_e_3)
 
 
-def test_compute_normalized_laplacian(toy_hypergraph, normalized_laplacian) -> None:
+def test_compute_normalized_laplacian(
+    toy_hypergraph, normalized_laplacian
+) -> None:
     """Test for compute_normalized_laplacian
 
     Args:
@@ -763,7 +773,9 @@ def test_compute_normalized_laplacian(toy_hypergraph, normalized_laplacian) -> N
     """
     laplacian: Laplacians = Laplacians(toy_hypergraph)
     laplacian.compute_normalized_laplacian()
-    assert_allclose(laplacian.normalized_laplacian, normalized_laplacian, atol=1e-8)
+    assert_allclose(
+        laplacian.normalized_laplacian, normalized_laplacian, atol=1e-8
+    )
 
 
 def test_compute_random_walk_laplacian_EE(toy_hypergraph, rw_laplacian) -> None:
@@ -826,7 +838,9 @@ def test_compute_node_neighbors_3(toy_hypergraph_3, ngbors_3) -> None:
     assert laplacian.node_neighbors == ngbors_3
 
 
-def test_compute_node_neighbors_not_inclusive(toy_hypergraph, ngbors_not_inclusive) -> None:
+def test_compute_node_neighbors_not_inclusive(
+    toy_hypergraph, ngbors_not_inclusive
+) -> None:
     """Test for compute_node_neighbors
 
     Args:
@@ -875,7 +889,9 @@ def test_compute_node_neighbors_not_inclusive_3(
     assert laplacian.node_neighbors == ngbors_not_inclusive_3
 
 
-def test_compute_random_walk_laplacian_EN(toy_hypergraph, rw_laplacian_EN) -> None:
+def test_compute_random_walk_laplacian_EN(
+    toy_hypergraph, rw_laplacian_EN
+) -> None:
     """Test for compute_random_walk_laplacian (EN)
 
     Args:
@@ -927,7 +943,9 @@ def test_compute_random_walk_laplacian_EN_3(
     assert_allclose(laplacian.rw_laplacian, rw_laplacian_EN_3, atol=1e-8)
 
 
-def test_compute_random_walk_laplacian_WE(toy_hypergraph, rw_laplacian_WE) -> None:
+def test_compute_random_walk_laplacian_WE(
+    toy_hypergraph, rw_laplacian_WE
+) -> None:
     """Test for compute_random_walk_laplacian (WE)
 
     Args:
@@ -979,7 +997,9 @@ def test_compute_random_walk_laplacian_WE_3(
     assert_allclose(laplacian.rw_laplacian, rw_laplacian_WE_3, atol=1e-8)
 
 
-def test_compute_hypergraph_adjacency(toy_hypergraph, hypergraph_adjacency) -> None:
+def test_compute_hypergraph_adjacency(
+    toy_hypergraph, hypergraph_adjacency
+) -> None:
     """Test for compute_hypergraph_adjacency
 
     Args:
@@ -992,4 +1012,7 @@ def test_compute_hypergraph_adjacency(toy_hypergraph, hypergraph_adjacency) -> N
     laplacian.compute_hypergraph_adjacency()
     assert_array_equal(laplacian.hypergraph_adjacency, hypergraph_adjacency)
     laplacian.compute_hodge_laplacian()
-    assert_array_equal(laplacian.hypergraph_adjacency, laplacian.hodge_laplacian_down - laplacian.Dv)
+    assert_array_equal(
+        laplacian.hypergraph_adjacency,
+        laplacian.hodge_laplacian_down - laplacian.Dv,
+    )

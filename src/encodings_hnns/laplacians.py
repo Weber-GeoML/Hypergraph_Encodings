@@ -10,8 +10,6 @@ from collections import OrderedDict
 import numpy as np
 from scipy.linalg import fractional_matrix_power
 
-from encodings_hnns.data_handling import parser
-
 
 class DisconnectedError(Exception):
     """Exception raised when a node is found to be disconnected."""
@@ -96,7 +94,9 @@ class Laplacians:
             self.compute_boundary()
         if self.Dv is None:
             self.compute_node_degrees()
-        self.hypergraph_adjacency = np.matmul(self.boundary_matrix, self.boundary_matrix.T) - self.Dv
+        self.hypergraph_adjacency = (
+            np.matmul(self.boundary_matrix, self.boundary_matrix.T) - self.Dv
+        )
 
     def compute_hodge_laplacian(self) -> None:
         """Computes the hodge-Laplacian of hypergraphs

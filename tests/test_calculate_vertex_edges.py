@@ -52,7 +52,9 @@ def test_basic_hypergraph(simple_args, simple_hypergraph):
     assert len(degE2) == 2  # Number of edges
 
     # Check specific values
-    assert torch.allclose(degV.squeeze(), torch.tensor([1.0, 2.0, 1.0]).pow(-0.5))
+    assert torch.allclose(
+        degV.squeeze(), torch.tensor([1.0, 2.0, 1.0]).pow(-0.5)
+    )
     assert torch.all(~torch.isinf(degV))  # No infinite values
     assert torch.all(~torch.isnan(degV))  # No NaN values
 
@@ -75,7 +77,9 @@ def test_degree_calculations(simple_args, simple_hypergraph):
 
     # Manual degree calculations for mean aggregation
     expected_degV = torch.tensor([[1.0], [2.0], [1.0]]).float().pow(-0.5)
-    expected_degE = torch.tensor([[0.8165], [0.8165]])  # Updated expected values
+    expected_degE = torch.tensor(
+        [[0.8165], [0.8165]]
+    )  # Updated expected values
 
     assert torch.allclose(degV, expected_degV)
     assert torch.allclose(degE, expected_degE, rtol=1e-3)
