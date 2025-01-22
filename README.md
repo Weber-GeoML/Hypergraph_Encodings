@@ -1,3 +1,5 @@
+[![Build Status](https://github.com/raphaelreiss/Hypergraph_Encodings/actions/workflows/python-package.yml/badge.svg?branch=master)](https://github.com/raphaelreiss/Hypergraph_Encodings/actions/workflows/python-package.yml)
+
 # Hypergraph_Encodings
 
 ## Organisation of repo
