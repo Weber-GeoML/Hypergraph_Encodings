@@ -63,7 +63,7 @@ def compare_encodings_wrapper(
     ]
 
     for encoding_type, description in encodings_to_check:
-        result = checks_encodings(
+        encoding_result = checks_encodings(
             name_of_encoding=encoding_type,
             hg1=hg1,
             hg2=hg2,
@@ -81,7 +81,9 @@ def compare_encodings_wrapper(
         )
         results["encodings"][encoding_type] = {
             "description": description,
-            "is_same": result,
+            "status": encoding_result["status"],
+            "scaling_factor": encoding_result.get("scaling_factor"),
+            "permutation": encoding_result.get("permutation")
         }
 
     return results
