@@ -143,7 +143,7 @@ def example_lifting():
     # Draw the hypergraph with correct parameters
     hnx.draw(H, 
             with_node_labels=True,
-            with_edge_labels=True)
+            with_edge_labels=False, pos=pos)
             # nodes_kwargs={'color': 'lightblue'},
             # edges_kwargs={'color': 'red', 'alpha': 0.2})
     
