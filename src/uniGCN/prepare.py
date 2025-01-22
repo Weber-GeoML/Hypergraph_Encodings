@@ -3,7 +3,6 @@
 import numpy as np
 import scipy.sparse as sp
 import torch
-import torch.nn.functional as F
 import torch.optim as optim
 import torch_sparse
 from torch_scatter import scatter
@@ -195,7 +194,11 @@ def fetch_data(
                 assert (
                     shape_before[1] != shape_after[1]
                 ), f"The shape are {shape_before} and {shape_after}"
-            X, Y, G = dataset["features"], dataset["labels"], dataset["hypergraph"]
+            X, Y, G = (
+                dataset["features"],
+                dataset["labels"],
+                dataset["hypergraph"],
+            )
 
             # normalize everything here (features and encodings, if added)
             # node features in sparse representation
@@ -258,7 +261,11 @@ def fetch_data(
                     shape_before[1] != shape_after[1]
                 ), f"The shape are {shape_before} and {shape_after}"
             # encodings are unormalized
-            X, Y, G = dataset["features"], dataset["labels"], dataset["hypergraph"]
+            X, Y, G = (
+                dataset["features"],
+                dataset["labels"],
+                dataset["hypergraph"],
+            )
             # node features in sparse representation
             X = sp.csr_matrix(X, dtype=np.float32)
             X = torch.FloatTensor(np.array(X.todense()))
@@ -307,7 +314,10 @@ def initialise(
     if unseen is not None:
         unseen = set(unseen)
         # remove unseen nodes
-        for e, vs in G.items():  # loops through edges and the vertices they contain
+        for (
+            e,
+            vs,
+        ) in G.items():  # loops through edges and the vertices they contain
             G[e] = list(set(vs) - unseen)
 
     if args.add_self_loop:

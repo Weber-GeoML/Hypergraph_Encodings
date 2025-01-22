@@ -10,9 +10,7 @@ import re
 import textwrap
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
-from tabulate import tabulate
 
 
 def parse_log_file(file_path):
@@ -309,7 +307,7 @@ def create_results_table(log_dir):
         print(f"LaTeX table saved as: results_table_{model_name}.tex")
         print(f"Summary plot saved as: results_table_{model_name}.png")
 
-    print(f"Full results saved as: full_results.json")
+    print("Full results saved as: full_results.json")
     return df, full_results
 
 

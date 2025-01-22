@@ -198,7 +198,12 @@ def Laplacian(V, E, X, m):
             for mediator in hyperedge:
                 if mediator != Se and mediator != Ie:
                     edges.extend(
-                        [[Se, mediator], [Ie, mediator], [mediator, Se], [mediator, Ie]]
+                        [
+                            [Se, mediator],
+                            [Ie, mediator],
+                            [mediator, Se],
+                            [mediator, Ie],
+                        ]
                     )
                     weights = update(Se, Ie, mediator, weights, c)
         else:

@@ -76,7 +76,10 @@ class UniSAGEConv(nn.Module):
 
     def __repr__(self):
         return "{}({}, {}, heads={})".format(
-            self.__class__.__name__, self.in_channels, self.out_channels, self.heads
+            self.__class__.__name__,
+            self.in_channels,
+            self.out_channels,
+            self.heads,
         )
 
     def forward(
@@ -122,7 +125,13 @@ class UniSAGEConv(nn.Module):
 class UniGINConv(nn.Module):
 
     def __init__(
-        self, args, in_channels, out_channels, heads=8, dropout=0.0, negative_slope=0.2
+        self,
+        args,
+        in_channels,
+        out_channels,
+        heads=8,
+        dropout=0.0,
+        negative_slope=0.2,
     ):
         super().__init__()
         self.W = nn.Linear(in_channels, heads * out_channels, bias=False)
@@ -137,7 +146,10 @@ class UniGINConv(nn.Module):
 
     def __repr__(self):
         return "{}({}, {}, heads={})".format(
-            self.__class__.__name__, self.in_channels, self.out_channels, self.heads
+            self.__class__.__name__,
+            self.in_channels,
+            self.out_channels,
+            self.heads,
         )
 
     def forward(
@@ -208,7 +220,9 @@ class UniGCNConv(nn.Module):
         # in_features: size of each input sample
         # out_features: size of each output sample
         self.W = nn.Linear(
-            in_features=in_channels, out_features=heads * out_channels, bias=False
+            in_features=in_channels,
+            out_features=heads * out_channels,
+            bias=False,
         )
         self.heads: int = heads
         self.in_channels: int = in_channels
@@ -219,7 +233,10 @@ class UniGCNConv(nn.Module):
 
     def __repr__(self):
         return "{}({}, {}, heads={})".format(
-            self.__class__.__name__, self.in_channels, self.out_channels, self.heads
+            self.__class__.__name__,
+            self.in_channels,
+            self.out_channels,
+            self.heads,
         )
 
     def forward(
@@ -363,7 +380,13 @@ class UniGCNConv(nn.Module):
 class UniGCNConv2(nn.Module):
 
     def __init__(
-        self, args, in_channels, out_channels, heads=8, dropout=0.0, negative_slope=0.2
+        self,
+        args,
+        in_channels,
+        out_channels,
+        heads=8,
+        dropout=0.0,
+        negative_slope=0.2,
     ):
         super().__init__()
         self.W = nn.Linear(in_channels, heads * out_channels, bias=True)
@@ -376,7 +399,10 @@ class UniGCNConv2(nn.Module):
 
     def __repr__(self):
         return "{}({}, {}, heads={})".format(
-            self.__class__.__name__, self.in_channels, self.out_channels, self.heads
+            self.__class__.__name__,
+            self.in_channels,
+            self.out_channels,
+            self.heads,
         )
 
     def forward(self, X, vertex, edges):
@@ -440,7 +466,10 @@ class UniGATConv(nn.Module):
 
     def __repr__(self):
         return "{}({}, {}, heads={})".format(
-            self.__class__.__name__, self.in_channels, self.out_channels, self.heads
+            self.__class__.__name__,
+            self.in_channels,
+            self.out_channels,
+            self.heads,
         )
 
     def reset_parameters(self) -> None:
@@ -542,7 +571,13 @@ class UniGNN(nn.Module):
         self.convs = nn.ModuleList(
             [Conv(args, nfeat, nhid, heads=nhead, dropout=args.attn_drop)]
             + [
-                Conv(args, nhid * nhead, nhid, heads=nhead, dropout=args.attn_drop)
+                Conv(
+                    args,
+                    nhid * nhead,
+                    nhid,
+                    heads=nhead,
+                    dropout=args.attn_drop,
+                )
                 for _ in range(nlayer - 2)
             ]
         )

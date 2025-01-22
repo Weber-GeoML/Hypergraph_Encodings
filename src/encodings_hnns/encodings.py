@@ -325,8 +325,8 @@ class HypergraphEncodings:
         rw_type: str = "EN",
         normalized: bool = True,
         dataset_name: str | None = None,
-        k: int = 20, # to vary!
-        use_same_sign : bool = False,
+        k: int = 20,  # to vary!
+        use_same_sign: bool = False,
     ) -> dict:
         """Adds encodings based on Laplacians
 
@@ -541,7 +541,7 @@ class HypergraphEncodings:
             the hypergraph with the RW encodings added to the featuress
 
         # TODO TODO TODO
-        # Write checks for this! 
+        # Write checks for this!
 
         """
         filename: str = (
@@ -667,7 +667,14 @@ if __name__ == "__main__":
             "green": [3, 5, 6],
             "blue": [4, 5],
         },
-        "features": {1: [[1]], 2: [[1]], 3: [[1]], 4: [[1]], 5: [[1]], 6: [[1]]},
+        "features": {
+            1: [[1]],
+            2: [[1]],
+            3: [[1]],
+            4: [[1]],
+            5: [[1]],
+            6: [[1]],
+        },
         "labels": {},
         "n": 6,
     }
