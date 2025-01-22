@@ -16,6 +16,7 @@ import numpy as np
 from itertools import permutations
 from encodings_hnns.check_encodings_same import find_encoding_match
 import hypernetx as hnx
+from torch_geometric.data import Data
 
 def create_output_dirs():
     """Create output directories for plots and results"""
@@ -501,20 +502,21 @@ def compare_encodings(hg1, hg2, pair_idx, category, is_isomorphic, level="graph"
         for encoding_type, description, should_be_same in encodings_to_check:
             f.write(f"\n=== {description} ===\n")
             result = checks_encodings(
-                encoding_type, 
-                should_be_same, 
-                hg1, 
-                hg2, 
-                encoder1, 
-                encoder2, 
-                "Graph A", 
-                "Graph B",
+                name_of_encoding=encoding_type, 
+                same=should_be_same, 
+                hg1=hg1, 
+                hg2=hg2, 
+                encoder_shrikhande=encoder1, 
+                encoder_rooke=encoder2, 
+                name1="Graph A", 
+                name2="Graph B",
                 save_plots=True,
                 plot_dir=f'plots/encodings/{level}/{pair_idx}',
                 pair_idx=pair_idx,
                 category=category,
                 is_isomorphic=is_isomorphic,
-                node_mapping=node_mapping
+                node_mapping=node_mapping,
+                graph_type=level,
             )
             f.write(f"Result: {'Same' if result else 'Different'}\n")
 
@@ -522,7 +524,37 @@ def compare_encodings(hg1, hg2, pair_idx, category, is_isomorphic, level="graph"
 def main():
     create_output_dirs()
     dataset = BRECDataset()
+
+    # First analyze Rook and Shrikhande graphs
+    print("\nAnalyzing Rook and Shrikhande graphs...")
     
+    # Load the graphs
+    rook = nx.read_graph6("rook_graph.g6")
+    shrikhande = nx.read_graph6("shrikhande.g6")
+    
+    # Convert to PyG Data objects
+    def nx_to_pyg(G):
+        edge_index = torch.tensor([[e[0] for e in G.edges()], 
+                                 [e[1] for e in G.edges()]], dtype=torch.long)
+        x = torch.ones((G.number_of_nodes(), 1), dtype=torch.float)
+        y = torch.zeros(G.number_of_nodes(), dtype=torch.long)
+        return Data(x=x, y=y, edge_index=edge_index, num_nodes=G.number_of_nodes())
+    
+    rook_data = nx_to_pyg(rook)
+    shrikhande_data = nx_to_pyg(shrikhande)
+    
+    # Analyze as a special pair
+    print("Analyzing Rook vs Shrikhande")
+    analyze_graph_pair(
+        rook_data, 
+        shrikhande_data, 
+        pair_idx="rook_vs_shrikhande", 
+        category="Special", 
+        is_isomorphic=False
+    )
+
+    
+    # Then continue with BREC dataset analysis
     part_dict = {
         "Basic": (0, 60),
         "Regular": (60, 160),
