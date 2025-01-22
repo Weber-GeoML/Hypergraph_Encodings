@@ -13,6 +13,7 @@ import warnings
 
 # import hypernetx as hnx
 import numpy as np
+
 # necessary for pickle.load
 import scipy.sparse as sp
 from tqdm import tqdm

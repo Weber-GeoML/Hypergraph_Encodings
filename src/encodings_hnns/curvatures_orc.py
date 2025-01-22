@@ -190,13 +190,8 @@ class ORC:
 
         # Execute the command using subprocess with redirected output
         try:
-            with open(os.devnull, 'w') as devnull:
-                subprocess.run(
-                    command, 
-                    check=True,
-                    stdout=devnull,
-                    stderr=devnull
-                )
+            with open(os.devnull, "w") as devnull:
+                subprocess.run(command, check=True, stdout=devnull, stderr=devnull)
         except subprocess.CalledProcessError as e:
             print(f"Error executing Julia command: {e}")
             return

@@ -96,7 +96,9 @@ class Laplacians:
             self.compute_boundary()
         if self.Dv is None:
             self.compute_node_degrees()
-        self.hypergraph_adjacency = np.matmul(self.boundary_matrix, self.boundary_matrix.T) - self.Dv
+        self.hypergraph_adjacency = (
+            np.matmul(self.boundary_matrix, self.boundary_matrix.T) - self.Dv
+        )
 
     def compute_hodge_laplacian(self) -> None:
         """Computes the hodge-Laplacian of hypergraphs
