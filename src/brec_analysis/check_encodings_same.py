@@ -1,17 +1,13 @@
 """Functions for checking if two encodings are the same"""
 
-from itertools import permutations
 
 import matplotlib.pyplot as plt
-import networkx as nx
-import networkx.algorithms.isomorphism as iso
 import numpy as np
 from torch_geometric.data import Data
 
 from brec_analysis.laplacians_specific_functions import (
     check_isospectrality,
     compute_laplacian,
-    reconstruct_matrix,
 )
 from brec_analysis.match_encodings import (
     check_encodings_same_up_to_scaling,
@@ -350,9 +346,9 @@ def checks_encodings(
 
             # Handle encodings
             hg1_encodings = get_encodings(
-                hg1, encoder_shrikhande, name_of_encoding, k=k
+                hg1, encoder_shrikhande, name_of_encoding, k_rwpe=k, k_lape=k
             )
-            hg2_encodings = get_encodings(hg2, encoder_rooke, name_of_encoding, k=k)
+            hg2_encodings = get_encodings(hg2, encoder_rooke, name_of_encoding, k_rwpe=k, k_lape=k)
 
             keep_first_column = True
 
@@ -408,8 +404,8 @@ def checks_encodings(
 
     else:
         # Handle other encodings
-        hg1_encodings = get_encodings(hg1, encoder_shrikhande, name_of_encoding, k=k)
-        hg2_encodings = get_encodings(hg2, encoder_rooke, name_of_encoding, k=k)
+        hg1_encodings = get_encodings(hg1, encoder_shrikhande, name_of_encoding, k_rwpe=k, k_lape=k)
+        hg2_encodings = get_encodings(hg2, encoder_rooke, name_of_encoding, k_rwpe=k, k_lape=k)
 
         if verbose:
             # print the feature name and the encoding name

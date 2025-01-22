@@ -48,7 +48,8 @@ def find_encoding_match(
     # First check if the encodings are identical
     if np.allclose(encoding1, encoding2, rtol=1e-13):
         # Return identity permutation if encodings are identical
-        print("Free lunch!")
+        if verbose:
+            print("Free lunch!")
         n_rows = encoding1.shape[0]
         return True, encoding1, tuple(range(n_rows))
 

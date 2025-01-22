@@ -3,23 +3,12 @@ This script is used to analyse the BREC dataset.
 It is used to compare the encodings of the graphs in the BREC dataset.
 """
 
-import os
-
-import hypernetx as hnx
-import matplotlib.pyplot as plt
 import networkx as nx
-import numpy as np
-import torch
 from brec.dataset import BRECDataset
 from torch_geometric.data import Data
 from torch_geometric.utils import to_networkx
 from encodings_hnns.liftings_and_expansions import lift_to_hypergraph
-from encodings_hnns.encodings import HypergraphEncodings
-from brec_analysis.check_encodings_same import (
-    checks_encodings,
-    find_isomorphism_mapping,
-)
-from brec_analysis.utils_for_brec import create_output_dirs, create_comparison_table, convert_nx_to_hypergraph_dict, nx_to_pyg
+from brec_analysis.utils_for_brec import create_output_dirs, convert_nx_to_hypergraph_dict, nx_to_pyg
 from brec_analysis.plotting_graphs_and_hgraphs_for_brec import plot_graph_pair, plot_hypergraph_pair
 from brec_analysis.compare_encodings_wrapper import compare_encodings_wrapper
 
