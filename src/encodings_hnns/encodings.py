@@ -391,7 +391,7 @@ class HypergraphEncodings:
                         f"The Hodge Laplacian (down) is \n {self.laplacian.hodge_laplacian_down}"
                     )
                 # Compute the eigenvalues and eigenvectors
-                eigenvalues, eigenvectors = np.linalg.eig(
+                eigenvalues, eigenvectors = np.linalg.eigh(
                     self.laplacian.hodge_laplacian_down
                 )
             elif type == "Normalized":
@@ -400,7 +400,7 @@ class HypergraphEncodings:
                     print(
                         f"The normalized Laplacian is {self.laplacian.normalized_laplacian}"
                     )
-                eigenvalues, eigenvectors = np.linalg.eig(
+                eigenvalues, eigenvectors = np.linalg.eigh(
                     self.laplacian.normalized_laplacian
                 )
             elif type == "RW":
@@ -514,7 +514,7 @@ class HypergraphEncodings:
         self,
         hypergraph: dict,
         verbose: bool = False,
-        rw_type: str = "WE",
+        rw_type: str = "EE",
         k: int = 20,
         normalized: bool = True,
         dataset_name: str | None = None,
@@ -539,6 +539,9 @@ class HypergraphEncodings:
 
         Returns:
             the hypergraph with the RW encodings added to the featuress
+
+        # TODO TODO TODO
+        # Write checks for this! 
 
         """
         filename: str = (
