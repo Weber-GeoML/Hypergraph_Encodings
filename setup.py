@@ -21,7 +21,7 @@ setup(
         "path",
         "brec",
     ],
-    extra_requires={
+    extras_require={
         "dev": [
             "mypy",
             "pandas-stubs",
@@ -29,10 +29,20 @@ setup(
             "pydocstyle",
             "black",
             "isort",
-            "black",
-            "isort",
             "docformatter",
+            "ruff",
+            "pylint"
         ],
-        "test": ["pytest", "coverage", "pytest-cov", "pytest-random-order"],
+        "test": [
+            "pytest",
+            "coverage",
+            "pytest-cov",
+            "pytest-random-order",
+            "torch",
+            "torch-geometric",
+            "torch-scatter",
+            "torch-sparse",
+            "numpy"
+        ],
     },
 )
