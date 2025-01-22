@@ -3,13 +3,11 @@ import os
 import pickle
 import warnings
 
-import matplotlib.pyplot as plt
 
 # import hypernetx as hnx
 import numpy as np
 
 # necessary for pickle.load
-import scipy.sparse as sp
 
 warnings.simplefilter("ignore")
 

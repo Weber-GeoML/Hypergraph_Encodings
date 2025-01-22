@@ -15,8 +15,6 @@ import warnings
 import numpy as np
 
 # necessary for pickle.load
-import scipy.sparse as sp
-from tqdm import tqdm
 
 from encodings_hnns.encodings import HypergraphEncodings
 from encodings_hnns.laplacians import DisconnectedError

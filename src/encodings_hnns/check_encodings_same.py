@@ -599,7 +599,7 @@ def find_isomorphism_mapping(G1, G2):
         def semantic_feasibility(self, G1_node, G2_node):
             """Print detailed information about node matching attempts"""
             feasible = super().semantic_feasibility(G1_node, G2_node)
-            print(f"\nTrying to match:")
+            print("\nTrying to match:")
             print(f"G1 node {G1_node} (degree {G1.degree[G1_node]}) with")
             print(f"G2 node {G2_node} (degree {G2.degree[G2_node]})")
             print(f"Current mapping: {self.mapping}")
@@ -695,7 +695,7 @@ def print_comparison_results(
             f"Mean difference: {np.mean(np.abs(permuted - hg2_encodings['features']))}"
         )
         if not is_laplacian:  # Only print extra newline for non-Laplacian encodings
-            print(f"\n")
+            print("\n")
     else:
         print(f"\n❌ No matching permutation found for {name_of_encoding}")
         print("Differences in original ordering:")
@@ -709,7 +709,7 @@ def print_comparison_results(
             f"Mean abs values: {np.mean(np.abs(hg1_encodings['features']))} vs {np.mean(np.abs(hg2_encodings['features']))}"
         )
         if not is_laplacian:  # Only print extra newline for non-Laplacian encodings
-            print(f"\n")
+            print("\n")
 
 
 def save_comparison_plot(plt, plot_dir, pair_idx, category, name_of_encoding):

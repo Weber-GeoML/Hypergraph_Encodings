@@ -10,7 +10,6 @@ from collections import OrderedDict
 import numpy as np
 from scipy.linalg import fractional_matrix_power
 
-from encodings_hnns.data_handling import parser
 
 
 class DisconnectedError(Exception):

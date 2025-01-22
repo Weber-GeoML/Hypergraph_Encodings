@@ -3,7 +3,6 @@
 import numpy as np
 import scipy.sparse as sp
 import torch
-import torch.nn.functional as F
 import torch.optim as optim
 import torch_sparse
 from torch_scatter import scatter
