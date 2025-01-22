@@ -13,20 +13,26 @@ import torch
 from brec.dataset import BRECDataset
 from torch_geometric.data import Data
 from torch_geometric.utils import to_networkx
-from encodings_hnns.liftings_and_expansions import lift_to_hypergraph
-from encodings_hnns.encodings import HypergraphEncodings
+
 from brec_analysis.check_encodings_same import (
     checks_encodings,
     find_isomorphism_mapping,
 )
-from brec_analysis.utils_for_brec import create_output_dirs, create_comparison_table, convert_nx_to_hypergraph_dict
 from brec_analysis.plotting_for_brec import plot_graph_pair, plot_hypergraph_pair
+from brec_analysis.utils_for_brec import (
+    convert_nx_to_hypergraph_dict,
+    create_comparison_table,
+    create_output_dirs,
+)
+from encodings_hnns.encodings import HypergraphEncodings
+from encodings_hnns.liftings_and_expansions import lift_to_hypergraph
+
 
 def analyze_graph_pair(
-    data1: Data, data2: Data, pair_idx: int|str, category: str, is_isomorphic: bool
+    data1: Data, data2: Data, pair_idx: int | str, category: str, is_isomorphic: bool
 ) -> None:
     """Analyze a pair of graphs: plot them and compare their encodings
-    
+
     Args:
         data1 (Data):
             The first graph.
@@ -62,9 +68,7 @@ def analyze_graph_pair(
 
     # Plot original graphs
     # in graph space
-    plot_graph_pair(
-        G1, G2, pair_idx, category, is_isomorphic, "plots/graph_pairs"
-    )
+    plot_graph_pair(G1, G2, pair_idx, category, is_isomorphic, "plots/graph_pairs")
 
     # Convert to hypergraph dictionaries
     # THESE ARE STILL GRAPHS!!!
@@ -182,13 +186,12 @@ def main() -> None:
 
     # Convert to PyG Data objects
     def nx_to_pyg(G):
-        edge_index = torch.tensor([[e[0] for e in G.edges()], 
-                                 [e[1] for e in G.edges()]], dtype=torch.long)
+        edge_index = torch.tensor(
+            [[e[0] for e in G.edges()], [e[1] for e in G.edges()]], dtype=torch.long
+        )
         x = torch.empty((G.number_of_nodes(), 0), dtype=torch.float)  # Empty features
         y = torch.zeros(G.number_of_nodes(), dtype=torch.long)
-        return Data(
-            x=x, y=y, edge_index=edge_index, num_nodes=G.number_of_nodes()
-        )
+        return Data(x=x, y=y, edge_index=edge_index, num_nodes=G.number_of_nodes())
 
     rook_data = nx_to_pyg(rook)
     shrikhande_data = nx_to_pyg(shrikhande)
@@ -225,9 +228,7 @@ def main() -> None:
             is_isomorphic = False
 
             # Analyze the pair
-            analyze_graph_pair(
-                graph1, graph2, pair_idx, category, is_isomorphic
-            )
+            analyze_graph_pair(graph1, graph2, pair_idx, category, is_isomorphic)
 
 
 if __name__ == "__main__":

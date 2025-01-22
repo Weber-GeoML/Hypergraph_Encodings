@@ -28,6 +28,7 @@ def create_output_dirs() -> None:
     for dir_name in dirs:
         os.makedirs(dir_name, exist_ok=True)
 
+
 def convert_nx_to_hypergraph_dict(G: nx.Graph) -> dict:
     """Convert NetworkX graph to hypergraph dictionary format"""
     hyperedges = {f"e_{i}": list(edge) for i, edge in enumerate(G.edges())}
@@ -40,9 +41,8 @@ def convert_nx_to_hypergraph_dict(G: nx.Graph) -> dict:
         "n": n,
     }
 
-def create_comparison_table(
-    stats1: dict, stats2: dict
-) -> tuple[list[str], list[str]]:
+
+def create_comparison_table(stats1: dict, stats2: dict) -> tuple[list[str], list[str]]:
     """Create comparison table with differences highlighted in red.
 
     Args:

@@ -3,7 +3,6 @@ import os
 import pickle
 import warnings
 
-
 # import hypernetx as hnx
 import numpy as np
 

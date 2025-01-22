@@ -37,9 +37,7 @@ class FormanRicci:
         F(e) = 2|e| - D
         where |e| is the number of nodes in the hyperedge and D is the sum of the degrees.
         """
-        assert (
-            self.forman_ricci == {}
-        ), "Forman-Ricci curvature already computed."
+        assert self.forman_ricci == {}, "Forman-Ricci curvature already computed."
 
         if self.node_degrees == {}:
             self.compute_node_degrees()
@@ -54,12 +52,8 @@ class FormanRicci:
         # Lukas: why not take advantage of the name of the hyper-edges?
         for name, hyperedge in self.hypergraph["hypergraph"].items():
             hyperedge_degree = len(hyperedge)
-            hyperedge_sum_degrees = sum(
-                [self.node_degrees[node] for node in hyperedge]
-            )
-            self.forman_ricci[name] = (
-                2 * hyperedge_degree - hyperedge_sum_degrees
-            )
+            hyperedge_sum_degrees = sum([self.node_degrees[node] for node in hyperedge])
+            self.forman_ricci[name] = 2 * hyperedge_degree - hyperedge_sum_degrees
 
     def compute_node_degrees(self) -> None:
         """

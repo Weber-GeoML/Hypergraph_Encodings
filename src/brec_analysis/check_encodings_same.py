@@ -1,15 +1,14 @@
 import os
 from itertools import permutations
-from torch_geometric.data import Data
 
 import matplotlib.pyplot as plt
+import networkx as nx
+import networkx.algorithms.isomorphism as iso
 import numpy as np
+from torch_geometric.data import Data
 
 from encodings_hnns.encodings import HypergraphEncodings
 from encodings_hnns.laplacians import Laplacians
-
-import networkx as nx
-import networkx.algorithms.isomorphism as iso
 
 
 def find_encoding_match(encoding1, encoding2, verbose: bool = True):
@@ -37,32 +36,20 @@ def find_encoding_match(encoding1, encoding2, verbose: bool = True):
         return True, encoding1, tuple(range(n_rows))
 
     # Check the max absolute value of each encodings. If they are different, return False
-    if not np.isclose(
-        np.max(np.abs(encoding1)), np.max(np.abs(encoding2)), rtol=1e-3
-    ):
+    if not np.isclose(np.max(np.abs(encoding1)), np.max(np.abs(encoding2)), rtol=1e-3):
         if verbose:
             print("Different because:")
-            print(
-                f"Max absolute value of encoding1: {np.max(np.abs(encoding1))}"
-            )
-            print(
-                f"Max absolute value of encoding2: {np.max(np.abs(encoding2))}"
-            )
+            print(f"Max absolute value of encoding1: {np.max(np.abs(encoding1))}")
+            print(f"Max absolute value of encoding2: {np.max(np.abs(encoding2))}")
             print("\n")
         return False, None, None
 
     # Same for min
-    if not np.isclose(
-        np.min(np.abs(encoding1)), np.min(np.abs(encoding2)), rtol=1e-3
-    ):
+    if not np.isclose(np.min(np.abs(encoding1)), np.min(np.abs(encoding2)), rtol=1e-3):
         if verbose:
             print("Different because:")
-            print(
-                f"Min absolute value of encoding1: {np.min(np.abs(encoding1))}"
-            )
-            print(
-                f"Min absolute value of encoding2: {np.min(np.abs(encoding2))}"
-            )
+            print(f"Min absolute value of encoding1: {np.min(np.abs(encoding1))}")
+            print(f"Min absolute value of encoding2: {np.min(np.abs(encoding2))}")
             print("\n")
         return False, None, None
 
@@ -157,12 +144,8 @@ def plot_matched_encodings(
             scaling_factor,
             perm_up_to_scaling,
             permuted_up_to_scaling,
-        ) = check_encodings_same_up_to_scaling(
-            encoding1, encoding2, verbose=False
-        )
-        if is_same_up_to_scaling and not np.isclose(
-            scaling_factor, 1.0, rtol=1e-10
-        ):
+        ) = check_encodings_same_up_to_scaling(encoding1, encoding2, verbose=False)
+        if is_same_up_to_scaling and not np.isclose(scaling_factor, 1.0, rtol=1e-10):
             # Only print if there's actually a non-trivial scaling
             print("⛔️ The encodings are the same up to scaling")
             print(f"The scaling factor is {scaling_factor}")
@@ -298,9 +281,7 @@ def checks_encodings(
 
     if name_of_encoding.startswith("LAPE-"):
         # Handle Laplacian encodings
-        lap_type = name_of_encoding.split("-")[
-            1
-        ]  # Get Normalized, RW, or Hodge
+        lap_type = name_of_encoding.split("-")[1]  # Get Normalized, RW, or Hodge
         print(f"Computing Laplacian for {lap_type}")
         # Get Laplacian matrices and features
         hg1_lape, L1 = compute_laplacian(hg1, lap_type)
@@ -348,9 +329,7 @@ def checks_encodings(
                 properties["Graph B"][prop],
                 rtol=1e-10,
             ):
-                print(
-                    f"The two graphs have different {prop} for {name_of_encoding}"
-                )
+                print(f"The two graphs have different {prop} for {name_of_encoding}")
                 same_properties = False
 
         # Compare norms
@@ -457,16 +436,12 @@ def checks_encodings(
             hg1_encodings = get_encodings(
                 hg1, encoder_shrikhande, name_of_encoding, k=k
             )
-            hg2_encodings = get_encodings(
-                hg2, encoder_rooke, name_of_encoding, k=k
-            )
+            hg2_encodings = get_encodings(hg2, encoder_rooke, name_of_encoding, k=k)
 
             keep_first_column = True
 
             if keep_first_column:
-                print(
-                    f"Truncating encodings to first 2 columns at {graph_type}"
-                )
+                print(f"Truncating encodings to first 2 columns at {graph_type}")
 
                 # Keep the first 2 columns od each encoding
                 hg1_encodings["features"] = hg1_encodings["features"][:, :1]
@@ -489,12 +464,10 @@ def checks_encodings(
             )
 
             # Check for scaled match
-            is_scaled_match, scaling_factor, _, _ = (
-                check_encodings_same_up_to_scaling(
-                    hg1_encodings["features"],
-                    hg2_encodings["features"],
-                    verbose=False,
-                )
+            is_scaled_match, scaling_factor, _, _ = check_encodings_same_up_to_scaling(
+                hg1_encodings["features"],
+                hg2_encodings["features"],
+                verbose=False,
             )
 
             # Print results
@@ -513,9 +486,7 @@ def checks_encodings(
 
     else:
         # Handle other encodings
-        hg1_encodings = get_encodings(
-            hg1, encoder_shrikhande, name_of_encoding, k=k
-        )
+        hg1_encodings = get_encodings(hg1, encoder_shrikhande, name_of_encoding, k=k)
         hg2_encodings = get_encodings(hg2, encoder_rooke, name_of_encoding, k=k)
 
         if verbose:
@@ -538,12 +509,10 @@ def checks_encodings(
         )
 
         # Check for scaled match
-        is_scaled_match, scaling_factor, _, _ = (
-            check_encodings_same_up_to_scaling(
-                hg1_encodings["features"],
-                hg2_encodings["features"],
-                verbose=False,
-            )
+        is_scaled_match, scaling_factor, _, _ = check_encodings_same_up_to_scaling(
+            hg1_encodings["features"],
+            hg2_encodings["features"],
+            verbose=False,
         )
 
         # Print results
@@ -656,12 +625,8 @@ def find_isomorphism_mapping(G1, G2):
             print(f"Feasible: {feasible}")
             if not feasible:
                 print("Neighbors comparison:")
-                print(
-                    f"G1 node {G1_node} neighbors: {list(G1.neighbors(G1_node))}"
-                )
-                print(
-                    f"G2 node {G2_node} neighbors: {list(G2.neighbors(G2_node))}"
-                )
+                print(f"G1 node {G1_node} neighbors: {list(G1.neighbors(G1_node))}")
+                print(f"G2 node {G2_node} neighbors: {list(G2.neighbors(G2_node))}")
             return feasible
 
     try:
@@ -716,13 +681,9 @@ def get_encodings(
             hg.copy(), rw_type="WE", verbose=False, k=k
         )
     elif name_of_encoding == "LCP-ORC":
-        return encoder.add_curvature_encodings(
-            hg.copy(), verbose=False, type="ORC"
-        )
+        return encoder.add_curvature_encodings(hg.copy(), verbose=False, type="ORC")
     elif name_of_encoding == "LCP-FRC":
-        return encoder.add_curvature_encodings(
-            hg.copy(), verbose=False, type="FRC"
-        )
+        return encoder.add_curvature_encodings(hg.copy(), verbose=False, type="FRC")
     elif name_of_encoding == "LAPE-Normalized":
         return encoder.add_laplacian_encodings(
             hg.copy(), type="Normalized", verbose=False, use_same_sign=True
@@ -730,9 +691,7 @@ def get_encodings(
     elif name_of_encoding == "LAPE-RW":
         # Add k to the name for random walk Laplacian
         name_of_encoding = f"LAPE-RW-k{k}"
-        return encoder.add_laplacian_encodings(
-            hg.copy(), type="RW", verbose=False, k=k
-        )
+        return encoder.add_laplacian_encodings(hg.copy(), type="RW", verbose=False, k=k)
     elif name_of_encoding == "LAPE-Hodge":
         return encoder.add_laplacian_encodings(
             hg.copy(), type="Hodge", verbose=False, use_same_sign=True
@@ -757,15 +716,11 @@ def print_comparison_results(
         print(f"\n✅ Found matching permutation for {name_of_encoding}!")
         print(f"Permutation: {perm}")
         print("Statistics after permutation:")
-        print(
-            f"Max difference: {np.max(np.abs(permuted - hg2_encodings['features']))}"
-        )
+        print(f"Max difference: {np.max(np.abs(permuted - hg2_encodings['features']))}")
         print(
             f"Mean difference: {np.mean(np.abs(permuted - hg2_encodings['features']))}"
         )
-        if (
-            not is_laplacian
-        ):  # Only print extra newline for non-Laplacian encodings
+        if not is_laplacian:  # Only print extra newline for non-Laplacian encodings
             print("\n")
     else:
         print(f"\n❌ No matching permutation found for {name_of_encoding}")
@@ -779,9 +734,7 @@ def print_comparison_results(
         print(
             f"Mean abs values: {np.mean(np.abs(hg1_encodings['features']))} vs {np.mean(np.abs(hg2_encodings['features']))}"
         )
-        if (
-            not is_laplacian
-        ):  # Only print extra newline for non-Laplacian encodings
+        if not is_laplacian:  # Only print extra newline for non-Laplacian encodings
             print("\n")
 
 
@@ -808,9 +761,7 @@ def save_comparison_plot(
     """
     os.makedirs(plot_dir, exist_ok=True)
     filename_base = (
-        f"pair_{pair_idx}_{category.lower()}"
-        if pair_idx is not None
-        else "comparison"
+        f"pair_{pair_idx}_{category.lower()}" if pair_idx is not None else "comparison"
     )
     plt.savefig(
         f"{plot_dir}/{filename_base}_{name_of_encoding.lower()}_comparison.png",
@@ -847,9 +798,7 @@ def compute_laplacian(hg, lap_type: str):
     return hg_lape, L
 
 
-def check_encodings_same_up_to_scaling(
-    encoding1, encoding2, verbose: bool = True
-):
+def check_encodings_same_up_to_scaling(encoding1, encoding2, verbose: bool = True):
     """
     Check if two encodings are equivalent under row permutations and scaling.
 
@@ -1040,9 +989,7 @@ def print_comparison_summary(results):
         # Group k-dependent encodings together
         grouped_results = {}
         for encoding, result in results[level].items():
-            base_encoding = (
-                encoding.split("-k")[0] if "-k" in encoding else encoding
-            )
+            base_encoding = encoding.split("-k")[0] if "-k" in encoding else encoding
             if base_encoding not in grouped_results:
                 grouped_results[base_encoding] = []
             grouped_results[base_encoding].append((encoding, result))
@@ -1073,9 +1020,7 @@ def print_comparison_summary(results):
                     encoding_results, key=lambda x: int(x[0].split("k")[-1])
                 ):
                     status = result.get("features", {}).get("status", "N/A")
-                    scaling = result.get("features", {}).get(
-                        "scaling_factor", None
-                    )
+                    scaling = result.get("features", {}).get("scaling_factor", None)
 
                     status_str = status
                     if status == "SCALED_MATCH" and scaling is not None:

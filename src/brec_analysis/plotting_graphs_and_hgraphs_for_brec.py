@@ -13,9 +13,7 @@ from brec_analysis.check_encodings_same import (
     checks_encodings,
     find_isomorphism_mapping,
 )
-from brec_analysis.utils_for_brec import create_output_dirs, create_comparison_table
-
-
+from brec_analysis.utils_for_brec import create_comparison_table, create_output_dirs
 
 
 def plot_hypergraph_pair(
@@ -118,8 +116,7 @@ def plot_hypergraph_pair(
         pos1,
         with_labels=True,
         node_color=[
-            "lightblue" if node in top1 else "lightgreen"
-            for node in BH1.nodes()
+            "lightblue" if node in top1 else "lightgreen" for node in BH1.nodes()
         ],
         node_size=500,
         font_size=12,
@@ -137,8 +134,7 @@ def plot_hypergraph_pair(
         pos2,
         with_labels=True,
         node_color=[
-            "lightblue" if node in top2 else "lightgreen"
-            for node in BH2.nodes()
+            "lightblue" if node in top2 else "lightgreen" for node in BH2.nodes()
         ],
         node_size=500,
         font_size=12,
@@ -264,9 +260,7 @@ def plot_graph_pair(
     # Plot first graph
     ax1 = plt.subplot(3, 2, 1)
     pos1 = nx.spring_layout(graph1)
-    plt.title(
-        f"Graph A\n{len(graph1.nodes())} nodes, {len(graph1.edges())} edges"
-    )
+    plt.title(f"Graph A\n{len(graph1.nodes())} nodes, {len(graph1.edges())} edges")
     nx.draw(
         graph1,
         pos1,
@@ -280,9 +274,7 @@ def plot_graph_pair(
     # Plot second graph
     ax2 = plt.subplot(3, 2, 2)
     pos2 = nx.spring_layout(graph2)
-    plt.title(
-        f"Graph B\n{len(graph2.nodes())} nodes, {len(graph2.edges())} edges"
-    )
+    plt.title(f"Graph B\n{len(graph2.nodes())} nodes, {len(graph2.edges())} edges")
     nx.draw(
         graph2,
         pos2,
@@ -399,9 +391,7 @@ def plot_graph_pair(
             "Number of components": nx.number_connected_components(G),
             "Is planar": nx.is_planar(G),
             # Centrality measures (averaged over nodes)
-            "Avg betweenness": np.mean(
-                list(nx.betweenness_centrality(G).values())
-            ),
+            "Avg betweenness": np.mean(list(nx.betweenness_centrality(G).values())),
             "Avg closeness": np.mean(list(nx.closeness_centrality(G).values())),
             "Avg eigenvector": np.mean(
                 list(nx.eigenvector_centrality_numpy(G).values())

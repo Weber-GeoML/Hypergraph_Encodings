@@ -124,14 +124,7 @@ class HyperGraphConvolution(Module):
         return AHW + b
 
     def __repr__(self):
-        return (
-            self.__class__.__name__
-            + " ("
-            + str(self.a)
-            + " -> "
-            + str(self.b)
-            + ")"
-        )
+        return self.__class__.__name__ + " (" + str(self.a) + " -> " + str(self.b) + ")"
 
 
 class SparseMM(torch.autograd.Function):

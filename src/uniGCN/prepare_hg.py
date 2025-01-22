@@ -56,9 +56,7 @@ def initialise_for_hypergraph_classification(
     for idx, hg in enumerate(list_hg):
         if not all(key in hg for key in required_keys):
             missing = required_keys - set(hg.keys())
-            raise ValueError(
-                f"Hypergraph {idx} missing required keys: {missing}"
-            )
+            raise ValueError(f"Hypergraph {idx} missing required keys: {missing}")
 
         if not isinstance(hg["labels"], (int, np.ndarray)):
             raise ValueError(
@@ -88,9 +86,7 @@ def initialise_for_hypergraph_classification(
         # loop through G items, which are keys: edges, values edge as a list that contains the vertices
         for e, vs in G.items():
             indices += vs
-            data += [1] * len(
-                vs
-            )  # extend data by adding as many '1's as there are vs
+            data += [1] * len(vs)  # extend data by adding as many '1's as there are vs
             indptr.append(
                 len(indices)
             )  # keep track of the number of vertices in each edge

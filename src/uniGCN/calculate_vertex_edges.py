@@ -64,13 +64,9 @@ def calculate_V_E(X: torch.Tensor, G: dict, args) -> tuple:
     for e, vs in G.items():
         indices += vs  # the corresponding row indice, as nodes are rows
         # this keep tracks of the non-zero elements in the final matrix H
-        data += [1] * len(
-            vs
-        )  # extend data by adding as many '1's as there are vs
+        data += [1] * len(vs)  # extend data by adding as many '1's as there are vs
         # the matrix H only contain 1s!
-        indptr.append(
-            len(indices)
-        )  # keep track of the number of vertices in each edge
+        indptr.append(len(indices))  # keep track of the number of vertices in each edge
         # this is just used to tell use where column begin and start in data
 
     # csc_matrix((data, indices, indptr), [shape=(M, N)])
@@ -103,9 +99,7 @@ def calculate_V_E(X: torch.Tensor, G: dict, args) -> tuple:
     # indptr = [0, 2, 4, 6]
     # N, M = 4, 3  # Shape of the matrix (4 rows, 3 columns)
     # H = sp.csc_matrix((data, indices, indptr), shape=(N, M), dtype=int).tocsr()
-    H = sp.csc_matrix(
-        (data, indices, indptr), shape=(N, M), dtype=int
-    ).tocsr()  # V x E
+    H = sp.csc_matrix((data, indices, indptr), shape=(N, M), dtype=int).tocsr()  # V x E
 
     # Say:
     # [[0 1 0]

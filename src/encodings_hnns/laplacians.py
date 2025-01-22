@@ -70,9 +70,7 @@ class Laplacians:
             set(node for hyperedge in hypergraph.values() for node in hyperedge)
         )
         if verbose:
-            print(
-                f"The nodes are {all_nodes}. \n We have {len(all_nodes)} nodes."
-            )
+            print(f"The nodes are {all_nodes}. \n We have {len(all_nodes)} nodes.")
 
         # Creates mapping from nodes to column indices
         node_to_col: dict = {node: idx for idx, node in enumerate(all_nodes)}
@@ -184,9 +182,7 @@ class Laplacians:
                             ] += value  # Reflect the value for symmetry (in A only!)
 
             # the rw Laplacian is I - Dv^{-1}*A
-            rw_l = np.eye(num_nodes) + np.matmul(
-                np.linalg.inv(self.Dv), -matrix_
-            )
+            rw_l = np.eye(num_nodes) + np.matmul(np.linalg.inv(self.Dv), -matrix_)
             # Note: this is not symmetric!
             self.rw_laplacian = rw_l
 
@@ -217,9 +213,7 @@ class Laplacians:
             for i, node_i in enumerate(all_nodes):
                 i_neighbors_counts: dict = {}
                 count_weights: int = 0
-                for hyperedge_name, hedge in self.hypergraph[
-                    "hypergraph"
-                ].items():
+                for hyperedge_name, hedge in self.hypergraph["hypergraph"].items():
                     if node_i in hedge:
                         count_weights += len(hedge) - 1
                         for node_j in hedge:
@@ -236,9 +230,7 @@ class Laplacians:
                             0  # not neigbors so cannot travel between i and j
                         )
                     elif node_j in self.node_neighbors[node_i]:
-                        matrix_[i, j] = (
-                            -i_neighbors_counts[node_j] / count_weights
-                        )
+                        matrix_[i, j] = -i_neighbors_counts[node_j] / count_weights
             self.rw_laplacian = matrix_
 
     def compute_ldp(self, verbose: bool = True) -> None:
@@ -269,9 +261,7 @@ class Laplacians:
             # neighbors is the neighbors of node
 
             # Get the degrees of the neighbors
-            neighbor_degrees = [
-                self.node_degrees[neighbor] for neighbor in neighbors
-            ]
+            neighbor_degrees = [self.node_degrees[neighbor] for neighbor in neighbors]
             assert neighbor_degrees
 
             # Calculate the statistics
