@@ -1,4 +1,10 @@
-[![Build Status](https://github.com/raphaelreiss/Hypergraph_Encodings/actions/workflows/python-package.yml/badge.svg?branch=master)](https://github.com/raphaelreiss/Hypergraph_Encodings/actions/workflows/python-package.yml)
+[![Pylint](https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/pylint.yml/badge.svg)](https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/pylint.yml)
+
+
+[![pytest](https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/pytest.yml/badge.svg)](https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/pytest.yml)
+
+[![Python package](https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/python-package.yml/badge.svg)](https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/python-package.yml)
+
 
 # Hypergraph_Encodings
 
