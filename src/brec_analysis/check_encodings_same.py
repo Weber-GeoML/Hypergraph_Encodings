@@ -1,6 +1,7 @@
 """Functions for checking if two encodings are the same"""
 
 import matplotlib.pyplot as plt
+import networkx as nx
 import numpy as np
 
 from brec_analysis.add_encodings import get_encodings
@@ -12,17 +13,19 @@ from brec_analysis.match_encodings import (
     check_encodings_same_up_to_scaling,
     find_encoding_match,
 )
-from brec_analysis.plotting_encodings_for_brec import save_comparison_plot
-from brec_analysis.plotting_encodings_for_brec import plot_matched_encodings
+from brec_analysis.match_status import MatchStatus
+from brec_analysis.plotting_encodings_for_brec import (
+    plot_matched_encodings,
+    save_comparison_plot,
+)
 from brec_analysis.printers_and_loggers import print_comparison_results
 from brec_analysis.utils_for_brec import create_comparison_result
 from encodings_hnns.encodings import HypergraphEncodings
-from brec_analysis.match_status import MatchStatus
-import networkx as nx
-# TODO: clean up 
+
+# TODO: clean up
 
 
-def lap_checks_to_clean_up(name_of_encoding:str, hg1, hg2, graph_type:str):
+def lap_checks_to_clean_up(name_of_encoding: str, hg1, hg2, graph_type: str):
     # Handle Laplacian encodings
     lap_type = name_of_encoding.split("-")[1]  # Get Normalized, RW, or Hodge
     print(f"Computing Laplacian for {lap_type}")
@@ -83,9 +86,7 @@ def lap_checks_to_clean_up(name_of_encoding:str, hg1, hg2, graph_type:str):
         rtol=1e-12,
     )
     if not same_norms:
-        print(
-            f"The two graphs have different eigenvector norms for {name_of_encoding}"
-        )
+        print(f"The two graphs have different eigenvector norms for {name_of_encoding}")
         same_properties = False
 
     # Print comparison of norms
@@ -93,9 +94,7 @@ def lap_checks_to_clean_up(name_of_encoding:str, hg1, hg2, graph_type:str):
     if verbose:
         print("\nComparison of eigenvector norms:")
         for name in ["Graph A", "Graph B"]:
-            print(
-                f"{name} Laplacian eigenvector norms: {properties[name]['norms']}"
-            )
+            print(f"{name} Laplacian eigenvector norms: {properties[name]['norms']}")
 
     # Check isospectrality
     are_isospectral = check_isospectrality(eigenvalues1, eigenvalues2)
@@ -119,9 +118,10 @@ def get_modified_name(name: str, k: int) -> str:
         return f"{name}-k{k}"
     return name
 
+
 def get_appropriate_encodings(name: str, hg1, hg2, encoder1, encoder2, k: int) -> tuple:
     """Get the appropriate encodings based on type.
-    
+
     Args:
         name:
             name of the encoding
@@ -144,9 +144,10 @@ def get_appropriate_encodings(name: str, hg1, hg2, encoder1, encoder2, k: int) -
         return get_laplacian_encodings(name, hg1, hg2)
     return get_regular_encodings(name, hg1, hg2, encoder1, encoder2, k)
 
+
 def get_laplacian_encodings(name: str, hg1, hg2) -> tuple:
     """Get Laplacian-based encodings.
-    
+
     Args:
         name:
             name of the encoding
@@ -162,16 +163,23 @@ def get_laplacian_encodings(name: str, hg1, hg2) -> tuple:
     lap_type = name.split("-")[1]
     _, L1 = compute_laplacian(hg1, lap_type)
     _, L2 = compute_laplacian(hg2, lap_type)
-    
+
     eigenvalues1, eigenvectors1 = np.linalg.eigh(L1)
     eigenvalues2, eigenvectors2 = np.linalg.eigh(L2)
-    
-    
+
     return eigenvectors1, eigenvectors2
 
-def get_regular_encodings(name: str, hg1: nx.Graph, hg2: nx.Graph, encoder1: HypergraphEncodings, encoder2: HypergraphEncodings, k: int) -> tuple:
+
+def get_regular_encodings(
+    name: str,
+    hg1: nx.Graph,
+    hg2: nx.Graph,
+    encoder1: HypergraphEncodings,
+    encoder2: HypergraphEncodings,
+    k: int,
+) -> tuple:
     """Get regular (non-Laplacian) encodings.
-    
+
     Args:
         name:
             name of the encoding
@@ -194,6 +202,7 @@ def get_regular_encodings(name: str, hg1: nx.Graph, hg2: nx.Graph, encoder1: Hyp
     hg2_encodings = get_encodings(hg2, encoder2, name, k_rwpe=k, k_lape=k)
     return hg1_encodings["features"], hg2_encodings["features"]
 
+
 def checks_encodings(
     name_of_encoding: str,
     hg1,
@@ -213,7 +222,7 @@ def checks_encodings(
     verbose: bool = False,
 ) -> dict:
     """Check if two graphs have the same encodings. Returns comparison results.
-    
+
     Args:
         name_of_encoding:
             name of the encoding
@@ -255,18 +264,18 @@ def checks_encodings(
     assert encoder_number_two is not None
 
     # Initialize result dictionary
-    comparison_result : dict = {
+    comparison_result: dict = {
         "status": None,
         "scaling_factor": None,
-        "permutation": None
+        "permutation": None,
     }
 
     # Initialize variables
-    is_direct_match : bool = False
-    is_same_up_to_scaling : bool = False
-    scaling_factor : float = None
-    permuted : bool = None
-    perm : bool = None
+    is_direct_match: bool = False
+    is_same_up_to_scaling: bool = False
+    scaling_factor: float = None
+    permuted: bool = None
+    perm: bool = None
 
     # The name_of_encoding might have been modified to include k
     modified_name = name_of_encoding
@@ -275,12 +284,7 @@ def checks_encodings(
 
     # Get encodings based on type
     hg1_encodings, hg2_encodings = get_appropriate_encodings(
-        name_of_encoding,
-        hg1,
-        hg2,
-        encoder_number_one,
-        encoder_number_two,
-        k
+        name_of_encoding, hg1, hg2, encoder_number_one, encoder_number_two, k
     )
 
     assert hg1_encodings is not None
@@ -292,9 +296,8 @@ def checks_encodings(
         print(f"features: \n {hg2_encodings['features']}")
         print(f"Encoding name: {name_of_encoding}")
 
-
     print(f"Encoding name: {name_of_encoding}")
-    match_result =check_for_matches(hg1_encodings, hg2_encodings, name_of_encoding)
+    match_result = check_for_matches(hg1_encodings, hg2_encodings, name_of_encoding)
     comparison_result.update(match_result)
 
     # Plot and get match results
@@ -323,10 +326,11 @@ def checks_encodings(
     )
 
     if name_of_encoding.startswith("LAPE-"):
-        eigenvectors1, eigenvectors2 = lap_checks_to_clean_up(name_of_encoding, hg1, hg2, graph_type)
+        eigenvectors1, eigenvectors2 = lap_checks_to_clean_up(
+            name_of_encoding, hg1, hg2, graph_type
+        )
         assert np.isclose(eigenvectors1, hg1_encodings).all()
         assert np.isclose(eigenvectors2, hg2_encodings).all()
-
 
         debug = False
         if debug:
@@ -411,7 +415,6 @@ def checks_encodings(
             print(f"END DEBUG: {graph_type}")
             print("*" * 100)
 
-
     # Save plot if requested - This will handle both LAPE and non-LAPE cases
     if save_plots:
         plt.tight_layout()
@@ -424,22 +427,20 @@ def checks_encodings(
 def check_for_matches(encoding1, encoding2, name: str) -> dict:
     """Check for direct matches and scaling matches."""
     is_direct_match, permuted, perm = find_encoding_match(encoding1, encoding2)
-    
+
     is_same_up_to_scaling = False
     scaling_factor = None
 
     assert encoding1 is not None
     assert encoding2 is not None
-    
+
     if not is_direct_match:
         print("**-" * 20)
         print(f"We are also checking up to scaling for {name}")
-        is_same_up_to_scaling, scaling_factor, perm, permuted = check_encodings_same_up_to_scaling(
-            encoding1, encoding2, verbose=False
+        is_same_up_to_scaling, scaling_factor, perm, permuted = (
+            check_encodings_same_up_to_scaling(encoding1, encoding2, verbose=False)
         )
-        if is_same_up_to_scaling and not np.isclose(
-            scaling_factor, 1.0, rtol=1e-10
-        ):
+        if is_same_up_to_scaling and not np.isclose(scaling_factor, 1.0, rtol=1e-10):
             # Only print if there's actually a non-trivial scaling
             print("⛔️ The encodings are the same up to scaling")
             print(f"The scaling factor is {scaling_factor}")
@@ -447,19 +448,18 @@ def check_for_matches(encoding1, encoding2, name: str) -> dict:
     else:
         is_same_up_to_scaling = True
         scaling_factor = 1.0
-    
+
     status = MatchStatus.NO_MATCH
     if is_direct_match:
         status = MatchStatus.EXACT_MATCH
     elif is_same_up_to_scaling:
         status = MatchStatus.SCALED_MATCH
-        
+
     return {
         "status": status,
         "is_direct_match": is_direct_match,
         "is_same_up_to_scaling": is_same_up_to_scaling,
         "scaling_factor": scaling_factor if is_same_up_to_scaling else None,
         "permutation": perm,
-        "permuted": permuted
+        "permuted": permuted,
     }
-

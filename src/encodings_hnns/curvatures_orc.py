@@ -213,7 +213,9 @@ class ORC:
 
             self.node_curvature_edges = stats["node_curvature_edges"]
             if verbose:
-                print(f"The node curvatures are \n {stats['node_curvature_neighborhood']}")
+                print(
+                    f"The node curvatures are \n {stats['node_curvature_neighborhood']}"
+                )
             self.node_curvature_neighborhood = stats["node_curvature_neighborhood"]
             if verbose:
                 print(f"The edge curvatures are \n {stats['edge_curvature']}")

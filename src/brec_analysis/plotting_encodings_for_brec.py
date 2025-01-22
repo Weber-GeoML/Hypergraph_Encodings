@@ -5,6 +5,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 def save_comparison_plot(
     plt: plt.Axes,
     plot_dir: str,

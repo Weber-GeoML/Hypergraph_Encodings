@@ -5,8 +5,9 @@ from typing import Any
 from torch_geometric.data import Data
 
 from brec_analysis.check_encodings_same import checks_encodings
-from encodings_hnns.encodings import HypergraphEncodings
 from brec_analysis.encodings_to_check import ENCODINGS_TO_CHECK
+from encodings_hnns.encodings import HypergraphEncodings
+
 
 def compare_encodings_wrapper(
     hg1: Data,
@@ -73,7 +74,7 @@ def compare_encodings_wrapper(
             "description": description,
             "status": encoding_result["status"],
             "scaling_factor": encoding_result.get("scaling_factor"),
-            "permutation": encoding_result.get("permutation")
+            "permutation": encoding_result.get("permutation"),
         }
 
     return results
