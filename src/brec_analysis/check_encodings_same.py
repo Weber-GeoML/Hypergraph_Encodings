@@ -1,4 +1,5 @@
-import os
+"""Functions for checking if two encodings are the same"""
+
 from itertools import permutations
 
 import matplotlib.pyplot as plt
@@ -7,105 +8,16 @@ import networkx.algorithms.isomorphism as iso
 import numpy as np
 from torch_geometric.data import Data
 
+from brec_analysis.laplacians_specific_functions import (
+    reconstruct_matrix,
+    check_isospectrality,
+    compute_laplacian,
+)
+from brec_analysis.plotting_encodings_for_brec import save_comparison_plot
+from brec_analysis.match_encodings import find_encoding_match, check_encodings_same_up_to_scaling
+
 from encodings_hnns.encodings import HypergraphEncodings
 from encodings_hnns.laplacians import Laplacians
-
-
-def find_encoding_match(encoding1, encoding2, verbose: bool = True):
-    """
-    Check if two encodings are equivalent under row permutations.
-    Returns (is_match, permuted_encoding1, permutation) if found, (False, None, None) if not.
-
-    Args:
-        encoding1: numpy array of shape (n, d)
-        encoding2: numpy array of shape (n, d)
-
-    Returns:
-        is_match: whether the two encodings are the same
-        permuted_encoding1: the permuted encoding of encoding1
-        permutation: the permutation that was applied
-    """
-    if encoding1.shape != encoding2.shape:
-        return False, None, None
-
-    # First check if the encodings are identical
-    if np.allclose(encoding1, encoding2, rtol=1e-13):
-        # Return identity permutation if encodings are identical
-        print("Free lunch!")
-        n_rows = encoding1.shape[0]
-        return True, encoding1, tuple(range(n_rows))
-
-    # Check the max absolute value of each encodings. If they are different, return False
-    if not np.isclose(np.max(np.abs(encoding1)), np.max(np.abs(encoding2)), rtol=1e-3):
-        if verbose:
-            print("Different because:")
-            print(f"Max absolute value of encoding1: {np.max(np.abs(encoding1))}")
-            print(f"Max absolute value of encoding2: {np.max(np.abs(encoding2))}")
-            print("\n")
-        return False, None, None
-
-    # Same for min
-    if not np.isclose(np.min(np.abs(encoding1)), np.min(np.abs(encoding2)), rtol=1e-3):
-        if verbose:
-            print("Different because:")
-            print(f"Min absolute value of encoding1: {np.min(np.abs(encoding1))}")
-            print(f"Min absolute value of encoding2: {np.min(np.abs(encoding2))}")
-            print("\n")
-        return False, None, None
-
-    # Compare the last column only. IF the max absolute value of the last column is different, return False
-    if not np.isclose(
-        np.max(np.abs(encoding1[:, -1])),
-        np.max(np.abs(encoding2[:, -1])),
-        rtol=1e-3,
-    ):
-        if verbose:
-            print("Different because:")
-            print(
-                f"Max absolute value of last column of encoding1: {np.max(np.abs(encoding1[:, -1]))}"
-            )
-            print(
-                f"Max absolute value of last column of encoding2: {np.max(np.abs(encoding2[:, -1]))}"
-            )
-            print("\n")
-        return False, None, None
-
-    # Compare the first column only. If the max absolute value of the first column is different, return False
-    if not np.isclose(
-        np.max(np.abs(encoding1[:, 0])),
-        np.max(np.abs(encoding2[:, 0])),
-        rtol=1e-3,
-    ):
-        if verbose:
-            print("Different because:")
-            print(
-                f"Max absolute value of first column of encoding1: {np.max(np.abs(encoding1[:, 0]))}"
-            )
-            print(
-                f"Max absolute value of first column of encoding2: {np.max(np.abs(encoding2[:, 0]))}"
-            )
-            print("\n")
-        return False, None, None
-
-    n_rows = encoding1.shape[0]
-
-    # For small matrices, we can try all permutations
-    if n_rows <= 10:  # Adjust this threshold based on your needs
-        for perm in permutations(range(n_rows)):
-            permuted = encoding1[list(perm), :]
-            if np.allclose(permuted, encoding2, rtol=1e-13):
-                return True, permuted, perm
-    else:
-        # For larger matrices, use a heuristic approach
-        # Sort rows lexicographically and compare
-        sorted1 = encoding1[np.lexsort(encoding1.T)]
-        sorted2 = encoding2[np.lexsort(encoding2.T)]
-        if np.allclose(sorted1, sorted2, rtol=1e-13):
-            # Find the permutation that was applied
-            perm = np.argsort(np.lexsort(encoding1.T))
-            return True, sorted1, perm
-
-    return False, None, None
 
 
 def plot_matched_encodings(
@@ -118,7 +30,7 @@ def plot_matched_encodings(
     name2: str = "Graph B",
     title: str = "",
     graph_type: str = "Graph",
-):
+) -> tuple[bool, np.ndarray, tuple[int, ...]]:
     """
     Plot two encodings and their difference, attempting to match their row orderings if possible.
 
@@ -133,6 +45,14 @@ def plot_matched_encodings(
             title for the plots
         graph_type:
             string indicating "Graph" or "Hypergraph"
+
+    Returns:
+        is_direct_match: 
+            whether the encodings are the same
+        permuted: 
+            the permuted encoding of encoding1
+        perm: 
+            the permutation that was applied
     """
     is_direct_match, permuted, perm = find_encoding_match(encoding1, encoding2)
 
@@ -540,134 +460,25 @@ def checks_encodings(
     return comparison_result
 
 
-# Save matrices in pmatrix format
-def matrix_to_pmatrix(matrix) -> str:
-    latex_str = "\\begin{pmatrix}\n"
-    for row in matrix:
-        latex_str += " & ".join([f"{x:.4f}" for x in row]) + " \\\\\n"
-    latex_str += "\\end{pmatrix}"
-    return latex_str
-
-
-def reconstruct_matrix(eigenvalues, eigenvectors) -> np.ndarray:
-    """Reconstruct the matrix from the eigenvalues and eigenvectors"""
-    diagonal_matrix = np.diag(eigenvalues)
-    reconstructed_matrix = eigenvectors @ diagonal_matrix @ eigenvectors.T
-    return reconstructed_matrix
-
-
-def check_isospectrality(eig1, eig2, tolerance=1e-10, verbose=False):
-    """
-    Check if two graphs are isospectral by comparing their sorted eigenvalues.
-
-    Args:
-        eig1, eig2: Arrays of eigenvalues
-        tolerance: Numerical tolerance for floating point comparison
-
-    Returns:
-        bool: True if graphs are isospectral
-    """
-    # Sort eigenvalues and take real parts
-    eig1_sorted = np.sort(np.real(eig1))
-    eig2_sorted = np.sort(np.real(eig2))
-
-    # Check if arrays have same shape
-    if eig1_sorted.shape != eig2_sorted.shape:
-        return False
-
-    # Compare eigenvalues within tolerance
-    diff = np.abs(eig1_sorted - eig2_sorted)
-    max_diff = np.max(diff)
-
-    print(f"Maximum eigenvalue difference: {max_diff}")
-    if verbose:
-        print("\nSorted eigenvalues comparison:")
-        for i, (e1, e2) in enumerate(zip(eig1_sorted, eig2_sorted)):
-            print(f"λ{i+1}: {e1:.10f} vs {e2:.10f} (diff: {abs(e1-e2):.10f})")
-
-    return max_diff < tolerance
-
-
-def find_isomorphism_mapping(G1, G2):
-    """
-    Find the node mapping between two isomorphic graphs with detailed debugging.
-    """
-
-    # Convert graphs to simple undirected graphs
-    G1 = nx.Graph(G1)
-    G2 = nx.Graph(G2)
-
-    print("\n=== Detailed Isomorphism Check ===")
-    print("\nGraph Properties:")
-    print(f"G1: {len(G1)} nodes, {G1.number_of_edges()} edges")
-    print(f"G2: {len(G2)} nodes, {G2.number_of_edges()} edges")
-
-    print("\nNode Degrees:")
-    print("G1 degrees:", sorted([d for n, d in G1.degree()]))
-    print("G2 degrees:", sorted([d for n, d in G2.degree()]))
-
-    print("\nEdge Lists:")
-    print("G1 edges:", sorted(G1.edges()))
-    print("G2 edges:", sorted(G2.edges()))
-
-    class VerboseGraphMatcher(iso.GraphMatcher):
-        def __init__(self, G1, G2):
-            super().__init__(G1, G2)
-            self.mapping_steps = []
-
-        def semantic_feasibility(self, G1_node, G2_node):
-            """Print detailed information about node matching attempts"""
-            feasible = super().semantic_feasibility(G1_node, G2_node)
-            print("\nTrying to match:")
-            print(f"G1 node {G1_node} (degree {G1.degree[G1_node]}) with")
-            print(f"G2 node {G2_node} (degree {G2.degree[G2_node]})")
-            print(f"Current mapping: {self.mapping}")
-            print(f"Feasible: {feasible}")
-            if not feasible:
-                print("Neighbors comparison:")
-                print(f"G1 node {G1_node} neighbors: {list(G1.neighbors(G1_node))}")
-                print(f"G2 node {G2_node} neighbors: {list(G2.neighbors(G2_node))}")
-            return feasible
-
-    try:
-        # Create verbose graph matcher
-        GM = VerboseGraphMatcher(G1, G2)
-
-        # Check isomorphism
-        is_isomorphic = GM.is_isomorphic()
-
-        if is_isomorphic:
-            mapping = GM.mapping
-            print("\n✅ Graphs are isomorphic!")
-            print(f"Final mapping: {mapping}")
-
-            # Verify mapping
-            print("\nVerifying mapping...")
-            for edge in G1.edges():
-                mapped_edge = (mapping[edge[0]], mapping[edge[1]])
-                if not G2.has_edge(*mapped_edge):
-                    print(f"❌ Mapping verification failed for edge {edge}!")
-                    return None
-                print(f"✓ Edge {edge} correctly maps to {mapped_edge}")
-
-            return mapping
-        else:
-            print("\n❌ Graphs are not isomorphic")
-            print("Possible reasons:")
-            print("1. Different degree sequences")
-            print("2. Different neighborhood structures")
-            print("3. No valid node mapping preserves all edges")
-            return None
-
-    except Exception as e:
-        print(f"\n❌ Error during isomorphism check: {str(e)}")
-        return None
-
 
 def get_encodings(
     hg: Data, encoder: HypergraphEncodings, name_of_encoding: str, k: int = 1
-):
-    """Helper function to get the appropriate encodings based on type."""
+) -> dict:
+    """Helper function to get the appropriate encodings based on type.
+
+    Args:
+        hg: 
+            the hypergraph
+        encoder: 
+            the encoder
+        name_of_encoding: 
+            the name of the encoding
+        k: 
+            the k value for the encoding
+
+    Returns:
+        the encodings
+    """
     if name_of_encoding == "LDP":
         return encoder.add_degree_encodings(hg.copy(), verbose=False)
     elif name_of_encoding == "RWPE":
@@ -736,169 +547,6 @@ def print_comparison_results(
         )
         if not is_laplacian:  # Only print extra newline for non-Laplacian encodings
             print("\n")
-
-
-def save_comparison_plot(
-    plt: plt.Axes,
-    plot_dir: str,
-    pair_idx: str,
-    category: str,
-    name_of_encoding: str,
-):
-    """Helper function to save the comparison plot.
-
-    Args:
-        plt:
-            matplotlib plot
-        plot_dir:
-            directory to save the plot
-        pair_idx:
-            index of the pair
-        category:
-            category of the pair
-        name_of_encoding:
-            name of the encoding
-    """
-    os.makedirs(plot_dir, exist_ok=True)
-    filename_base = (
-        f"pair_{pair_idx}_{category.lower()}" if pair_idx is not None else "comparison"
-    )
-    plt.savefig(
-        f"{plot_dir}/{filename_base}_{name_of_encoding.lower()}_comparison.png",
-        bbox_inches="tight",
-        dpi=300,
-    )
-
-
-def compute_laplacian(hg, lap_type: str):
-    """Compute Laplacian matrix for a given hypergraph."""
-    encoder = HypergraphEncodings()
-
-    # Initialize the encoder with hyperedges
-    encoder.compute_hyperedges(hg, verbose=False)
-
-    # Initialize and compute the Laplacian
-    encoder.laplacian = Laplacians(hg)
-
-    if lap_type == "Normalized":
-        encoder.laplacian.compute_normalized_laplacian()
-        L = encoder.laplacian.normalized_laplacian
-    elif lap_type == "RW":
-        encoder.laplacian.compute_random_walk_laplacian(verbose=False)
-        L = encoder.laplacian.rw_laplacian
-    elif lap_type == "Hodge":
-        encoder.laplacian.compute_boundary()  # Need to compute boundary first
-        encoder.laplacian.compute_hodge_laplacian()
-        L = encoder.laplacian.hodge_laplacian_down
-
-    hg_lape = encoder.add_laplacian_encodings(
-        hg.copy(), type=lap_type, verbose=False, use_same_sign=True
-    )
-    del encoder
-    return hg_lape, L
-
-
-def check_encodings_same_up_to_scaling(encoding1, encoding2, verbose: bool = True):
-    """
-    Check if two encodings are equivalent under row permutations and scaling.
-
-    Args:
-        encoding1: numpy array of shape (n, d)
-        encoding2: numpy array of shape (n, d)
-        verbose: whether to print diagnostic information
-
-    Returns:
-        is_same: bool indicating if encodings are the same up to scaling and permutation
-        scaling_factor: float, the scaling factor that makes them match (None if no match)
-        permutation: the permutation that was applied (None if no match)
-        permuted_encoding: the permuted and scaled encoding1 (None if no match)
-    """
-    if encoding1.shape != encoding2.shape:
-        if verbose:
-            print("❌ Encodings have different shapes")
-        return False, None, None, None
-
-    # First try direct match
-    is_match, permuted, perm = find_encoding_match(
-        encoding1, encoding2, verbose=verbose
-    )
-    if is_match:
-        if verbose:
-            print("✅ Encodings match directly (no scaling needed)")
-        return True, 1.0, perm, permuted
-
-    # First try direct match with -1 scaling
-    is_match, permuted, perm = find_encoding_match(
-        encoding1, -encoding2, verbose=verbose
-    )
-    if is_match:
-        if verbose:
-            print("✅ Encodings match directly (with -1 scaling)")
-        return True, -1.0, perm, permuted
-
-    # If no direct match, try scaling
-    max_abs1 = np.max(np.abs(encoding1))
-    max_abs2 = np.max(np.abs(encoding2))
-
-    if max_abs1 == 0 or max_abs2 == 0:
-        if verbose:
-            print("❌ One of the encodings is all zeros")
-        return False, None, None, None
-
-    scaling_factor = max_abs2 / max_abs1
-    scaled_encoding1 = encoding1 * scaling_factor
-
-    if verbose:
-        print(f"\nTrying scaling factor: {scaling_factor:.4e}")
-        print(f"Original max values: {max_abs1:.4e} vs {max_abs2:.4e}")
-        print(
-            f"After scaling: {np.max(np.abs(scaled_encoding1)):.4e} vs {max_abs2:.4e}"
-        )
-
-    # Check if scaled versions match
-    is_match, permuted, perm = find_encoding_match(
-        scaled_encoding1, encoding2, verbose=verbose
-    )
-
-    if is_match:
-        if verbose:
-            print(f"✅ Found match after scaling by {scaling_factor:.4e}")
-        return True, scaling_factor, perm, permuted
-
-    # If still no match, try with normalized versions
-    normalized1 = encoding1 / max_abs1
-    normalized2 = encoding2 / max_abs2
-
-    if verbose:
-        print("\nTrying with normalized encodings (divided by max abs value)")
-
-    is_match, permuted, perm = find_encoding_match(
-        normalized1, normalized2, verbose=verbose
-    )
-
-    if is_match:
-        if verbose:
-            print("✅ Found match after normalization")
-        return True, max_abs2 / max_abs1, perm, permuted
-
-    # If we get here, the encodings are truly different
-    if verbose:
-        print(
-            "\n❌ Encodings are different even after trying scaling and normalization"
-        )
-        print("Statistics for diagnosis:")
-        print(
-            f"Encoding 1 - min: {np.min(encoding1):.4e}, max: {np.max(encoding1):.4e}, mean: {np.mean(encoding1):.4e}"
-        )
-        print(
-            f"Encoding 2 - min: {np.min(encoding2):.4e}, max: {np.max(encoding2):.4e}, mean: {np.mean(encoding2):.4e}"
-        )
-        print(f"Ratio of max values (E2/E1): {max_abs2/max_abs1:.4e}")
-        print(
-            f"Ratio of min values (E2/E1): {np.min(np.abs(encoding2))/np.min(np.abs(encoding1)):.4e}"
-        )
-
-    return False, None, None, None
 
 
 # def analyze_graph_pair(graph1, graph2, pair_idx : str, category : str, is_isomorphic : bool):

@@ -76,3 +76,11 @@ def create_comparison_table(stats1: dict, stats2: dict) -> tuple[list[str], list
         colors.append("red" if is_different else "black")
 
     return table_text, colors
+
+# Save matrices in pmatrix format
+def matrix_to_pmatrix(matrix) -> str:
+    latex_str = "\\begin{pmatrix}\n"
+    for row in matrix:
+        latex_str += " & ".join([f"{x:.4f}" for x in row]) + " \\\\\n"
+    latex_str += "\\end{pmatrix}"
+    return latex_str
