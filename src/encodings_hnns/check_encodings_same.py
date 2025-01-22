@@ -1,12 +1,16 @@
-import json
+
 import os
 from itertools import permutations
+from torch_geometric.data import Data
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from encodings_hnns.encodings import HypergraphEncodings
 from encodings_hnns.laplacians import Laplacians
+
+import networkx as nx
+import networkx.algorithms.isomorphism as iso
 
 
 def find_encoding_match(encoding1, encoding2, verbose : bool =True):
@@ -576,8 +580,6 @@ def find_isomorphism_mapping(G1, G2):
     """
     Find the node mapping between two isomorphic graphs with detailed debugging.
     """
-    import networkx as nx
-    import networkx.algorithms.isomorphism as iso
 
     # Convert graphs to simple undirected graphs
     G1 = nx.Graph(G1)
@@ -874,80 +876,80 @@ def check_encodings_same_up_to_scaling(encoding1, encoding2, verbose : bool=True
     return False, None, None, None
 
 
-def analyze_graph_pair(graph1, graph2, pair_idx : str, category : str, is_isomorphic : bool):
-    """Analyze a pair of graphs and store comparison results"""
-    results = {
-        "pair_idx": pair_idx,
-        "category": category,
-        "is_isomorphic": is_isomorphic,
-        "graph_level": {},
-        "hypergraph_level": {},
-    }
+# def analyze_graph_pair(graph1, graph2, pair_idx : str, category : str, is_isomorphic : bool):
+#     """Analyze a pair of graphs and store comparison results"""
+#     results = {
+#         "pair_idx": pair_idx,
+#         "category": category,
+#         "is_isomorphic": is_isomorphic,
+#         "graph_level": {},
+#         "hypergraph_level": {},
+#     }
 
-    encoder1 = HypergraphEncodings()
-    encoder2 = HypergraphEncodings()
+#     encoder1 = HypergraphEncodings()
+#     encoder2 = HypergraphEncodings()
 
-    # List of encodings to check
-    k_dependent_encodings = ["RWPE", "LAPE-RW"]
-    k_values = [1, 2, 20]
+#     # List of encodings to check
+#     k_dependent_encodings = ["RWPE", "LAPE-RW"]
+#     k_values = [1, 2, 20]
 
-    base_encodings = ["LDP", "LCP-FRC", "LCP-ORC", "LAPE-Normalized", "LAPE-Hodge"]
+#     base_encodings = ["LDP", "LCP-FRC", "LCP-ORC", "LAPE-Normalized", "LAPE-Hodge"]
 
-    # Generate all encodings with k values
-    encodings_to_check = base_encodings.copy()
-    for enc in k_dependent_encodings:
-        for k in k_values:
-            encodings_to_check.append(f"{enc}-k{k}")
+#     # Generate all encodings with k values
+#     encodings_to_check = base_encodings.copy()
+#     for enc in k_dependent_encodings:
+#         for k in k_values:
+#             encodings_to_check.append(f"{enc}-k{k}")
 
-    # Check graph-level encodings
-    for encoding in encodings_to_check:
-        # Extract k value if present in encoding name
-        k = 1  # default value
-        if "-k" in encoding:
-            base_encoding, k = encoding.split("-k")
-            k = int(k)
-        else:
-            base_encoding = encoding
+#     # Check graph-level encodings
+#     for encoding in encodings_to_check:
+#         # Extract k value if present in encoding name
+#         k = 1  # default value
+#         if "-k" in encoding:
+#             base_encoding, k = encoding.split("-k")
+#             k = int(k)
+#         else:
+#             base_encoding = encoding
 
-        results["graph_level"][encoding] = checks_encodings(
-            base_encoding,
-            True,
-            graph1,
-            graph2,
-            encoder1,
-            encoder2,
-            graph_type="Graph",
-            k=k,
-        )
+#         results["graph_level"][encoding] = checks_encodings(
+#             base_encoding,
+#             True,
+#             graph1,
+#             graph2,
+#             encoder1,
+#             encoder2,
+#             graph_type="Graph",
+#             k=k,
+#         )
 
-    # Check hypergraph-level encodings
-    for encoding in encodings_to_check:
-        # Extract k value if present in encoding name
-        k = 1  # default value
-        if "-k" in encoding:
-            base_encoding, k = encoding.split("-k")
-            k = int(k)
-        else:
-            base_encoding = encoding
+#     # Check hypergraph-level encodings
+#     for encoding in encodings_to_check:
+#         # Extract k value if present in encoding name
+#         k = 1  # default value
+#         if "-k" in encoding:
+#             base_encoding, k = encoding.split("-k")
+#             k = int(k)
+#         else:
+#             base_encoding = encoding
 
-        results["hypergraph_level"][encoding] = checks_encodings(
-            base_encoding,
-            True,
-            data1_lifted,
-            data2_lifted,
-            encoder1,
-            encoder2,
-            graph_type="Hypergraph",
-            k=k,
-        )
+#         results["hypergraph_level"][encoding] = checks_encodings(
+#             base_encoding,
+#             True,
+#             data1_lifted,
+#             data2_lifted,
+#             encoder1,
+#             encoder2,
+#             graph_type="Hypergraph",
+#             k=k,
+#         )
 
-    # Save results to JSON
-    os.makedirs("results/comparisons", exist_ok=True)
-    output_file = f"results/comparisons/pair_{pair_idx}_{category.lower()}.json"
-    with open(output_file, "w") as f:
-        json.dump(results, f, indent=2)
+#     # Save results to JSON
+#     os.makedirs("results/comparisons", exist_ok=True)
+#     output_file = f"results/comparisons/pair_{pair_idx}_{category.lower()}.json"
+#     with open(output_file, "w") as f:
+#         json.dump(results, f, indent=2)
 
-    return results
+#     return results
 
 
 def print_comparison_summary(results):

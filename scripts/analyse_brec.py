@@ -22,15 +22,25 @@ from encodings_hnns.encodings import HypergraphEncodings
 from encodings_hnns.liftings_and_expansions import lift_to_hypergraph
 
 
-def create_output_dirs():
+def create_output_dirs() -> None:
     """Create output directories for plots and results"""
     dirs = ["plots/graph_pairs", "plots/hypergraph_pairs", "plots/encodings", "results"]
     for dir_name in dirs:
         os.makedirs(dir_name, exist_ok=True)
 
 
-def create_comparison_table(stats1, stats2):
-    """Create comparison table with differences highlighted in red."""
+def create_comparison_table(stats1 : dict, stats2 : dict) -> tuple[list[str], list[str]]:
+    """Create comparison table with differences highlighted in red.
+    
+    Args:
+        stats1 (dict): 
+            Statistics for the first graph.
+        stats2 (dict): 
+            Statistics for the second graph.
+    
+    Returns:
+        tuple[list[str], list[str]]: A tuple containing the table text and colors.
+    """
     table_text = []
     colors = []  # List to store colors for each row
 
@@ -57,9 +67,28 @@ def create_comparison_table(stats1, stats2):
 
 
 def plot_hypergraph_pair(
-    G1, G2, hg1, hg2, pair_idx, category, is_isomorphic, output_dir
+    G1 : nx.Graph, G2 : nx.Graph, hg1 : dict, hg2 : dict, pair_idx : str, category : str, is_isomorphic : bool, output_dir : str
 ):
-    """Plot comparison of two hypergraphs with their bipartite representations."""
+    """Plot comparison of two hypergraphs with their bipartite representations.
+    
+    Args:
+        G1 (nx.Graph): 
+            The first graph.
+        G2 (nx.Graph): 
+            The second graph.
+        hg1 (dict): 
+            The first hypergraph.
+        hg2 (dict): 
+            The second hypergraph.
+        pair_idx (str): 
+            The index of the pair.
+        category (str): 
+            The category of the pair.
+        is_isomorphic (bool): 
+            Whether the graphs are isomorphic.
+        output_dir (str): 
+            The directory to save the plots.
+    """
     # Create figure with 4x2 subplot grid (increased height for new row)
     plt.figure(figsize=(30, 32))
     plt.suptitle(f"Pair {pair_idx} ({category})", fontsize=16)
@@ -224,8 +253,23 @@ def plot_hypergraph_pair(
     plt.close()
 
 
-def plot_graph_pair(graph1, graph2, pair_idx, category, is_isomorphic, output_dir):
-    """Plot a pair of graphs side by side with graph statistics and degree distributions."""
+def plot_graph_pair(graph1 : nx.Graph, graph2 : nx.Graph, pair_idx : str, category : str, is_isomorphic : bool, output_dir : str) -> None:
+    """Plot a pair of graphs side by side with graph statistics and degree distributions.
+    
+    Args:
+        graph1 (nx.Graph): 
+            The first graph.
+        graph2 (nx.Graph): 
+                The second graph.
+        pair_idx (str): 
+            The index of the pair.
+        category (str): 
+            The category of the pair.
+        is_isomorphic (bool): 
+            Whether the graphs are isomorphic.
+        output_dir (str): 
+            The directory to save the plots.
+    """
     # Create figure with 3x2 subplot grid (added row for adjacency matrices)
     fig = plt.figure(figsize=(16, 28))
 
@@ -517,11 +561,11 @@ def plot_graph_pair(graph1, graph2, pair_idx, category, is_isomorphic, output_di
     plt.close()
 
 
-def analyze_graph_pair(data1, data2, pair_idx, category, is_isomorphic):
+def analyze_graph_pair(data1 : Data, data2 : Data, pair_idx : str, category : str, is_isomorphic : bool) -> None:
     """Analyze a pair of graphs: plot them and compare their encodings"""
     # Convert PyG data to NetworkX graphs
     G1 = to_networkx(data1, to_undirected=True)
-    G2 = to_networkx(data2, to_undirected=True)
+    G2 = to_networkx(data2, to_undirected=True) 
     assert not is_isomorphic, "All pairs in BREC are non-isomorphic"
 
     # store the Asjacency matrix plots and their difference
@@ -591,7 +635,7 @@ def analyze_graph_pair(data1, data2, pair_idx, category, is_isomorphic):
     )
 
 
-def convert_nx_to_hypergraph_dict(G):
+def convert_nx_to_hypergraph_dict(G : nx.Graph) -> dict:
     """Convert NetworkX graph to hypergraph dictionary format"""
     hyperedges = {f"e_{i}": list(edge) for i, edge in enumerate(G.edges())}
     n = G.number_of_nodes()
@@ -600,8 +644,8 @@ def convert_nx_to_hypergraph_dict(G):
 
 
 def compare_encodings(
-    hg1, hg2, pair_idx, category, is_isomorphic, level="graph", node_mapping=None
-):
+    hg1 : Data, hg2 : Data, pair_idx : str, category : str, is_isomorphic : bool, level : str="graph", node_mapping : dict | None=None
+)-> None:
     """Compare encodings between two (hyper)graphs"""
     encoder1 = HypergraphEncodings()
     encoder2 = HypergraphEncodings()
@@ -649,7 +693,7 @@ def compare_encodings(
             f.write(f"Result: {'Same' if result else 'Different'}\n")
 
 
-def main():
+def main() -> None:
     create_output_dirs()
     dataset = BRECDataset()
 
