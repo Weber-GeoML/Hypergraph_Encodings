@@ -27,6 +27,7 @@ class HypergraphEncodings:
 
     def __init__(self):
         self.hyperedges: None | dict = None
+        self.laplacian: None | Laplacians = None
 
     def compute_hyperedges(self, hypergraph: dict, verbose: bool = False) -> None:
         """Computes a dictionary called hyperedges.
@@ -127,7 +128,7 @@ class HypergraphEncodings:
             # and std of the degrees of the neighbors
             ld_profile: dict = laplacian.ldp
 
-            if self.hyperedges == None:
+            if self.hyperedges is None:
                 self.compute_hyperedges(hypergraph, verbose=verbose)
 
             features_augmented = hypergraph["features"]
@@ -232,7 +233,7 @@ class HypergraphEncodings:
                 # following calls the julia code and runs the subroutines
                 rc.compute_orc()
 
-            if self.hyperedges == None:
+            if self.hyperedges is None:
                 self.compute_hyperedges(hypergraph, verbose=verbose)
                 if verbose:
                     print("the hyperedges are")
@@ -324,7 +325,8 @@ class HypergraphEncodings:
         rw_type: str = "EN",
         normalized: bool = True,
         dataset_name: str | None = None,
-        k: int = 20,
+        k: int = 20, # to vary!
+        use_same_sign : bool = False,
     ) -> dict:
         """Adds encodings based on Laplacians
 
@@ -370,40 +372,44 @@ class HypergraphEncodings:
 
             # Computes the dictionary with keys as node
             # and values as hyperedges
-            if self.hyperedges == None:
+            if self.hyperedges is None:
                 self.compute_hyperedges(hypergraph, verbose=verbose)
 
-            laplacian: Laplacians = Laplacians(hypergraph=hypergraph)
+            # Store the Laplacian object as instance variable
+            self.laplacian = Laplacians(hypergraph=hypergraph)
+
             eigenvalues: np.ndarray
             eigenvectors: np.ndarray
             if type == "Hodge":
-                laplacian.compute_hodge_laplacian()
+                self.laplacian.compute_hodge_laplacian()
                 # We would use up for edge feature
                 # as the up matrix is number of edge by number of egde
                 # We use down for node feature
                 # as the down matrix is number of nodes by number of nodes
                 if verbose:
                     print(
-                        f"The Hodge Laplacian (down) is \n {laplacian.hodge_laplacian_down}"
+                        f"The Hodge Laplacian (down) is \n {self.laplacian.hodge_laplacian_down}"
                     )
                 # Compute the eigenvalues and eigenvectors
-                eigenvalues, eigenvectors = np.linalg.eig(
-                    laplacian.hodge_laplacian_down
+                eigenvalues, eigenvectors = np.linalg.eigh(
+                    self.laplacian.hodge_laplacian_down
                 )
             elif type == "Normalized":
-                laplacian.compute_normalized_laplacian()
+                self.laplacian.compute_normalized_laplacian()
                 if verbose:
                     print(
-                        f"The normalized Laplacian is {laplacian.normalized_laplacian}"
+                        f"The normalized Laplacian is {self.laplacian.normalized_laplacian}"
                     )
-                eigenvalues, eigenvectors = np.linalg.eig(
-                    laplacian.normalized_laplacian
+                eigenvalues, eigenvectors = np.linalg.eigh(
+                    self.laplacian.normalized_laplacian
                 )
             elif type == "RW":
-                laplacian.compute_random_walk_laplacian(type=rw_type, verbose=verbose)
+                self.laplacian.compute_random_walk_laplacian(
+                    type=rw_type, verbose=verbose
+                )
                 if verbose:
-                    print(f"The RW laplacian is \n {laplacian.rw_laplacian}")
-                eigenvalues, eigenvectors = np.linalg.eig(laplacian.rw_laplacian)
+                    print(f"The RW laplacian is \n {self.laplacian.rw_laplacian}")
+                eigenvalues, eigenvectors = np.linalg.eig(self.laplacian.rw_laplacian)
 
             # TODO: take the real part of the eigenvalues/eigenvectors
             # put a flag to catch if it larger than 10e-3 (imaginary part)
@@ -434,6 +440,9 @@ class HypergraphEncodings:
             # this means that if we use k eigenvectors, we have
             # 2^k different possibilities
             sign: int = random.choice([-1, 1])
+            # for rook and shrikhande, we use the same sign
+            if use_same_sign:
+                sign = 1
 
             features_augmented = hypergraph["features"]
 
@@ -505,7 +514,7 @@ class HypergraphEncodings:
         self,
         hypergraph: dict,
         verbose: bool = False,
-        rw_type: str = "WE",
+        rw_type: str = "EE",
         k: int = 20,
         normalized: bool = True,
         dataset_name: str | None = None,
@@ -531,6 +540,9 @@ class HypergraphEncodings:
         Returns:
             the hypergraph with the RW encodings added to the featuress
 
+        # TODO TODO TODO
+        # Write checks for this! 
+
         """
         filename: str = (
             f"computed_encodings/{dataset_name}_rw_encodings_{rw_type}_k_{k}_normalized_{normalized}.pkl"
@@ -545,7 +557,7 @@ class HypergraphEncodings:
                 hypergraph["features"].shape[0] == hypergraph["n"]
             ), f"BEFORE: The shape is {hypergraph['features'].shape[0]} but n is {hypergraph['n']}"
 
-            if self.hyperedges == None:
+            if self.hyperedges is None:
                 self.compute_hyperedges(hypergraph, verbose=verbose)
 
             laplacian: Laplacians = Laplacians(hypergraph=hypergraph)

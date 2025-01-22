@@ -55,6 +55,9 @@ class Laplacians:
         self.Dv: None | np.ndarray = None
         # the matrix of edge degrees
         self.De: None | np.ndarray = None
+        # the ajacency matrix of a hypergraph is Defined in Zhou, Huang Scholkopf
+        # as BB^T - D_v
+        self.hypergraph_adjacency: None | np.ndarray = None
 
     def compute_boundary(self, verbose: bool = False) -> None:
         """Computes the boundary matrix
@@ -87,12 +90,20 @@ class Laplacians:
 
         self.boundary_matrix = matrix.T
 
+    def compute_hypergraph_adjacency(self) -> None:
+        """Computes the hypergraph adjacency matrix"""
+        if self.boundary_matrix is None:
+            self.compute_boundary()
+        if self.Dv is None:
+            self.compute_node_degrees()
+        self.hypergraph_adjacency = np.matmul(self.boundary_matrix, self.boundary_matrix.T) - self.Dv
+
     def compute_hodge_laplacian(self) -> None:
         """Computes the hodge-Laplacian of hypergraphs
 
         There is the up Laplacian and the down Laplacian
         """
-        if self.boundary_matrix == None:
+        if self.boundary_matrix is None:
             self.compute_boundary()
         self.hodge_laplacian_up = np.matmul(
             self.boundary_matrix.T, self.boundary_matrix
@@ -103,7 +114,7 @@ class Laplacians:
 
     def compute_normalized_laplacian(self) -> None:
         """Computes the normalized laplacian"""
-        if self.boundary_matrix == None:
+        if self.boundary_matrix is None:
             # computes the boundary matrix
             self.compute_boundary()
         if self.node_degrees == {}:

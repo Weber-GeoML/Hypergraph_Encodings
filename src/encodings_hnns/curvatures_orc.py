@@ -155,7 +155,7 @@ class ORC:
             )
         )
 
-        # Specifies the output file path
+        # Save the hypergraph to TSV
         _save_to_tsv(hypergraph=hypergraph, output_file=input_file)
 
         # Gets the current working directory
@@ -188,34 +188,43 @@ class ORC:
             result_file,
         ]
 
-        # Execute the command using subprocess
+        # Execute the command using subprocess with redirected output
         try:
-            subprocess.run(command, check=True)
+            with open(os.devnull, 'w') as devnull:
+                subprocess.run(
+                    command, 
+                    check=True,
+                    stdout=devnull,
+                    stderr=devnull
+                )
         except subprocess.CalledProcessError as e:
-            print(f"Error executing command: {e}")
+            print(f"Error executing Julia command: {e}")
+            return
 
-        # the we read
-        data: list[dict]
-        with open(result_file, "r") as f:
-            data = json.load(f)
+        # Read results
+        try:
+            with open(result_file, "r") as f:
+                data = json.load(f)
 
-        # at this stage data is a list of two dicts
-        # first one uses mean aggregation
-        # second ones uses max aggregation
-        stats: dict
-        if aggregation_type == "Mean":
-            stats = data[0]
-        elif aggregation_type == "Max":
-            stats = data[1]
+            # at this stage data is a list of two dicts
+            # first one uses mean aggregation
+            # second ones uses max aggregation
+            stats: dict
+            if aggregation_type == "Mean":
+                stats = data[0]
+            elif aggregation_type == "Max":
+                stats = data[1]
 
-        self.node_curvature_edges = stats["node_curvature_edges"]
-        print(f"The node curvatures are \n {stats['node_curvature_neighborhood']}")
-        self.node_curvature_neighborhood = stats["node_curvature_neighborhood"]
-        print(f"The edge curvatures are \n {stats['edge_curvature']}")
-        self.edge_curvature = {
-            key: stats["edge_curvature"][i]
-            for i, key in enumerate(self.hypergraph["hypergraph"])
-        }
+            self.node_curvature_edges = stats["node_curvature_edges"]
+            print(f"The node curvatures are \n {stats['node_curvature_neighborhood']}")
+            self.node_curvature_neighborhood = stats["node_curvature_neighborhood"]
+            print(f"The edge curvatures are \n {stats['edge_curvature']}")
+            self.edge_curvature = {
+                key: stats["edge_curvature"][i]
+                for i, key in enumerate(self.hypergraph["hypergraph"])
+            }
+        except Exception as e:
+            print(f"Error processing Julia results: {e}")
 
 
 # Example utilization

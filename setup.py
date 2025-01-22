@@ -19,6 +19,7 @@ setup(
         "tabulate",
         "matplotlib",
         "path",
+        "brec"
     ],
     extra_requires={
         "dev": [
