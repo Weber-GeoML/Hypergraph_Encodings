@@ -1,4 +1,3 @@
-
 import numpy as np
 
 from encodings_hnns.encodings import HypergraphEncodings

@@ -3,10 +3,8 @@
 Note: pairs in BREC are not isomorphic.
 """
 
-
 import networkx as nx
 import networkx.algorithms.isomorphism as iso
-
 
 
 def find_isomorphism_mapping(G1, G2):
