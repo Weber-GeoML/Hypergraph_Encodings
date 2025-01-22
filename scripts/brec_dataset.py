@@ -8,7 +8,6 @@ import networkx as nx
 import torch
 import torch.nn.functional as F
 from brec.dataset import BRECDataset
-from brec.evaluator import evaluate
 from torch_geometric.nn import GCNConv
 from torch_geometric.utils import to_networkx
 

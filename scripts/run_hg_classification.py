@@ -19,7 +19,6 @@ import path
 import torch
 import torch.nn.functional as F
 from sklearn.model_selection import train_test_split
-from split_data_for_hypergraph_classification import get_split
 from torch.optim import optimizer
 from tqdm import tqdm  # Add this import
 
@@ -320,7 +319,7 @@ for hg in current_dataset:
         label = tuple(label.flatten())
     unique_labels.add(label)
 
-print(f"\nDataset Statistics:")
+print("\nDataset Statistics:")
 print(f"Number of hypergraphs: {num_hypergraphs}")
 print(f"Feature dimensions: {feature_shape}")
 print(f"Number of features per node: {num_features}")
@@ -331,7 +330,7 @@ print(f"Unique labels: {sorted(unique_labels)}")
 avg_nodes = sum(hg["features"].shape[0] for hg in current_dataset) / num_hypergraphs
 avg_edges = sum(len(hg["hypergraph"]) for hg in current_dataset) / num_hypergraphs
 
-print(f"\nHypergraph Statistics:")
+print("\nHypergraph Statistics:")
 print(f"Average nodes per hypergraph: {avg_nodes:.2f}")
 print(f"Average edges per hypergraph: {avg_edges:.2f}")
 
@@ -626,7 +625,7 @@ for dataset_name, dataset in datasets.items():
     baselogger.info(f"Average edges per hypergraph: {avg_edges:.2f}")
 
 # Improve split logging
-baselogger.info(f"\nData split sizes:")
+baselogger.info("\nData split sizes:")
 baselogger.info(f"Train set: {len(train_idx)} hypergraphs")
 baselogger.info(f"Val set: {len(val_idx)} hypergraphs")
 baselogger.info(f"Test set: {len(test_idx)} hypergraphs")
@@ -637,7 +636,7 @@ baselogger.info(f"Number of completed runs: {len(test_accs)}")
 baselogger.info(f"Best validation accuracy: {max(best_val_accs):.2f}%")
 baselogger.info(f"Best test accuracy: {max(best_test_accs):.2f}%")
 
-print(f"\nSplit Information:")
+print("\nSplit Information:")
 print(f"Train set size: {len(train_idx)}")
 print(f"Test set size: {len(test_idx)}")
 

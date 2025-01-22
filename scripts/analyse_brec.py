@@ -4,7 +4,6 @@ It is used to compare the encodings of the graphs in the BREC dataset.
 """
 
 import os
-from itertools import permutations
 
 import hypernetx as hnx
 import matplotlib.pyplot as plt
@@ -17,7 +16,6 @@ from torch_geometric.utils import to_networkx
 
 from encodings_hnns.check_encodings_same import (
     checks_encodings,
-    find_encoding_match,
     find_isomorphism_mapping,
 )
 from encodings_hnns.encodings import HypergraphEncodings
@@ -126,7 +124,7 @@ def plot_hypergraph_pair(
         font_size=12,
         font_weight="bold",
     )
-    plt.title(f"Graph A Bipartite")
+    plt.title("Graph A Bipartite")
 
     # Plot second bipartite
     plt.subplot(426)
@@ -144,7 +142,7 @@ def plot_hypergraph_pair(
         font_size=12,
         font_weight="bold",
     )
-    plt.title(f"Bipartite B")
+    plt.title("Bipartite B")
 
     # Row 4: Hyperedge size distributions
     # Plot first histogram
@@ -202,12 +200,12 @@ def plot_hypergraph_pair(
     stats_text = [
         f"Graph A: {len(hg1['hypergraph'])} hyperedges",
         f"Graph B: {len(hg2['hypergraph'])} hyperedges",
-        f"\nHyperedge sizes Graph A:",
+        "\nHyperedge sizes Graph A:",
         *[
             f"Size {len(v)}: {sum(1 for e in hg1['hypergraph'].values() if len(e) == len(v))}"
             for v in hyperedge_sizes1
         ],
-        f"\nHyperedge sizes Graph B:",
+        "\nHyperedge sizes Graph B:",
         *[
             f"Size {len(v)}: {sum(1 for e in hg2['hypergraph'].values() if len(e) == len(v))}"
             for v in hyperedge_sizes2

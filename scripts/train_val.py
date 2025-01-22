@@ -12,7 +12,6 @@ import time
 from random import sample
 
 import config
-import matplotlib.pyplot as plt
 import numpy as np
 import path
 import torch
@@ -119,7 +118,7 @@ X, Y, G = fetch_data(
 )
 print(f"X are the features \n {X} \n with shape {X.shape}")
 print(f"Y are the labels \n {Y}")
-print(f"G is the hg")
+print("G is the hg")
 V, E, degE, degV, degE2 = calculate_V_E(X, G, args)
 
 
