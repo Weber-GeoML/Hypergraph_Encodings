@@ -1,35 +1,17 @@
+"""Wrapper for comparing encodings between two (hyper)graphs"""
+
 import os
 
-import hypernetx as hnx
-import matplotlib.pyplot as plt
-import networkx as nx
-import numpy as np
-import torch
-from brec.dataset import BRECDataset
 from torch_geometric.data import Data
-from torch_geometric.utils import to_networkx
 
-from brec_analysis.check_encodings_same import (
-    checks_encodings,
-    find_isomorphism_mapping,
-)
-from brec_analysis.plotting_graphs_and_hgraphs_for_brec import (
-    plot_graph_pair,
-    plot_hypergraph_pair,
-)
-from brec_analysis.utils_for_brec import (
-    convert_nx_to_hypergraph_dict,
-    create_comparison_table,
-    create_output_dirs,
-)
+from brec_analysis.check_encodings_same import checks_encodings
 from encodings_hnns.encodings import HypergraphEncodings
-from encodings_hnns.liftings_and_expansions import lift_to_hypergraph
 
 
 def compare_encodings(
     hg1: Data,
     hg2: Data,
-    pair_idx: str,
+    pair_idx: str | int,
     category: str,
     is_isomorphic: bool,
     level: str = "graph",

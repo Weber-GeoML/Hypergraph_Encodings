@@ -1,20 +1,11 @@
+"""Utility functions for the BREC dataset"""
+
 import os
 
-import hypernetx as hnx
-import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import torch
-from brec.dataset import BRECDataset
-from torch_geometric.data import Data
-from torch_geometric.utils import to_networkx
 
-from brec_analysis.check_encodings_same import (
-    checks_encodings,
-    find_isomorphism_mapping,
-)
-from encodings_hnns.encodings import HypergraphEncodings
-from encodings_hnns.liftings_and_expansions import lift_to_hypergraph
 
 
 def create_output_dirs() -> None:
@@ -30,7 +21,15 @@ def create_output_dirs() -> None:
 
 
 def convert_nx_to_hypergraph_dict(G: nx.Graph) -> dict:
-    """Convert NetworkX graph to hypergraph dictionary format"""
+    """Convert NetworkX graph to hypergraph dictionary format
+    
+    Args:
+        G (nx.Graph):
+            The NetworkX graph to convert.
+
+    Returns:
+        dict: The hypergraph dictionary.
+    """
     hyperedges = {f"e_{i}": list(edge) for i, edge in enumerate(G.edges())}
     n = G.number_of_nodes()
     features = torch.empty((n, 0))

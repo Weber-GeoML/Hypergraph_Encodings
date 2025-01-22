@@ -1,19 +1,13 @@
+"""Plotting functions for the BREC dataset"""
+
 import os
 
 import hypernetx as hnx
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
-import torch
-from brec.dataset import BRECDataset
-from torch_geometric.data import Data
-from torch_geometric.utils import to_networkx
 
-from brec_analysis.check_encodings_same import (
-    checks_encodings,
-    find_isomorphism_mapping,
-)
-from brec_analysis.utils_for_brec import create_comparison_table, create_output_dirs
+from brec_analysis.utils_for_brec import create_comparison_table
 
 
 def plot_hypergraph_pair(
