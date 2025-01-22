@@ -25,7 +25,7 @@ def find_encoding_match(encoding1, encoding2, verbose=True):
         return False, None, None
     
     # First check if the encodings are identical
-    if np.allclose(encoding1, encoding2, rtol=1e-10):
+    if np.allclose(encoding1, encoding2, rtol=1e-13):
         # Return identity permutation if encodings are identical
         print("Free lunch!")
         n_rows = encoding1.shape[0]
@@ -73,14 +73,14 @@ def find_encoding_match(encoding1, encoding2, verbose=True):
     if n_rows <= 10:  # Adjust this threshold based on your needs
         for perm in permutations(range(n_rows)):
             permuted = encoding1[list(perm), :]
-            if np.allclose(permuted, encoding2, rtol=1e-10):
+            if np.allclose(permuted, encoding2, rtol=1e-13):
                 return True, permuted, perm
     else:
         # For larger matrices, use a heuristic approach
         # Sort rows lexicographically and compare
         sorted1 = encoding1[np.lexsort(encoding1.T)]
         sorted2 = encoding2[np.lexsort(encoding2.T)]
-        if np.allclose(sorted1, sorted2):
+        if np.allclose(sorted1, sorted2, rtol=1e-13):
             # Find the permutation that was applied
             perm = np.argsort(np.lexsort(encoding1.T))
             return True, sorted1, perm
@@ -113,32 +113,38 @@ def plot_matched_encodings(encoding1, encoding2, ax1, ax2, ax3, name1="Graph A",
         print("**-"*20)
     
     if is_direct_match:
-        im1 = ax1.imshow(permuted, cmap="viridis")
-        im2 = ax2.imshow(encoding2, cmap="viridis")
+        vmin = min(np.min(permuted), np.min(encoding2))
+        vmax = max(np.max(permuted), np.max(encoding2))
+        im1 = ax1.imshow(permuted, cmap="viridis", vmin=vmin, vmax=vmax)
+        im2 = ax2.imshow(encoding2, cmap="viridis", vmin=vmin, vmax=vmax)
         diff = np.abs(permuted - encoding2)
         # add the min and max value of the encoding to the title
         ax1.set_title(f"{name1}\n(Permuted to match {name2}) \n min: {np.min(permuted):.2e}, max: {np.max(permuted):.2e}")
     else:
-        im1 = ax1.imshow(encoding1, cmap="viridis")
-        im2 = ax2.imshow(encoding2, cmap="viridis")
+        vmin = min(np.min(encoding1), np.min(encoding2))
+        vmax = max(np.max(encoding1), np.max(encoding2))
+        im1 = ax1.imshow(encoding1, cmap="viridis", vmin=vmin, vmax=vmax)
+        im2 = ax2.imshow(encoding2, cmap="viridis", vmin=vmin, vmax=vmax)
         diff = encoding1 - encoding2
         # add the min and max value of the encoding to the title
-        ax1.set_title(f"{name1}\n(Original ordering) \n min: {np.min(encoding1):.2e}, max: {np.max(encoding1):.2e}")
+        ax1.set_title(f"{name1}\n(Original ordering) \n min: {np.min(encoding1):.4e}, max: {np.max(encoding1):.4e}")
     
     # Plot difference matrix
-    im3 = ax3.imshow(diff, cmap="Blues")  # Using Reds colormap to highlight differences
+    im3 = ax3.imshow(diff, cmap="Blues")  # Using Blues colormap to highlight differences
     
     # add the min and max value of the encoding two to the title
     ax2.set_title(f"{name2}\n(min: {np.min(encoding2):.2e}, max: {np.max(encoding2):.2e})")
     
     # Check if difference is uniformly zero
     if np.allclose(diff, np.zeros_like(diff)):
+        # replace any value whose absolute value is less than 1e-13 with 0
+        diff = np.where(np.abs(diff) < 1e-13, 0, diff)
         ax3.set_title("Absolute Difference\n(Uniformly Zero)")
     else:
         # Get max absolute values for both encodings
         max_abs1 = np.max(np.abs(encoding1))
         max_abs2 = np.max(np.abs(encoding2))
-        ax3.set_title(f"Difference\nMax abs values: {max_abs1:.2e} vs {max_abs2:.2e}\n Mean abs values: {np.mean(np.abs(encoding1)):.2e} vs {np.mean(np.abs(encoding2)):.2e}")
+        ax3.set_title(f"Difference\nMax abs values: {max_abs1:.4e} vs {max_abs2:.4e}\n Mean abs values: {np.mean(np.abs(encoding1)):.4e} vs {np.mean(np.abs(encoding2)):.4e} \n Min abs values: {np.min(np.abs(encoding1)):.4e} vs {np.min(np.abs(encoding2)):.4e}")
     
     # Add colorbars
     plt.colorbar(im1, ax=ax1)
@@ -163,18 +169,18 @@ def plot_matched_encodings(encoding1, encoding2, ax1, ax2, ax3, name1="Graph A",
     # Determine match status
     match_status = []
     if is_direct_match:
-        match_status.append(r"${\bf [MATCH]}$")
+        match_status.append(r"${ \bf [MATCH]}$")
     elif is_same_up_to_scaling:
-        match_status.append(r"${\bf [SCALED\ MATCH]}$")
+        match_status.append(r"${ \bf [SCALED\ MATCH]}$")
         scale_info = f" (scaled by {scaling_factor:.2e})"
     else:
         match_status.append(r"${\bf [NO\ MATCH]}$")
 
     # Add match status to the main title
     if title:
-        title = f"{graph_type} {title}" + "\n".join(match_status)
+        title = f"{graph_type} {title} \n " + "\n".join(match_status)
     else:
-        title = f"{graph_type}" + "\n".join(match_status)
+        title = f"{graph_type} \n " + "\n".join(match_status)
     plt.suptitle(title, y=1.05)
     
     return is_direct_match, permuted, perm
@@ -203,7 +209,8 @@ def checks_encodings(
     is_isomorphic: bool = None,
     node_mapping: dict = None,
     graph_type: str = "Graph",
-    k: int = 1
+    k: int = 3,
+    verbose: bool = False,
 ) -> dict:
     """Check if two graphs have the same encodings. Returns comparison results."""
     
@@ -225,7 +232,7 @@ def checks_encodings(
         hg1_lape, L1 = compute_laplacian(hg1, lap_type)
         hg2_lape, L2 = compute_laplacian(hg2, lap_type)
         
-        # Compute eigendecomposition
+        # Compute eigendecomposition of Laplacian matrices
         eigenvalues1, eigenvectors1 = np.linalg.eigh(L1)  # Using eigh for symmetric matrices
         eigenvalues2, eigenvectors2 = np.linalg.eigh(L2)
         
@@ -321,11 +328,11 @@ def checks_encodings(
         # Check isospectrality
         are_isospectral = check_isospectrality(eigenvalues1, eigenvalues2)
         if not are_isospectral:
-            print(f"\n🚫 The two graphs are not isospectral for {name_of_encoding}")
+            print(f"\n🚫 The two graphs are not isospectral for {name_of_encoding} at {graph_type}")
         else:
             print(f"\n🟢 The two graphs are isospectral for {name_of_encoding}")
         # print is same properties with box
-        print(f"\n{'🟢' if same_properties else '⛔️'} Properties comparison for {name_of_encoding} \n")
+        print(f"\n{'🟢' if same_properties else '⛔️'} Properties comparison for {name_of_encoding} at {graph_type} \n")
         
         # Store results for eigenvalues and eigenvectors
         comparison_result["eigenvalues"] = {"is_isospectral": are_isospectral}
@@ -335,11 +342,69 @@ def checks_encodings(
             scaling_factor if is_same_up_to_scaling else None
         )
         comparison_result["properties"] = {"same": same_properties}
+
+        # 
+        debug = False
+        if debug:
+            # TODO: cleaan up
+            print('*'*100)
+            print(f"DEBUG: {graph_type}")
+            print('*'*100)
+
+            # Handle encodings
+            hg1_encodings = get_encodings(hg1, encoder_shrikhande, name_of_encoding, k=k)
+            hg2_encodings = get_encodings(hg2, encoder_rooke, name_of_encoding, k=k)
+
+            keep_first_column = True
+
+            if keep_first_column:
+                print(f"Truncating encodings to first 2 columns at {graph_type}")
+
+                # Keep the first 2 columns od each encoding
+                hg1_encodings["features"] = hg1_encodings["features"][:, :1]
+                hg2_encodings["features"] = hg2_encodings["features"][:, :1]
+
+            print(f"features: \n {hg1_encodings['features']}")
+            print(f"features: \n {hg2_encodings['features']}")
+
+            # Plot and get match results
+            is_direct_match, permuted, perm = plot_matched_encodings(
+                hg1_encodings["features"],
+                hg2_encodings["features"],
+                ax1, ax2, ax3,
+                name1, name2,
+                modified_name,  # Pass modified name as title
+                graph_type
+            )
+            
+            # Check for scaled match
+            is_scaled_match, scaling_factor, _, _ = check_encodings_same_up_to_scaling(
+                hg1_encodings["features"],
+                hg2_encodings["features"],
+                verbose=False
+            )
+
+            # Print results 
+            print_comparison_results(is_direct_match, name_of_encoding, perm, permuted, 
+                                {"features": hg1_encodings["features"]}, {"features": hg2_encodings["features"]})
+            
+            print('*'*100)
+            print(f"END DEBUG: {graph_type}")
+            print('*'*100)
+
+
         
     else:
         # Handle other encodings
         hg1_encodings = get_encodings(hg1, encoder_shrikhande, name_of_encoding, k=k)
         hg2_encodings = get_encodings(hg2, encoder_rooke, name_of_encoding, k=k)
+
+
+        if verbose:
+            # print the feature name and the encoding name
+            print(f"features: \n {hg1_encodings['features']}")
+            print(f"features: \n {hg2_encodings['features']}")
+            print(f"Encoding name: {name_of_encoding}")
         
         
         # Plot and get match results
@@ -511,11 +576,13 @@ def get_encodings(hg, encoder, name_of_encoding, k=1):
     """Helper function to get the appropriate encodings based on type."""
     if name_of_encoding == "LDP":
         return encoder.add_degree_encodings(hg.copy(), verbose=False)
-    elif name_of_encoding == "LAPE":
-        return encoder.add_laplacian_encodings(hg.copy(), type="Normalized", verbose=False, use_same_sign=True)
     elif name_of_encoding == "RWPE":
         # Add k to the name for random walks
+        # TODO: fix two things. First, there are ones that should not be there.
+        # TODO Two: pass in k through the all pipeline
         name_of_encoding = f"RWPE-k{k}"
+        print(f"Adding random walk encodings with k={k} for {name_of_encoding}")
+        print(f"features: \n {hg['features']}")
         return encoder.add_randowm_walks_encodings(hg.copy(), rw_type="WE", verbose=False, k=k)
     elif name_of_encoding == "LCP-ORC":
         return encoder.add_curvature_encodings(hg.copy(), verbose=False, type="ORC")
@@ -594,6 +661,7 @@ def compute_laplacian(hg, lap_type):
         L = encoder.laplacian.hodge_laplacian_down
     
     hg_lape = encoder.add_laplacian_encodings(hg.copy(), type=lap_type, verbose=False, use_same_sign=True)
+    del encoder
     return hg_lape, L
 
 def check_encodings_same_up_to_scaling(encoding1, encoding2, verbose=True):
@@ -622,6 +690,13 @@ def check_encodings_same_up_to_scaling(encoding1, encoding2, verbose=True):
         if verbose:
             print("✅ Encodings match directly (no scaling needed)")
         return True, 1.0, perm, permuted
+    
+    # First try direct match with -1 scaling
+    is_match, permuted, perm = find_encoding_match(encoding1, -encoding2, verbose=verbose)
+    if is_match:
+        if verbose:
+            print("✅ Encodings match directly (with -1 scaling)")
+        return True, -1.0, perm, permuted
 
     # If no direct match, try scaling
     max_abs1 = np.max(np.abs(encoding1))
@@ -682,6 +757,7 @@ def analyze_graph_pair(data1, data2, pair_idx, category, is_isomorphic):
         "graph_level": {},
         "hypergraph_level": {}
     }
+
     
     # List of encodings to check
     k_dependent_encodings = ["RWPE", "LAPE-RW"]
