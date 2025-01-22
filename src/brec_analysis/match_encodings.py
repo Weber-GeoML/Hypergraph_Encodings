@@ -14,12 +14,11 @@ import numpy as np
 from torch_geometric.data import Data
 
 from brec_analysis.laplacians_specific_functions import (
-    reconstruct_matrix,
     check_isospectrality,
     compute_laplacian,
+    reconstruct_matrix,
 )
 from brec_analysis.plotting_encodings_for_brec import save_comparison_plot
-
 from encodings_hnns.encodings import HypergraphEncodings
 from encodings_hnns.laplacians import Laplacians
 
@@ -36,11 +35,11 @@ def find_encoding_match(
         encoding2: numpy array of shape (n, d)
 
     Returns:
-        is_match: 
+        is_match:
             whether the two encodings are the same (up to row permutations)
-        permuted_encoding1: 
+        permuted_encoding1:
             the permuted encoding of encoding1
-        permutation: 
+        permutation:
             the permutation that was applied
     """
     if encoding1.shape != encoding2.shape:
@@ -138,13 +137,13 @@ def check_encodings_same_up_to_scaling(
         verbose: whether to print diagnostic information
 
     Returns:
-        is_same: 
+        is_same:
             bool indicating if encodings are the same up to scaling and permutation
-        scaling_factor: 
+        scaling_factor:
             float, the scaling factor that makes them match (None if no match)
-        permutation: 
+        permutation:
             the permutation that was applied (None if no match)
-        permuted_encoding: 
+        permuted_encoding:
             the permuted and scaled encoding1 (None if no match)
     """
     if encoding1.shape != encoding2.shape:

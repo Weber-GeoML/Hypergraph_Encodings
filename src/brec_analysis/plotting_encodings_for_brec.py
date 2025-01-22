@@ -11,6 +11,7 @@ from torch_geometric.data import Data
 from encodings_hnns.encodings import HypergraphEncodings
 from encodings_hnns.laplacians import Laplacians
 
+
 def save_comparison_plot(
     plt: plt.Axes,
     plot_dir: str,

@@ -9,13 +9,15 @@ import numpy as np
 from torch_geometric.data import Data
 
 from brec_analysis.laplacians_specific_functions import (
-    reconstruct_matrix,
     check_isospectrality,
     compute_laplacian,
+    reconstruct_matrix,
+)
+from brec_analysis.match_encodings import (
+    check_encodings_same_up_to_scaling,
+    find_encoding_match,
 )
 from brec_analysis.plotting_encodings_for_brec import save_comparison_plot
-from brec_analysis.match_encodings import find_encoding_match, check_encodings_same_up_to_scaling
-
 from encodings_hnns.encodings import HypergraphEncodings
 from encodings_hnns.laplacians import Laplacians
 
@@ -47,11 +49,11 @@ def plot_matched_encodings(
             string indicating "Graph" or "Hypergraph"
 
     Returns:
-        is_direct_match: 
+        is_direct_match:
             whether the encodings are the same
-        permuted: 
+        permuted:
             the permuted encoding of encoding1
-        perm: 
+        perm:
             the permutation that was applied
     """
     is_direct_match, permuted, perm = find_encoding_match(encoding1, encoding2)
@@ -460,20 +462,19 @@ def checks_encodings(
     return comparison_result
 
 
-
 def get_encodings(
     hg: Data, encoder: HypergraphEncodings, name_of_encoding: str, k: int = 1
 ) -> dict:
     """Helper function to get the appropriate encodings based on type.
 
     Args:
-        hg: 
+        hg:
             the hypergraph
-        encoder: 
+        encoder:
             the encoder
-        name_of_encoding: 
+        name_of_encoding:
             the name of the encoding
-        k: 
+        k:
             the k value for the encoding
 
     Returns:

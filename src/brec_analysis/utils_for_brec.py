@@ -7,7 +7,6 @@ import numpy as np
 import torch
 
 
-
 def create_output_dirs() -> None:
     """Create output directories for plots and results"""
     dirs = [
@@ -22,7 +21,7 @@ def create_output_dirs() -> None:
 
 def convert_nx_to_hypergraph_dict(G: nx.Graph) -> dict:
     """Convert NetworkX graph to hypergraph dictionary format
-    
+
     Args:
         G (nx.Graph):
             The NetworkX graph to convert.
@@ -76,6 +75,7 @@ def create_comparison_table(stats1: dict, stats2: dict) -> tuple[list[str], list
         colors.append("red" if is_different else "black")
 
     return table_text, colors
+
 
 # Save matrices in pmatrix format
 def matrix_to_pmatrix(matrix) -> str:
