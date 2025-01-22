@@ -1,3 +1,10 @@
+[![Pylint](https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/pylint.yml/badge.svg)](https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/pylint.yml)
+
+
+[![pytest](https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/pytest.yml/badge.svg)](https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/pytest.yml)
+
+[![Python package](https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/python-package.yml/badge.svg)](https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/python-package.yml)
+
 # Hypergraph_Encodings
 
 ## Organisation of repo
