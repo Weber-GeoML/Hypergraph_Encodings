@@ -13,9 +13,25 @@ from brec_analysis.plotting_graphs_and_hgraphs_for_brec import plot_graph_pair, 
 from brec_analysis.compare_encodings_wrapper import compare_encodings_wrapper
 from brec_analysis.match_status import MatchStatus
 import json
+import matplotlib.pyplot as plt
+import os
+import click
+from brec_analysis.encodings_to_check import ENCODINGS_TO_CHECK
+import multiprocessing as mp
+from functools import partial
+
+# Define categories and their ranges
+part_dict: dict[str, tuple[int, int]] = {
+    # "Basic": (0, 60),
+    "Regular": (60, 160),
+    "Extension": (160, 260),
+    "CFI": (260, 360),
+    "4-Vertex_Condition": (360, 380),
+    "Distance_Regular": (380, 400),
+}
 
 def analyze_graph_pair(
-    data1: Data, data2: Data, pair_idx: int|str, category: str, is_isomorphic: bool
+    data1: Data, data2: Data, pair_idx: int|str, category: str, is_isomorphic: bool, encoding: str
 ) -> dict:
     """Analyze a pair of graphs: plot them and compare their encodings
     
@@ -30,6 +46,8 @@ def analyze_graph_pair(
             The category of the pair.
         is_isomorphic (bool):
             Whether the graphs are isomorphic.
+        encoding (str):
+            The encoding to use.
     """
     # Convert PyG data to NetworkX graphs
     G1 = to_networkx(data1, to_undirected=True)
@@ -64,7 +82,7 @@ def analyze_graph_pair(
     hg2 = convert_nx_to_hypergraph_dict(G2)
 
     # Initialize the results structure
-    final_results = {
+    final_results : dict = {
         "pair_idx": pair_idx,
         "category": category,
         "is_isomorphic": is_isomorphic,
@@ -114,8 +132,9 @@ def analyze_graph_pair(
         pair_idx,
         category,
         is_isomorphic,
-        "hypergraph",
-        node_mapping,
+        level="hypergraph",
+        node_mapping=node_mapping,
+        encoding_type=encoding,
     )
     final_results["hypergraph_level"]["encodings"] = hypergraph_results["encodings"]
 
@@ -139,7 +158,7 @@ def write_results(f, results: dict, json_results: dict) -> None:
         
         for encoding_type, result in results[level]["encodings"].items():
             # Write to text file
-            f.write(f"\n=== {result['description']} ===\n")
+            f.write(f"\n=== {result[level]['encodings']} ===\n")
             is_same = result['status'] in [MatchStatus.EXACT_MATCH, MatchStatus.SCALED_MATCH]
             f.write(f"Result: {'Same' if is_same else 'Different'}\n")
             if result['status'] == MatchStatus.SCALED_MATCH:
@@ -157,71 +176,255 @@ def write_results(f, results: dict, json_results: dict) -> None:
             if not is_same:
                 json_results[category][encoding_key]['different'] += 1
 
-def main() -> None:
-    """Main function to analyse the BREC dataset"""
-    create_output_dirs()
-    dataset = BRECDataset()
+def plot_disconnected_pair(G1: nx.Graph, G2: nx.Graph, pair_idx: int, category: str) -> None:
+    """Plot a pair of graphs side by side, highlighting their connectivity status.
     
-    # Create results files
-    results_file = "results/all_comparisons.txt"
-    json_file = "results/statistics.json"
+    Args:
+        G1: First graph
+        G2: Second graph
+        pair_idx: Index of the pair
+        category: Category of the pair
+    """
+    plt.figure(figsize=(12, 5))
+    
+    # Plot first graph
+    plt.subplot(121)
+    pos1 = nx.spring_layout(G1, seed=42)
+    
+    # Color nodes based on connected components for G1
+    components1 = list(nx.connected_components(G1))
+    colors1 = [f'C{i}' for i in range(len(components1))]
+    node_colors1 = ['white'] * G1.number_of_nodes()
+    for comp_idx, component in enumerate(components1):
+        for node in component:
+            node_colors1[node] = colors1[comp_idx]
+    
+    nx.draw(G1, pos1, node_color=node_colors1, 
+           with_labels=True, node_size=500, 
+           edgecolors='black', linewidths=1)
+    plt.title(f'Graph 1 ({len(components1)} components)')
+    
+    # Plot second graph
+    plt.subplot(122)
+    pos2 = nx.spring_layout(G2, seed=42)
+    
+    # Color nodes based on connected components for G2
+    components2 = list(nx.connected_components(G2))
+    colors2 = [f'C{i}' for i in range(len(components2))]
+    node_colors2 = ['white'] * G2.number_of_nodes()
+    for comp_idx, component in enumerate(components2):
+        for node in component:
+            node_colors2[node] = colors2[comp_idx]
+    
+    nx.draw(G2, pos2, node_color=node_colors2, 
+           with_labels=True, node_size=500, 
+           edgecolors='black', linewidths=1)
+    plt.title(f'Graph 2 ({len(components2)} components)')
+    
+    # Add overall title
+    plt.suptitle(f'Disconnected Pair {pair_idx} ({category})', y=1.05)
+    
+    # Save the plot
+    plot_dir = "plots/disconnected_pairs"
+    os.makedirs(plot_dir, exist_ok=True)
+    plt.savefig(f"{plot_dir}/pair_{pair_idx}_{category.lower()}.png", 
+                bbox_inches='tight', dpi=300)
+    plt.close()
+
+
+# create a function that runs through every pair in BREC, and
+# check wehther the graphs are connected.
+# keep count of connected and disconnected pairs by category
+def check_connectivity_stats(dataset: BRECDataset) -> dict:
+    """Check connectivity of all graph pairs in BREC dataset."""
+    connectivity_stats : dict= {}
+        
+    # Initialize statistics
+    for category in part_dict:
+        connectivity_stats[category] = {
+            'connected': 0,
+            'disconnected': 0,
+            'total_pairs': 0
+        }
+    
+    # Check each pair in each category
+    for category, (start, end) in part_dict.items():
+        print(f"\nChecking connectivity for {category} category...")
+        for pair_idx in range(start, end):
+            # Get both graphs in the pair
+            G1 = to_networkx(dataset[pair_idx * 2], to_undirected=True)
+            G2 = to_networkx(dataset[pair_idx * 2 + 1], to_undirected=True)
+            
+            # Check connectivity
+            is_G1_connected = nx.is_connected(G1)
+            is_G2_connected = nx.is_connected(G2)
+            
+            connectivity_stats[category]['total_pairs'] += 1
+            
+            # If both graphs are connected
+            if is_G1_connected and is_G2_connected:
+                connectivity_stats[category]['connected'] += 1
+            else:
+                connectivity_stats[category]['disconnected'] += 1
+                # Print which graphs are disconnected and plot them
+                if not is_G1_connected and not is_G2_connected:
+                    print(f"  Pair {pair_idx}: Both graphs are disconnected")
+                elif not is_G1_connected:
+                    print(f"  Pair {pair_idx}: First graph is disconnected")
+                else:
+                    print(f"  Pair {pair_idx}: Second graph is disconnected")
+                
+                # Plot the disconnected pair
+                plot_disconnected_pair(G1, G2, pair_idx, category)
+                print(f"  Plot saved to: plots/disconnected_pairs/pair_{pair_idx}_{category.lower()}.png")
+    
+    # Print summary
+    print("\nConnectivity Summary:")
+    print("-" * 60)
+    print(f"{'Category':<20} {'Connected':<12} {'Disconnected':<12} {'Total':<12}")
+    print("-" * 60)
+    
+    for category in connectivity_stats:
+        stats = connectivity_stats[category]
+        connected_percent = (stats['connected'] / stats['total_pairs']) * 100
+        print(f"{category:<20} {stats['connected']:<12} {stats['disconnected']:<12} {stats['total_pairs']:<12} ({connected_percent:.1f}% connected)")
+    
+    return connectivity_stats
+
+def process_pair(dataset: BRECDataset, encoding: str, pair_info: tuple) -> dict:
+    """Process a single pair of graphs."""
+    category, pair_idx = pair_info
+    print(f"\nDEBUG: Processing pair_info: {pair_info}")
+    print(f"DEBUG: Category: {category}, Pair Index: {pair_idx}")
+    print(f"DEBUG: Dataset indices: {pair_idx * 2} and {pair_idx * 2 + 1}")
+    
+    # Get both graphs and check connectivity
+    G1 = to_networkx(dataset[pair_idx * 2], to_undirected=True)
+    G2 = to_networkx(dataset[pair_idx * 2 + 1], to_undirected=True)
+    
+    # Check regularity for Regular category
+    if category == "Regular":
+        is_reg1, deg1 = is_regular(G1)
+        is_reg2, deg2 = is_regular(G2)
+        assert is_reg1, f"Graph 1 in Regular pair {pair_idx} is not regular! Degrees: {[d for _, d in G1.degree()]}"
+        assert is_reg2, f"Graph 2 in Regular pair {pair_idx} is not regular! Degrees: {[d for _, d in G2.degree()]}"
+        print(f"Regular graphs confirmed: degrees {deg1} and {deg2}")
+    
+    # Skip if either graph is disconnected
+    if not (nx.is_connected(G1) and nx.is_connected(G2)):
+        print(f"Skipping pair {pair_idx} ({category}): Contains disconnected graph(s)")
+        return None
+    
+    # Analyze connected pair
+    pair_results = analyze_graph_pair(
+        dataset[pair_idx * 2],
+        dataset[pair_idx * 2 + 1],
+        pair_idx,
+        category,
+        is_isomorphic=False,
+        encoding=encoding,
+    )
+    
+    return pair_results
+
+@click.command()
+@click.option(
+    '--encoding',
+    type=str,
+    default="LAPE-Normalized",
+    required=True,
+    help='Encoding to analyze (e.g., "LAPE-Normalized", "LDP", etc.)'
+)
+@click.option(
+    '--test-mode',
+    is_flag=True, # default is False
+    help='Run only 3 test pairs instead of full dataset'
+)
+@click.option(
+    '--num-workers',
+    type=int,
+    default=mp.cpu_count() - 2,
+    help='Number of worker processes to use'
+)
+def main(encoding: str, test_mode: bool, num_workers: int) -> None:
+    """Analyze BREC dataset with specified encoding."""
+    # Validate encoding
+    valid_encodings = [enc[0] for enc in ENCODINGS_TO_CHECK]
+    if encoding not in valid_encodings:
+        raise click.BadParameter(
+            f"Invalid encoding. Choose from: {', '.join(valid_encodings)}"
+        )
+    
+    print(f"\nAnalyzing BREC dataset with {encoding} encoding...")
+    print(f"Using {num_workers} worker processes")
+    
+    create_output_dirs()
+    dataset : BRECDataset = BRECDataset()
+    
+    # First check connectivity
+    print("\nAnalyzing connectivity of BREC dataset...")
+    connectivity_stats : dict= check_connectivity_stats(dataset)
+    
+    # Save connectivity stats to JSON
+    connectivity_file : str= "results/connectivity_stats.json"
+    with open(connectivity_file, 'w') as f:
+        json.dump(connectivity_stats, f, indent=2)
+    print(f"\nConnectivity statistics saved to: {connectivity_file}")
+    
+    # Create results files with encoding-specific names
+    results_file : str= f"results/comparisons_{encoding}.txt"
+    json_file : str= f"results/statistics_{encoding}.json"
     
     # Initialize JSON results
-    json_results = {}
+    json_results : dict= {}
     
     with open(results_file, "w") as f:
-        # First analyze Rook and Shrikhande graphs
-        print("\nAnalyzing Rook and Shrikhande graphs...")
+        if test_mode:
+            pairs_to_process : list[tuple[str, int]] = [
+                ("Basic", 0),
+                ("Basic", 1),
+                ("Basic", 2)
+            ]
+        else:
+            # Full analysis
+            pairs_to_process : list[tuple[str, int]] = [
+                (category, idx)
+                for category, (start, end) in part_dict.items()
+                for idx in range(start, end)
+            ]
 
-        # Load the graphs
-        rook = nx.read_graph6("rook_graph.g6")
-        shrikhande = nx.read_graph6("shrikhande.g6")
-
-        rook_data = nx_to_pyg(rook)
-        shrikhande_data = nx_to_pyg(shrikhande)
-
-        # Analyze as a special pair
-        print("Analyzing Rook vs Shrikhande")
-        special_results = analyze_graph_pair(
-            rook_data,
-            shrikhande_data,
-            pair_idx="rook_vs_shrikhande",
-            category="Special",
-            is_isomorphic=False,
-        )
-        write_results(f, special_results, json_results)
+        print("Pairs to process:", pairs_to_process)
         
-        # Then continue with BREC dataset analysis
-        part_dict: dict[str, tuple[int, int]] = {
-            "Basic": (0, 60),
-            "Regular": (60, 160),
-            "Extension": (160, 260),
-            "CFI": (260, 360),
-            "4-Vertex_Condition": (360, 380),
-            "Distance_Regular": (380, 400),
-        }
-
-        # Process pairs and collect results
-        for category, (start, end) in part_dict.items():
-            print(f"\nProcessing {category} category...")
-            for pair_idx in range(start, end):
-                pair_results = analyze_graph_pair(
-                    dataset[pair_idx * 2],
-                    dataset[pair_idx * 2 + 1],
-                    pair_idx,
-                    category,
-                    is_isomorphic=False,
-                )
-                write_results(f, pair_results, json_results)
+        # Print detailed information about pairs to process
+        print("\nDEBUG: Detailed pairs to process:")
+        for category, idx in pairs_to_process:
+            print(f"Category: {category}, Index: {idx}, Dataset indices: {idx * 2} and {idx * 2 + 1}")
+        
+        print(f"\nDEBUG: Total pairs to process: {len(pairs_to_process)}")
+        
+        # Create a pool of worker processes
+        with mp.Pool(num_workers) as pool:
+            # Create a partial function with fixed arguments
+            process_func = partial(process_pair, dataset, encoding)
+            
+            # Process pairs in parallel and collect results
+            results : list[dict] = []
+            for result in pool.imap_unordered(process_func, pairs_to_process):
+                if result is not None:  # Skip None results (disconnected pairs)
+                    results.append(result)
+            
+        # Write all results after parallel processing is complete
+        for result in results:
+            write_results(f, result, json_results)
         
         # Save JSON results with percentages
-        final_stats = {}
+        final_stats : dict= {}
         for category in json_results:
             final_stats[category] = {}
-            for encoding in json_results[category]:
-                stats = json_results[category][encoding]
+            for enc in json_results[category]:
+                stats = json_results[category][enc]
                 percentage = (stats['different'] / stats['total']) * 100 if stats['total'] > 0 else 0
-                final_stats[category][encoding] = round(percentage, 2)
+                final_stats[category][enc] = round(percentage, 2)
         
         # Save JSON file
         with open(json_file, 'w') as json_f:
@@ -234,8 +437,8 @@ def main() -> None:
 
 def generate_latex_table(stats: dict) -> None:
     """Generate LaTeX table from statistics."""
-    categories = ["Basic", "Regular", "Extension", "CFI", "4-Vertex_Condition"]
-    encodings = [
+    categories : list[str] = ["Basic", "Regular", "Extension", "CFI", "4-Vertex_Condition"]
+    encodings : list[str] = [
         "Graph (1-WL)",
         "Hypergraph (1-WL)",
         "Graph (LDP)",
@@ -248,7 +451,7 @@ def generate_latex_table(stats: dict) -> None:
         "Graph (Normalized LAPE)"
     ]
     
-    latex_file = "results/comparison_table.tex"
+    latex_file : str = "results/comparison_table.tex"
     with open(latex_file, 'w') as f:
         f.write("\\begin{table*}[h!]\n\\centering\n\\tiny\n")
         f.write("\\begin{tabular}{|l|" + "c|"*len(categories) + "}\n\\hline\n")
@@ -273,5 +476,27 @@ def generate_latex_table(stats: dict) -> None:
         
     print(f"\nLaTeX table saved to: {latex_file}")
 
+def is_regular(G: nx.Graph) -> tuple[bool, int]:
+    """Check if a graph is regular (all nodes have same degree).
+    
+    Args:
+        G: NetworkX graph
+        
+    Returns:
+        tuple[bool, int]: (is_regular, degree if regular else -1)
+    """
+    if len(G) == 0:  # Empty graph
+        return True, 0
+        
+    degrees = [d for _, d in G.degree()]
+    first_degree = degrees[0]
+    
+    # Check if all degrees are equal to the first degree
+    is_reg = all(d == first_degree for d in degrees)
+    
+    return is_reg, first_degree if is_reg else -1
+
 if __name__ == "__main__":
+    # Required for Windows compatibility
+    mp.freeze_support()
     main()

@@ -17,6 +17,7 @@ def compare_encodings_wrapper(
     is_isomorphic: bool,
     level: str = "graph",
     node_mapping: dict | None = None,
+    encoding_type: str = "LAPE-Normalized",
 ) -> dict:
     """Compare encodings between two (hyper)graphs.
 
@@ -33,6 +34,12 @@ def compare_encodings_wrapper(
             The category of the pair.
         is_isomorphic (bool):
             Whether the graphs are isomorphic.
+        level (str):
+            The level of the comparison: graph or hypergraph.
+        node_mapping (dict):
+            The node mapping between the two graphs.
+        encoding_type (str):
+            The type of encoding to use.
 
     Returns:
         dict:
@@ -53,28 +60,27 @@ def compare_encodings_wrapper(
 
     # TODO: here I want to loop through different values of k. 2, 3, 4, 20.
 
-    for encoding_type, description in ENCODINGS_TO_CHECK:
-        encoding_result = checks_encodings(
-            name_of_encoding=encoding_type,
-            hg1=hg1,
-            hg2=hg2,
-            encoder_number_one=encoder1,
-            encoder_number_two=encoder2,
-            name1="Graph A",
-            name2="Graph B",
-            save_plots=True,
-            plot_dir=f"plots/encodings/{level}/{pair_idx}",
-            pair_idx=pair_idx,
-            category=category,
-            is_isomorphic=is_isomorphic,
-            node_mapping=node_mapping,
-            graph_type=level,
-        )
-        results["encodings"][encoding_type] = {
-            "description": description,
-            "status": encoding_result["status"],
-            "scaling_factor": encoding_result.get("scaling_factor"),
-            "permutation": encoding_result.get("permutation"),
-        }
+
+    encoding_result = checks_encodings(
+        name_of_encoding=encoding_type,
+        hg1=hg1,
+        hg2=hg2,
+        encoder_number_one=encoder1,
+        encoder_number_two=encoder2,
+        name1="Graph A",
+        name2="Graph B",
+        save_plots=True,
+        plot_dir=f"plots/encodings/{level}/{pair_idx}",
+        pair_idx=pair_idx,
+        category=category,
+        is_isomorphic=is_isomorphic,
+        node_mapping=node_mapping,
+        graph_type=level,
+    )
+    results["encodings"][encoding_type] = {
+        "status": encoding_result["status"],
+        "scaling_factor": encoding_result.get("scaling_factor"),
+        "permutation": encoding_result.get("permutation"),
+    }
 
     return results

@@ -6,6 +6,6 @@ ENCODINGS_TO_CHECK = [
     # ("RWPE", "Random Walk Encodings"),
     # ("LCP-ORC", "Local Curvature Profile - ORC"),
     ("LAPE-Normalized", "Normalized Laplacian"),
-    ("LAPE-RW", "Random Walk Laplacian"),
-    ("LAPE-Hodge", "Hodge Laplacian"),
+    # ("LAPE-RW", "Random Walk Laplacian"),
+    # ("LAPE-Hodge", "Hodge Laplacian"),
 ]
