@@ -199,6 +199,8 @@ def get_regular_encodings(
     """
     hg1_encodings = get_encodings(hg1, encoder1, name, k_rwpe=k, k_lape=k)
     hg2_encodings = get_encodings(hg2, encoder2, name, k_rwpe=k, k_lape=k)
+    print(f"hg1_encodings: \n {hg1_encodings}")
+    print(f"hg2_encodings: \n {hg2_encodings}")
     return hg1_encodings["features"], hg2_encodings["features"]
 
 
@@ -218,7 +220,7 @@ def checks_encodings(
     node_mapping: dict = None,
     graph_type: str = "Graph",
     k: int = 3,
-    verbose: bool = False,
+    verbose: bool = True,
 ) -> dict:
     """Check if two graphs have the same encodings. Returns comparison results.
 
