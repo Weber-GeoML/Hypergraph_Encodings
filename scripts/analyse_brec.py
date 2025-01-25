@@ -21,32 +21,18 @@ from brec_analysis.plotting_graphs_and_hgraphs_for_brec import (
 from brec_analysis.compare_encodings_wrapper import compare_encodings_wrapper
 from brec_analysis.match_status import MatchStatus
 import json
-from brec_analysis.analyse_brec_categories import analyze_brec_categories
+from brec_analysis.analyse_brec_categories import (
+    analyze_brec_categories,
+    quick_eda_from_github,
+)
 from brec_analysis.southern_orc_example import southern_orc_example
+from brec_analysis.parse_click_args import parse_encoding, parse_categories
+from brec_analysis.categories_to_check import VALID_CATEGORIES, PART_DICT
 import click
 from brec_analysis.encodings_to_check import ENCODINGS_TO_CHECK
 import multiprocessing as mp
-
-# Define valid categories with their ranges
-VALID_CATEGORIES = [
-    ("basic", (0, 60), "Basic"),
-    ("regular", (60, 85), "Regular"),
-    ("str", (85, 135), "Strongly Regular"),
-    ("cfi", (135, 185), "CFI"),
-    ("extension", (185, 235), "Extension"),
-    ("4vtx", (235, 255), "4-Vertex Condition"),
-    ("dr", (255, 275), "Distance Regular"),
-]
-
-PART_DICT = {
-    "Basic": (0, 60),
-    "Regular": (60, 85),
-    "strongly regular": (85, 135),
-    "CFI": (135, 185),
-    "Extension": (185, 235),
-    "4-Vertex_Condition": (235, 255),
-    "Distance_Regular": (255, 275),
-}
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 def analyze_graph_pair(
@@ -251,24 +237,6 @@ def write_results(f, filepath_json, results: dict, json_results: dict) -> dict:
     return simple_result
 
 
-def quick_eda_from_github(graphs):
-    # Now you can analyze specific categories or pairs
-    # For example, analyze the first pair of basic graphs:
-    if "basic" in graphs:
-        G1, G2 = graphs["basic"][0], graphs["basic"][1]
-        print("\nAnalyzing first pair of basic graphs:")
-        print(f"G1: {G1.number_of_nodes()} nodes, {G1.number_of_edges()} edges")
-        print(f"G2: {G2.number_of_nodes()} nodes, {G2.number_of_edges()} edges")
-    if "regular" in graphs:
-        G1, G2 = graphs["regular"][0], graphs["regular"][1]
-        print("\nAnalyzing first pair of regular graphs:")
-        print(f"G1: {G1.number_of_nodes()} nodes, {G1.number_of_edges()} edges")
-        print(f"G2: {G2.number_of_nodes()} nodes, {G2.number_of_edges()} edges")
-        # degree distribution
-        print(f"G1 degree distribution: {G1.degree()}")
-        print(f"G2 degree distribution: {G2.degree()}")
-
-
 def rook_and_shrikhande_special_case() -> None:
     """Analyze the Rook and Shrikhande graphs"""
     # Create results files
@@ -307,283 +275,6 @@ def rook_and_shrikhande_special_case() -> None:
     json_path = "results/brec/rook_vs_shrikhande_statistics.json"
     with open(results_file, "w") as f:
         write_results(f, json_path, special_results, json_results)
-
-
-def parse_encoding(encodings: str) -> list[tuple[str, str]]:
-    """Parse encoding indices"""
-    # Parse encoding indices
-    try:
-        if "-" in encodings:
-            # Handle range format (e.g., "0-3")
-            start, end = map(int, encodings.split("-"))
-            encoding_indices = list(range(start, end + 1))
-            print(f"start: {start}, end: {end}, encoding_indices: {encoding_indices}")
-        else:
-            # Handle comma-separated format (e.g., "0,2,3")
-            encoding_indices = [int(i) for i in encodings.split(",")]
-
-        # Validate indices
-        max_idx = len(ENCODINGS_TO_CHECK) - 1
-        invalid_indices = [i for i in encoding_indices if i < 0 or i > max_idx]
-        if invalid_indices:
-            raise ValueError(
-                f"Invalid encoding indices: {invalid_indices}. "
-                f"Must be between 0 and {max_idx}"
-            )
-
-        # Select specified encodings
-        selected_encodings = [ENCODINGS_TO_CHECK[i] for i in encoding_indices]
-        return selected_encodings
-    except ValueError as e:
-        print(f"Error parsing encoding indices: {e}")
-        print("\nAvailable encodings:")
-        for i, (code, name) in enumerate(ENCODINGS_TO_CHECK):
-            print(f"{i}: {code} ({name})")
-        return
-
-
-def parse_categories(categories_str: str) -> list[str]:
-    """Parse category indices from string input.
-
-    Args:
-        categories_str: String containing category indices (e.g., "0" or "0,3" or "0-3")
-
-    Returns:
-        List of selected category names
-
-    Raises:
-        ValueError: If invalid indices are provided
-    """
-    try:
-        # Handle range format (e.g., "0-3")
-        if "-" in categories_str:
-            start, end = map(int, categories_str.split("-"))
-            category_indices = list(range(start, end + 1))
-        else:
-            # Handle comma-separated format (e.g., "0,2,3")
-            category_indices = [int(i) for i in categories_str.split(",")]
-
-        # Validate indices
-        max_idx = len(VALID_CATEGORIES) - 1
-        invalid_indices = [i for i in category_indices if i < 0 or i > max_idx]
-        if invalid_indices:
-            raise ValueError(
-                f"Invalid category indices: {invalid_indices}\n"
-                f"Must be between 0 and {max_idx}"
-            )
-
-        # Get selected categories
-        selected_categories = [VALID_CATEGORIES[i][0] for i in category_indices]
-
-        # Print selection info
-        print("\nSelected categories:")
-        for idx in category_indices:
-            code, range_, name = VALID_CATEGORIES[idx]
-            print(f"  {name} (range: {range_[0]}-{range_[1]})")
-
-        return selected_categories
-
-    except ValueError as e:
-        print(f"Error parsing category indices: {e}")
-        print("\nAvailable categories:")
-        for i, (code, range_, name) in enumerate(VALID_CATEGORIES):
-            print(f"{i}: {name} (range: {range_[0]}-{range_[1]})")
-        raise
-
-
-@click.command()
-@click.option(
-    "--encodings",
-    "-e",
-    help='Indices of encodings to check (e.g., "0" or "0,3" or "0-3")',
-    default="0",
-)
-@click.option(
-    "--categories",
-    "-c",
-    help='Indices of categories to analyze (e.g., "0" or "0,3" or "0-3")',
-    default="0",
-)
-def main(encodings: str, categories: str) -> None:
-    """Analyze BREC dataset with specified encodings and categories
-
-    Args:
-        encodings: Comma-separated indices or range (e.g., "0,2,3" or "0-3")
-        categories: Comma-separated categories to analyze (e.g., "basic,regular" or "all")
-    """
-
-    selected_encodings = parse_encoding(encodings)
-    selected_categories = parse_categories(categories)
-
-    print(f"Selected encodings: {selected_encodings}")
-    print(f"Selected categories: {selected_categories}")
-
-    create_output_dirs()
-
-    rook_and_shrikhande_special_case()
-
-    dataset_pip = BRECDataset()
-    print(f"Total number of graphs in BREC dataset: {len(dataset_pip)}")
-
-    # Get the graphs for analysis
-    graphs_read_from_files: dict[str, list[nx.Graph]] = analyze_brec_categories()
-    quick_eda_from_github(graphs_read_from_files)
-
-    # BREC with pip package
-    # help(BRECDataset)
-    # or
-    # from brec import __version__
-    # print(f"BREC version: {__version__}")
-
-    # print(f"Total number of graphs in BREC dataset: {len(dataset)}")
-
-    # # After loading dataset
-    # print("\nDataset Summary:")
-    # dataset_pip.print_summary()
-
-    # # We can also try to get the number of classes
-    # print(f"\nNumber of classes: {dataset_pip.num_classes}")
-
-    # # Since BREC contains pairs of graphs, let's show the breakdown
-    # num_pairs = len(dataset_pip) // 2
-    # print(f"Number of graph pairs: {num_pairs}")
-    # # After loading dataset
-    # first_graph = dataset_pip[0]
-    # print("First graph object:")
-    # print(first_graph)
-    # print("\nObject type:", type(first_graph))
-    # print("\nAvailable attributes:")
-    # for attr in dir(first_graph):
-    #     if not attr.startswith('_'):  # Skip private attributes
-    #         print(f"{attr}: {getattr(first_graph, attr)}")
-    # assert False
-
-    # Create results files
-    results_file = "results/brec/all_comparisons.txt"
-    json_file = "results/brec/statistics.json"
-
-    # Initialize JSON results
-    json_results: dict = {}
-
-    print("*-" * 25)
-    print("*-" * 25)
-    print("*-" * 25)
-    print("*-" * 25)
-    print("*-" * 25)
-    print("*-" * 25)
-    print("Systematically analyzing the BREC dataset")
-
-    # Create results directory first
-    create_output_dirs()
-
-    with open(results_file, "w") as f:
-
-        # Then continue with BREC dataset analysis
-        # After loading the dataset
-        # Show breakdown by category
-
-        print("\nBreakdown by category:")
-        for category, (start, end) in PART_DICT.items():
-            num_category_pairs = end - start
-            print(
-                f"{category}: {num_category_pairs} pairs ({num_category_pairs*2} graphs)"
-            )
-
-        pip = False
-        if pip:
-            # Process pairs and collect results
-            for category, (start, end) in PART_DICT.items():
-                print(f"\nProcessing {category} category...")
-                for pair_idx in range(start, end):
-                    pair_results = analyze_graph_pair(
-                        dataset[pair_idx * 2],
-                        dataset[pair_idx * 2 + 1],
-                        pair_idx,
-                        category,
-                        is_isomorphic=False,
-                        types_of_encoding=selected_encodings,
-                    )
-                    if len(selected_encodings) == 1:
-                        json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{pair_idx}_statistics.json"
-                        write_results(f, json_path, pair_results, json_results)
-
-        else:
-            print(f"Only checking these types of encodings: {selected_encodings}")
-            print(f"Only checking these categories: {selected_categories}")
-            total_pair_idx = 0  # Keep track of total pairs processed
-
-            for category, graphs in graphs_read_from_files.items():
-                if category not in selected_categories:
-                    print(f"Skipping {category} category")
-                    continue
-
-                print(f"\nProcessing {category} category...")
-                num_pairs_to_process = min(5, len(graphs) // 2)
-
-                if len(selected_encodings) == 1:
-                    # check if the json_path = f"results/brec/ran/{category}_pair_{total_pair_idx}_statistics.json"
-                    # already exists
-                    json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{total_pair_idx}_statistics.json"
-                    if os.path.exists(json_path):
-                        print(
-                            f"Skipping {category} category as {json_path} already exists"
-                        )
-                        continue
-
-                for local_pair_idx in range(num_pairs_to_process):
-                    g1 = graphs[local_pair_idx * 2]
-                    g2 = graphs[local_pair_idx * 2 + 1]
-
-                    # Skip if either graph has more than 20 nodes
-                    if g1.number_of_nodes() > 20 or g2.number_of_nodes() > 20:
-                        print(
-                            f"Skipping pair {local_pair_idx + 1}/5 in {category} "
-                            f"(too many nodes: G1={g1.number_of_nodes()}, "
-                            f"G2={g2.number_of_nodes()})"
-                        )
-                        continue
-
-                    print(
-                        f"Processing pair {local_pair_idx + 1}/5 in {category} "
-                        f"(global pair index: {total_pair_idx})"
-                    )
-
-                    pair_results = analyze_graph_pair(
-                        g1,
-                        g2,
-                        total_pair_idx,  # Use the global pair index
-                        category,
-                        is_isomorphic=False,
-                        already_in_nx=True,
-                        types_of_encoding=selected_encodings,
-                    )
-                    if len(selected_encodings) == 1:
-                        json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{total_pair_idx}_statistics.json"
-                        write_results(f, json_path, pair_results, json_results)
-
-                    total_pair_idx += 1  # Increment the global counter
-
-        # Save JSON results with percentages
-        final_stats: dict = {}
-        for category in json_results:
-            final_stats[category] = {}
-            for enc in json_results[category]:
-                stats = json_results[category][enc]
-                percentage = (
-                    (stats["different"] / stats["total"]) * 100
-                    if stats["total"] > 0
-                    else 0
-                )
-                final_stats[category][enc] = round(percentage, 2)
-
-        # Save JSON file
-        with open(json_file, "w") as json_f:
-            json.dump(final_stats, json_f, indent=2)
-
-        print(f"\nStatistics saved to: {json_file}")
-
-        # Generate LaTeX table
-        generate_latex_table(final_stats)
 
     # # Check each pair in each category
     # for category, (start, end) in PART_DICT.items():
@@ -685,7 +376,7 @@ def process_pair(dataset: BRECDataset, encoding: str, pair_info: tuple) -> dict:
     # connectivity_stats: dict = check_connectivity_stats(dataset)
 
     # # Save connectivity stats to JSON
-    # connectivity_file: str = "results/connectivity_stats.json"
+    # connectivity_file: str = "results/brec/connectivity_stats.json"
     # with open(connectivity_file, "w") as f:
     #     json.dump(connectivity_stats, f, indent=2)
     # print(f"\nConnectivity statistics saved to: {connectivity_file}")
@@ -762,6 +453,220 @@ def is_regular(G: nx.Graph) -> tuple[bool, int]:
     is_reg = all(d == first_degree for d in degrees)
 
     return is_reg, first_degree if is_reg else -1
+
+
+@click.command()
+@click.option(
+    "--encodings",
+    "-e",
+    help='Indices of encodings to check (e.g., "0" or "0,3" or "0-3")',
+    default="1",
+)
+@click.option(
+    "--categories",
+    "-c",
+    help='Indices of categories to analyze (e.g., "0" or "0,3" or "0-3")',
+    default="0-1",
+)
+def main(encodings: str, categories: str) -> None:
+    """Analyze BREC dataset with specified encodings and categories
+
+    Args:
+        encodings:
+            Comma-separated indices or range (e.g., "0,2,3" or "0-3")
+            Dictates which encodings to check
+        categories:
+            Comma-separated categories to analyze (e.g., "basic,regular" or "all")
+            Dictates which BREC categories to analyze
+    """
+
+    selected_encodings = parse_encoding(encodings)
+    selected_categories = parse_categories(categories)
+
+    print(f"Selected encodings: {selected_encodings}")
+    print(f"Selected categories: {selected_categories}")
+
+    create_output_dirs()
+
+    # rook_and_shrikhande_special_case()
+
+    # dataset_pip = BRECDataset()
+    # print(f"Total number of graphs in BREC dataset: {len(dataset_pip)}")
+
+    # Get the graphs for analysis
+    graphs_read_from_files: dict[str, list[nx.Graph]] = analyze_brec_categories()
+    quick_eda_from_github(graphs_read_from_files, verbose=False)
+
+    # BREC with pip package
+    # help(BRECDataset)
+    # or
+    # from brec import __version__
+    # print(f"BREC version: {__version__}")
+
+    # print(f"Total number of graphs in BREC dataset: {len(dataset)}")
+
+    # # After loading dataset
+    # print("\nDataset Summary:")
+    # dataset_pip.print_summary()
+
+    # # We can also try to get the number of classes
+    # print(f"\nNumber of classes: {dataset_pip.num_classes}")
+
+    # # Since BREC contains pairs of graphs, let's show the breakdown
+    # num_pairs = len(dataset_pip) // 2
+    # print(f"Number of graph pairs: {num_pairs}")
+    # # After loading dataset
+    # first_graph = dataset_pip[0]
+    # print("First graph object:")
+    # print(first_graph)
+    # print("\nObject type:", type(first_graph))
+    # print("\nAvailable attributes:")
+    # for attr in dir(first_graph):
+    #     if not attr.startswith('_'):  # Skip private attributes
+    #         print(f"{attr}: {getattr(first_graph, attr)}")
+    # assert False
+
+    # Create results files
+    results_file = f"results/brec/all_comparisons_encodings_{encodings}_categories_{categories}.txt"
+    json_file = (
+        f"results/brec/statistics_encodings_{encodings}_categories_{categories}.json"
+    )
+
+    print(f"results_file: {results_file}")
+    print(f"json_file: {json_file}")
+
+    # Initialize JSON results
+    json_results: dict = {}
+
+    print("*-" * 25)
+    print("*-" * 25)
+    print("*-" * 25)
+    print("*-" * 25)
+    print("*-" * 25)
+    print("*-" * 25)
+    print("Systematically analyzing the BREC dataset")
+
+    # Create results directory first
+    create_output_dirs()
+
+    with open(results_file, "w") as f:
+
+        # Then continue with BREC dataset analysis
+        # After loading the dataset
+        # Show breakdown by category
+
+        print("\nBreakdown by category:")
+        for category, (start, end) in PART_DICT.items():
+            num_category_pairs = end - start
+            print(
+                f"{category}: {num_category_pairs} pairs ({num_category_pairs*2} graphs)"
+            )
+
+        print(f"Only checking these types of encodings: {selected_encodings}")
+        print(f"Only checking these categories: {selected_categories}")
+
+        pip = False
+        if pip:
+            # Process pairs and collect results
+            for category, (start, end) in PART_DICT.items():
+                print(f"\nProcessing {category} category...")
+                for pair_idx in range(start, end):
+                    pair_results = analyze_graph_pair(
+                        dataset[pair_idx * 2],
+                        dataset[pair_idx * 2 + 1],
+                        pair_idx,
+                        category,
+                        is_isomorphic=False,
+                        types_of_encoding=selected_encodings,
+                    )
+                    if len(selected_encodings) == 1:
+                        json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{pair_idx}_statistics.json"
+                        write_results(f, json_path, pair_results, json_results)
+
+        else:
+            total_pair_idx = 0  # Keep track of total pairs processed
+
+            # looping over categories
+            for category, graphs in graphs_read_from_files.items():
+                if category not in selected_categories:
+                    print(f"Skipping {category} category")
+                    continue
+
+                print(f"\nProcessing {category} category...")
+                num_pairs_to_process = min(2, len(graphs) // 2)
+
+                if len(selected_encodings) == 1:
+                    # check if the json_path = f"results/brec/ran/{category}_pair_{total_pair_idx}_statistics.json"
+                    # already exists
+                    json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{total_pair_idx}_statistics.json"
+                    if os.path.exists(json_path):
+                        print(
+                            f"Skipping {category} category as {json_path} already exists"
+                        )
+                        continue
+
+                for local_pair_idx in range(num_pairs_to_process):
+                    g1 = graphs[local_pair_idx * 2]
+                    g2 = graphs[local_pair_idx * 2 + 1]
+
+                    # Skip if either graph has more than 20 nodes
+                    if g1.number_of_nodes() > 20 or g2.number_of_nodes() > 20:
+                        print(
+                            f"Skipping pair {local_pair_idx + 1}/5 in {category} "
+                            f"(too many nodes: G1={g1.number_of_nodes()}, "
+                            f"G2={g2.number_of_nodes()})"
+                        )
+                        continue
+
+                    print(
+                        f"Processing pair {local_pair_idx + 1}/5 in {category} "
+                        f"(global pair index: {total_pair_idx})"
+                    )
+
+                    pair_results = analyze_graph_pair(
+                        g1,
+                        g2,
+                        total_pair_idx,  # Use the global pair index
+                        category,
+                        is_isomorphic=False,
+                        already_in_nx=True,
+                        types_of_encoding=selected_encodings,
+                    )
+                    if len(selected_encodings) == 1:
+                        json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{total_pair_idx}_statistics.json"
+                        write_results(f, json_path, pair_results, json_results)
+
+                    total_pair_idx += 1  # Increment the global counter
+
+        # Save JSON results with percentages
+        # keys are categories
+        final_stats: dict = {}
+        # loop over categories
+        for category in json_results:
+            final_stats[category] = {}
+            # loop over encodings
+            for enc in json_results[category]:
+                # Get the statistics for this category-encoding combination
+                stats = json_results[category][enc]
+                # Calculate the percentage of graphs that were classified as different
+                # (number of different graphs / total number of graphs) * 100
+                # If no graphs were processed (total = 0), set percentage to 0
+                percentage: float = (
+                    (stats["different"] / stats["total"]) * 100
+                    if stats["total"] > 0
+                    else 0
+                )
+                final_stats[category][enc] = [round(percentage, 2), stats["total"]]
+
+        # all results (all pairs) for the chosen encodings and categories
+        # Save JSON file
+        with open(json_file, "w") as json_f:
+            json.dump(final_stats, json_f, indent=2)
+
+        print(f"\nStatistics saved to: {json_file}")
+
+        # Generate LaTeX table
+        generate_latex_table(final_stats)
 
 
 if __name__ == "__main__":
