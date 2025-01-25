@@ -1,13 +1,15 @@
 #!/bin/bash
 #SBATCH --job-name=brec_parallel       
 #SBATCH --array=0-48%4           # 7 encodings * 7 categories = 49 combinations, max 4 concurrent
-#SBATCH --time=24:00:00         
-#SBATCH --mem=16GB               
+#SBATCH --time=96:00:00         
+#SBATCH --mem=32GB               
 #SBATCH --output=sbatch_logs/brec_parallel_%A_%a.log  # %A is job ID, %a is array index
+#SBATCH --partition=mweber_gpu     
+#SBATCH --gpus=1                   # One GPU per task
 
-# Load modules and activate environment (adjust as needed)
+# Load modules and activate environment
 module load anaconda/2023.07
-source activate your_env_name
+source activate hgencodings_gpu_weber
 
 # Define ranges
 ENCODING_START=0
