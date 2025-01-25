@@ -11,7 +11,7 @@ setup(
         "pandas",
         "matplotlib",
         "torch",
-        "scipy==1.10.0",
+        "scipy",
         "torch-geometric",
         "torch-scatter",
         "torch-sparse",
@@ -24,6 +24,7 @@ setup(
         "brec",
         "imageio",
         "imageio-ffmpeg",
+        "POT",  # Python Optimal Transport library
     ],
     extras_require={
         "dev": [

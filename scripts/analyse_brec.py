@@ -3,36 +3,38 @@ This script is used to analyse the BREC dataset.
 It is used to compare the encodings of the graphs in the BREC dataset.
 """
 
+import json
+import multiprocessing as mp
+import os
+
+import click
 import networkx as nx
 from brec.dataset import BRECDataset
 from torch_geometric.data import Data
 from torch_geometric.utils import to_networkx
-from encodings_hnns.liftings_and_expansions import lift_to_hypergraph
-from brec_analysis.utils_for_brec import (
-    create_output_dirs,
-    convert_nx_to_hypergraph_dict,
-    nx_to_pyg,
-)
-import os
-from brec_analysis.plotting_graphs_and_hgraphs_for_brec import (
-    plot_graph_pair,
-    plot_hypergraph_pair,
-)
-from brec_analysis.compare_encodings_wrapper import compare_encodings_wrapper
-from brec_analysis.match_status import MatchStatus
-import json
+
 from brec_analysis.analyse_brec_categories import (
     analyze_brec_categories,
     quick_eda_from_github,
 )
-from brec_analysis.southern_orc_example import southern_orc_example
-from brec_analysis.parse_click_args import parse_encoding, parse_categories
-from brec_analysis.categories_to_check import VALID_CATEGORIES, PART_DICT
-import click
+from brec_analysis.categories_to_check import PART_DICT
+from brec_analysis.compare_encodings_wrapper import compare_encodings_wrapper
 from brec_analysis.encodings_to_check import ENCODINGS_TO_CHECK
-import multiprocessing as mp
-import matplotlib.pyplot as plt
-import numpy as np
+from brec_analysis.match_status import MatchStatus
+from brec_analysis.parse_click_args import parse_categories, parse_encoding
+from brec_analysis.isomorphism_mapping import find_isomorphism_mapping
+from brec_analysis.plotting_graphs_and_hgraphs_for_brec import (
+    plot_graph_pair,
+    plot_hypergraph_pair,
+)
+from brec_analysis.southern_orc_example import southern_orc_example
+from brec_analysis.statistics import generate_latex_table
+from brec_analysis.utils_for_brec import (
+    convert_nx_to_hypergraph_dict,
+    create_output_dirs,
+    nx_to_pyg,
+)
+from encodings_hnns.liftings_and_expansions import lift_to_hypergraph
 
 
 def analyze_graph_pair(
@@ -241,7 +243,7 @@ def rook_and_shrikhande_special_case() -> None:
     """Analyze the Rook and Shrikhande graphs"""
     # Create results files
     results_file = "results/brec/rook_vs_shrikhande_comparisons.txt"
-    json_file = "results/brec/rook_vs_shrikhande_statistics.json"
+    json_path = "results/brec/rook_vs_shrikhande_statistics.json"
 
     # Initialize JSON results
     json_results: dict = {}
@@ -272,7 +274,6 @@ def rook_and_shrikhande_special_case() -> None:
         category="Special",
         is_isomorphic=False,
     )
-    json_path = "results/brec/rook_vs_shrikhande_statistics.json"
     with open(results_file, "w") as f:
         write_results(f, json_path, special_results, json_results)
 
@@ -380,58 +381,6 @@ def process_pair(dataset: BRECDataset, encoding: str, pair_info: tuple) -> dict:
     # with open(connectivity_file, "w") as f:
     #     json.dump(connectivity_stats, f, indent=2)
     # print(f"\nConnectivity statistics saved to: {connectivity_file}")
-
-
-def generate_latex_table(stats: dict) -> None:
-    """Generate LaTeX table from statistics."""
-    categories: list[str] = [
-        "Basic",
-        "Regular",
-        "Extension",
-        "CFI",
-        "4-Vertex_Condition",
-    ]
-    encodings: list[str] = [
-        "Graph (1-WL)",
-        "Hypergraph (1-WL)",
-        "Graph (LDP)",
-        "Hypergraph (LDP)",
-        "Graph (LCP-FRC)",
-        "Hypergraph (LCP-FRC)",
-        "Graph (EE RWPE)",
-        "Graph (EN RWPE)",
-        "Graph (Hodge LAPE)",
-        "Graph (Normalized LAPE)",
-    ]
-
-    latex_file: str = "results/comparison_table.tex"
-    with open(latex_file, "w") as f:
-        f.write("\\begin{table*}[h!]\n\\centering\n\\tiny\n")
-        f.write("\\begin{tabular}{|l|" + "c|" * len(categories) + "}\n\\hline\n")
-
-        # Header
-        f.write(
-            "\\textbf{Level (Encodings)} & "
-            + " & ".join([f"\\textbf{{{cat}}}" for cat in categories])
-            + " \\\\\n\\hline\n"
-        )
-
-        # Data rows
-        for encoding in encodings:
-            row = [encoding]
-            for category in categories:
-                value = stats.get(category, {}).get(encoding, "")
-                row.append(f"{value}\\%" if value != "" else "")
-            f.write(" & ".join(row) + " \\\\\n")
-
-        # Table footer
-        f.write("\\hline\n\\end{tabular}\n")
-        f.write(
-            "\\caption{Difference in encodings on BREC dataset. We report the percentage of pairs with different encoding, at different level (graph or hypergraph)}\n"
-        )
-        f.write("\\end{table*}\n")
-
-    print(f"\nLaTeX table saved to: {latex_file}")
 
 
 def is_regular(G: nx.Graph) -> tuple[bool, int]:
@@ -566,24 +515,24 @@ def main(encodings: str, categories: str) -> None:
         print(f"Only checking these categories: {selected_categories}")
 
         pip = False
-        if pip:
-            # Process pairs and collect results
-            for category, (start, end) in PART_DICT.items():
-                print(f"\nProcessing {category} category...")
-                for pair_idx in range(start, end):
-                    pair_results = analyze_graph_pair(
-                        dataset[pair_idx * 2],
-                        dataset[pair_idx * 2 + 1],
-                        pair_idx,
-                        category,
-                        is_isomorphic=False,
-                        types_of_encoding=selected_encodings,
-                    )
-                    if len(selected_encodings) == 1:
-                        json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{pair_idx}_statistics.json"
-                        write_results(f, json_path, pair_results, json_results)
+        # if pip:
+        #     # Process pairs and collect results
+        #     for category, (start, end) in PART_DICT.items():
+        #         print(f"\nProcessing {category} category...")
+        #         for pair_idx in range(start, end):
+        #             pair_results = analyze_graph_pair(
+        #                 dataset[pair_idx * 2],
+        #                 dataset[pair_idx * 2 + 1],
+        #                 pair_idx,
+        #                 category,
+        #                 is_isomorphic=False,
+        #                 types_of_encoding=selected_encodings,
+        #             )
+        #             if len(selected_encodings) == 1:
+        #                 json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{pair_idx}_statistics.json"
+        #                 write_results(f, json_path, pair_results, json_results)
 
-        else:
+        if not pip:
             total_pair_idx = 0  # Keep track of total pairs processed
 
             # looping over categories
