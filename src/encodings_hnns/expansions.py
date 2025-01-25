@@ -1,11 +1,12 @@
+import itertools
+
 import hypernetx as hnx
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import torch
 from torch_geometric.data import Data
-from torch_geometric.utils import to_networkx, from_networkx
-import itertools
+from torch_geometric.utils import from_networkx, to_networkx
 
 # Compute the De matrices
 from encodings_hnns.laplacians import Laplacians

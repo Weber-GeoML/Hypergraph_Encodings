@@ -1,3 +1,5 @@
+"""Enum for match status"""
+
 from enum import Enum
 
 
