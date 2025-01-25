@@ -17,6 +17,7 @@ def compare_encodings_wrapper(
     is_isomorphic: bool,
     level: str = "graph",
     node_mapping: dict | None = None,
+    types_of_encoding: list[tuple[str, str]] = ENCODINGS_TO_CHECK,
 ) -> dict:
     """Compare encodings between two (hyper)graphs.
 
@@ -53,7 +54,7 @@ def compare_encodings_wrapper(
 
     # TODO: here I want to loop through different values of k. 2, 3, 4, 20.
 
-    for encoding_type, description in ENCODINGS_TO_CHECK:
+    for encoding_type, description in types_of_encoding:
         encoding_result = checks_encodings(
             name_of_encoding=encoding_type,
             hg1=hg1,
