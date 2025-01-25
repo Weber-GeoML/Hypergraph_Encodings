@@ -13,7 +13,7 @@ from scipy.stats import ks_2samp
 from encodings_hnns.orc_from_southern import ollivier_ricci_curvature, prob_rw, prob_two_hop
 import numpy as np
 import os
-from src.brec_analysis.analyse_brec_categories import analyze_brec_categories
+from brec_analysis.analyse_brec_categories import analyze_brec_categories
 
 def southern_orc_example(rook, shrikhande) -> None:
     # After loading rook and shrikhande graphs
