@@ -1,40 +1,37 @@
 #!/bin/bash
+#SBATCH --job-name=brec_parallel       
+#SBATCH --array=0-48%4           # 7 encodings * 7 categories = 49 combinations, max 4 concurrent
+#SBATCH --time=96:00:00         
+#SBATCH --mem=32GB               
+#SBATCH --output=sbatch_logs/brec_parallel_%A_%a.log  # %A is job ID, %a is array index
+#SBATCH --partition=mweber_gpu     
+#SBATCH --gpus=1                   # One GPU per task
 
-# Array of encodings to process
-encodings=(
-    "LDP"
-    "LCP-FRC"
-    "RWPE"
-    "LCP-ORC"
-    "LAPE-Normalized"
-    "LAPE-RW"
-    "LAPE-Hodge"
-)
+# Load modules and activate environment
+module load anaconda/2023.07
+source activate hgencodings_gpu_weber
 
-# Maximum number of parallel processes
-MAX_PARALLEL=4
+# Define ranges
+ENCODING_START=0
+ENCODING_END=6
+CATEGORY_START=0
+CATEGORY_END=6
 
-# Counter for running processes
-running=0
+# Calculate total combinations for array index mapping
+TOTAL_CATEGORIES=$((CATEGORY_END - CATEGORY_START + 1))
 
-for encoding in "${encodings[@]}"; do
-    # Run the Python script in the background
-    python scripts/analyse_brec.py --encoding "$encoding" &
-    
-    # Increment counter
-    ((running++))
-    
-    # If we've reached max parallel processes, wait for one to finish
-    if ((running >= MAX_PARALLEL)); then
-        wait -n
-        ((running--))
-    fi
-done
+# Calculate encoding and category from array task ID
+encoding=$((SLURM_ARRAY_TASK_ID / TOTAL_CATEGORIES))
+category=$((SLURM_ARRAY_TASK_ID % TOTAL_CATEGORIES))
 
-# Wait for remaining processes to finish
-wait
+# Create log directory
+log_dir="logs_brec"
+mkdir -p "$log_dir"
 
-echo "All analyses complete!"
+# Construct log filename
+log_file="$log_dir/brec_encoding${encoding}_category${category}.log"
 
-# Combine results
-python scripts/combine_results.py 
+echo "Running analysis with encoding: $encoding, category: $category"
+python scripts/analyse_brec.py -e "$encoding" -c "$category" > "$log_file" 2>&1
+
+echo "Analysis complete!" 

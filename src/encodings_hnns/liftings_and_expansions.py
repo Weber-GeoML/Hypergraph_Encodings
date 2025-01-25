@@ -162,7 +162,7 @@ def example_lifting():
         font_size=16,
         font_weight="bold",
     )
-    plt.title("Original Graph")
+    plt.title("Original Graph", fontsize=20)
 
     # Plot hypergraph
     plt.subplot(122)
@@ -175,7 +175,7 @@ def example_lifting():
     # nodes_kwargs={'color': 'lightblue'},
     # edges_kwargs={'color': 'red', 'alpha': 0.2})
 
-    plt.title("Hypergraph Representation")
+    plt.title("Hypergraph Representation", fontsize=20)
 
     plt.tight_layout()
     plt.show()
@@ -244,7 +244,7 @@ def lift_and_plot_graphs():
 
     # Plot Shrikhande graph and its hypergraph
     plt.figure(figsize=(20, 7))
-    plt.suptitle("Shrikhande Graph", fontsize=16)
+    plt.suptitle("Shrikhande Graph", fontsize=20)
 
     # Original graph
     plt.subplot(131)
@@ -258,7 +258,7 @@ def lift_and_plot_graphs():
         font_size=12,
         font_weight="bold",
     )
-    plt.title("Original Graph")
+    plt.title("Original Graph", fontsize=20)
 
     # Bipartite representation
     plt.subplot(132)
@@ -277,7 +277,7 @@ def lift_and_plot_graphs():
         font_size=12,
         font_weight="bold",
     )
-    plt.title("Bipartite Representation")
+    plt.title("Bipartite Representation", fontsize=20)
 
     # Hypergraph representation
     plt.subplot(133)
@@ -290,7 +290,8 @@ def lift_and_plot_graphs():
         convex=False,
     )
     plt.title(
-        f"Hypergraph Representation\n({len(shrikhande_hyper['hypergraph'])} hyperedges)"
+        f"Hypergraph Representation\n({len(shrikhande_hyper['hypergraph'])} hyperedges)",
+        fontsize=20,
     )
 
     plt.tight_layout()
@@ -299,7 +300,7 @@ def lift_and_plot_graphs():
 
     # Plot Rooke graph and its representations
     plt.figure(figsize=(20, 7))
-    plt.suptitle("Rooke Graph", fontsize=16)
+    plt.suptitle("Rooke Graph", fontsize=20)
 
     # Original graph
     plt.subplot(131)
@@ -313,19 +314,20 @@ def lift_and_plot_graphs():
         font_size=12,
         font_weight="bold",
     )
-    plt.title("Original Graph")
+    plt.title("Original Graph", fontsize=20)
 
     # Bipartite representation
     plt.subplot(132)
     H_rooke = hnx.Hypergraph(rooke_hyper["hypergraph"])
     # assert that the number of hypere
     BH = H_rooke.bipartite()
+    labels = {node: str(node) for node in BH.nodes() if node not in top}
     top = set(n for n, d in BH.nodes(data=True) if d["bipartite"] == 0)
     pos = nx.bipartite_layout(BH, top)
     nx.draw(
         BH,
         pos,
-        with_labels=True,
+        labels=labels,
         node_color=[
             "lightblue" if node in top else "lightgreen" for node in BH.nodes()
         ],
@@ -333,7 +335,7 @@ def lift_and_plot_graphs():
         font_size=12,
         font_weight="bold",
     )
-    plt.title("Bipartite Representation of the lifted hypergraph")
+    plt.title("Bipartite Representation of the lifted hypergraph", fontsize=20)
 
     # Hypergraph representation
     plt.subplot(133)
@@ -346,7 +348,8 @@ def lift_and_plot_graphs():
         convex=False,
     )
     plt.title(
-        f"Hypergraph Representation\n({len(rooke_hyper['hypergraph'])} hyperedges)"
+        f"Hypergraph Representation\n({len(rooke_hyper['hypergraph'])} hyperedges)",
+        fontsize=20,
     )
 
     plt.tight_layout()

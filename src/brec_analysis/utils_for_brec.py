@@ -15,6 +15,7 @@ def create_output_dirs() -> None:
         "plots/hypergraphs_pairs",
         "plots/encodings",
         "results/brec",
+        "results/brec/ran",
     ]
     for dir_name in dirs:
         os.makedirs(dir_name, exist_ok=True)
