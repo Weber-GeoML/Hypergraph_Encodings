@@ -40,7 +40,7 @@ def get_encodings(
             hg.copy(), rw_type="WE", verbose=False, k=k_rwpe
         )
     elif name_of_encoding == "LCP-ORC":
-        return encoder.add_curvature_encodings(hg.copy(), verbose=True, type="ORC")
+        return encoder.add_curvature_encodings(hg.copy(), verbose=False, type="ORC")
     elif name_of_encoding == "LCP-FRC":
         return encoder.add_curvature_encodings(hg.copy(), verbose=False, type="FRC")
     elif name_of_encoding == "LAPE-Normalized":
