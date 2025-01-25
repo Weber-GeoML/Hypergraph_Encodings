@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=brec_parallel       
-#SBATCH --array=0-48%4           # 7 encodings * 7 categories = 49 combinations, max 4 concurrent
+#SBATCH --array=0-48%49           # 7 encodings * 7 categories = 49 combinations, max 4 concurrent
 #SBATCH --time=96:00:00         
 #SBATCH --mem=32GB               
 #SBATCH --output=sbatch_logs/brec_parallel_%A_%a.log  # %A is job ID, %a is array index
@@ -32,6 +32,6 @@ mkdir -p "$log_dir"
 log_file="$log_dir/brec_encoding${encoding}_category${category}.log"
 
 echo "Running analysis with encoding: $encoding, category: $category"
-python scripts/analyse_brec.py -e "$encoding" -c "$category" > "$log_file" 2>&1
+python scripts/analyse_brec.py -e "$encoding" -c "$category" &> "$log_file"
 
 echo "Analysis complete!" 
