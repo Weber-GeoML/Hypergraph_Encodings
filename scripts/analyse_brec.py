@@ -542,7 +542,8 @@ def main(encodings: str, categories: str) -> None:
                     continue
 
                 print(f"\nProcessing {category} category...")
-                num_pairs_to_process = min(2, len(graphs) // 2)
+                num_pairs_to_process = (len(graphs) // 2)
+                print(f"Number of pairs to process: {num_pairs_to_process}")
 
                 if len(selected_encodings) == 1:
                     # check if the json_path = f"results/brec/ran/{category}_pair_{total_pair_idx}_statistics.json"
@@ -559,13 +560,13 @@ def main(encodings: str, categories: str) -> None:
                     g2 = graphs[local_pair_idx * 2 + 1]
 
                     # Skip if either graph has more than 20 nodes
-                    if g1.number_of_nodes() > 20 or g2.number_of_nodes() > 20:
-                        print(
-                            f"Skipping pair {local_pair_idx + 1}/5 in {category} "
-                            f"(too many nodes: G1={g1.number_of_nodes()}, "
-                            f"G2={g2.number_of_nodes()})"
-                        )
-                        continue
+                    # if g1.number_of_nodes() > 20 or g2.number_of_nodes() > 20:
+                    #     print(
+                    #         f"Skipping pair {local_pair_idx + 1}/5 in {category} "
+                    #         f"(too many nodes: G1={g1.number_of_nodes()}, "
+                    #         f"G2={g2.number_of_nodes()})"
+                    #     )
+                    #     continue
 
                     print(
                         f"Processing pair {local_pair_idx + 1}/5 in {category} "
