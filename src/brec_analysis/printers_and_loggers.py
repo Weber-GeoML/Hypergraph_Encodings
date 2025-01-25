@@ -33,7 +33,7 @@ def print_comparison_results(
         print(f"Permutation: {perm}")
         print("Statistics after permutation:")
         max_diff = np.max(np.abs(permuted - hg2_encodings["features"]))
-        # print(f"Max difference: {max_diff}")
+        print(f"Max difference: {max_diff}")
         assert np.isclose(max_diff, 0)
         mean_diff = np.mean(np.abs(permuted - hg2_encodings["features"]))
         # print(

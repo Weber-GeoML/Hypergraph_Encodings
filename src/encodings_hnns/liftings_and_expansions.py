@@ -21,7 +21,7 @@ from torch_geometric.utils import to_networkx
 from encodings_hnns.laplacians import Laplacians
 
 
-def lift_to_hypergraph(graph, verbose=True) -> dict:
+def lift_to_hypergraph(graph, verbose=True, already_in_nx=False) -> dict:
     """
     Constructs a hypergraph from a given graph by identifying maximal cliques of size >=3
     and including remaining edges as hyperedges of size 2.
@@ -39,7 +39,10 @@ def lift_to_hypergraph(graph, verbose=True) -> dict:
     Note: function given by Lukas.
     """
     # Convert PyG graph to NetworkX format for clique detection
-    G = to_networkx(graph, to_undirected=True)
+    if not already_in_nx:   
+        G = to_networkx(graph, to_undirected=True)
+    else:
+        G = graph
 
     # Find all maximal cliques of size 3 or larger
     cliques = [clique for clique in nx.find_cliques(G) if len(clique) >= 3]
@@ -89,7 +92,10 @@ def lift_to_hypergraph(graph, verbose=True) -> dict:
     assert len(hypergraph) == hyperedge_id
 
     # Get number of nodes
-    n = graph.num_nodes
+    if not already_in_nx:
+        n = graph.num_nodes
+    else:
+        n = len(G.nodes())
 
     # Extract node features and labels, using empty arrays as fallback
     features = (

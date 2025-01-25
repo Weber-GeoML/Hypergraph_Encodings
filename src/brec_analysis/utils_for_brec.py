@@ -12,9 +12,9 @@ def create_output_dirs() -> None:
     """Create output directories for plots and results"""
     dirs = [
         "plots/graph_pairs",
-        "plots/hypergraphs",
+        "plots/hypergraphs_pairs",
         "plots/encodings",
-        "results",
+        "results/brec",
     ]
     for dir_name in dirs:
         os.makedirs(dir_name, exist_ok=True)

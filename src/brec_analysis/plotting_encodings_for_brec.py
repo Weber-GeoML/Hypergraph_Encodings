@@ -31,6 +31,7 @@ def save_comparison_plot(
     filename_base = (
         f"pair_{pair_idx}_{category.lower()}" if pair_idx is not None else "comparison"
     )
+    print(f"Saving plot to {plot_dir}/{filename_base}_{name_of_encoding.lower()}_comparison.png")
     plt.savefig(
         f"{plot_dir}/{filename_base}_{name_of_encoding.lower()}_comparison.png",
         bbox_inches="tight",
@@ -112,7 +113,8 @@ def plot_matched_encodings(
     # Check if difference is uniformly zero
     if np.allclose(diff, np.zeros_like(diff)):
         # replace any value whose absolute value is less than 1e-13 with 0
-        diff = np.where(np.abs(diff) < 1e-13, 0, diff)
+        if is_direct_match:
+            diff = np.where(np.abs(diff) < 1e-10, 0, diff)
         ax3.set_title("Absolute Difference\n(Uniformly Zero)")
     else:
         # Get max absolute values for both encodings
