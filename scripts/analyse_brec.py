@@ -449,6 +449,11 @@ def main(encodings: str, categories: str) -> None:
     for category, graphs in graphs_read_from_files.items():
         for graph in graphs:
             assert nx.is_connected(graph), f"Graph in {category} is not connected"
+            # assert the number of connected components is 1
+            components = list(nx.connected_components(graph))
+            assert (
+                len(components) == 1
+            ), f"Graph in {category} has {len(components)} components"
 
     # BREC with pip package
     # help(BRECDataset)
