@@ -1,18 +1,14 @@
-import ot
-
 import networkx as nx
 import numpy as np
+import ot
 import scipy as sp
-
 
 #  ╭──────────────────────────────────────────────────────────╮
 #  │ Ollivier-Ricci                                           │
 #  ╰──────────────────────────────────────────────────────────╯
 
 
-def ollivier_ricci_curvature(
-    G, alpha=0.0, weight=None, prob_fn=None
-) -> np.ndarray:
+def ollivier_ricci_curvature(G, alpha=0.0, weight=None, prob_fn=None) -> np.ndarray:
     """Calculate Ollivier--Ricci curvature for graphs that allows for a custom probability measure.
 
     This function calculates the Ollivier--Ricci curvature of a graph,
@@ -100,7 +96,6 @@ def ollivier_ricci_curvature(
 
         distance = ot.emd2(mi, mj, M)
         curvature.append(1.0 - distance)
-
 
     print(f"curvature: \n {curvature}")
     return np.asarray(curvature)

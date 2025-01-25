@@ -1,6 +1,6 @@
 """Define encodings to check"""
 
-ENCODINGS_TO_CHECK : list[tuple[str, str]] = [
+ENCODINGS_TO_CHECK: list[tuple[str, str]] = [
     ("LDP", "Local Degree Profile"),
     ("LCP-FRC", "Local Curvature Profile - FRC"),
     ("RWPE", "Random Walk Encodings"),

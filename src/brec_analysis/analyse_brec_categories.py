@@ -1,10 +1,12 @@
-import numpy as np
 import os
+
 import networkx as nx
+import numpy as np
+
 
 def analyze_brec_categories() -> dict:
     """Analyse the BREC dataset by category
-    
+
     Returns:
         dict: Dictionary mapping categories to lists of NetworkX graphs
     """
@@ -15,7 +17,7 @@ def analyze_brec_categories() -> dict:
         "cfi": "cfi.npy",
         "extension": "extension.npy",
         "4vtx": "4vtx.npy",
-        "dr": "dr.npy"  # distance regular
+        "dr": "dr.npy",  # distance regular
     }
 
     data_path = "BREC_Data"
@@ -23,9 +25,9 @@ def analyze_brec_categories() -> dict:
     print("\nBREC Dataset Structure:")
     total_pairs = 0
     total_graphs = 0
-    
+
     graphs_by_category: dict = {}
-    
+
     for category, filename in categories.items():
         file_path = os.path.join(data_path, filename)
         try:
@@ -34,7 +36,7 @@ def analyze_brec_categories() -> dict:
             total_pairs += num_pairs
             total_graphs += len(data)
             print(f"{category}: {num_pairs} pairs ({len(data)} graphs)")
-            
+
             nx_graphs = []
             if category in ["regular", "cfi"]:
                 # Handle array of pairs format
@@ -56,14 +58,16 @@ def analyze_brec_categories() -> dict:
                     else:
                         G = nx.from_graph6_bytes(g6_str.encode())
                     nx_graphs.append(G)
-            
+
             graphs_by_category[category] = nx_graphs
-            
+
             # Print info about first graph
             first_graph = nx_graphs[0]
-            print(f"  First graph: {first_graph.number_of_nodes()} nodes, "
-                  f"{first_graph.number_of_edges()} edges")
-            
+            print(
+                f"  First graph: {first_graph.number_of_nodes()} nodes, "
+                f"{first_graph.number_of_edges()} edges"
+            )
+
         except Exception as e:
             print(f"Error loading {category}: {e}")
             if len(data) > 0:
@@ -71,6 +75,5 @@ def analyze_brec_categories() -> dict:
                 print(f"First item content: {data[0]}")
 
     print(f"\nTotal: {total_pairs} pairs ({total_graphs} graphs)")
-    
-    return graphs_by_category
 
+    return graphs_by_category

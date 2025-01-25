@@ -39,7 +39,7 @@ def lift_to_hypergraph(graph, verbose=True, already_in_nx=False) -> dict:
     Note: function given by Lukas.
     """
     # Convert PyG graph to NetworkX format for clique detection
-    if not already_in_nx:   
+    if not already_in_nx:
         G = to_networkx(graph, to_undirected=True)
     else:
         G = graph

@@ -330,86 +330,86 @@ def checks_encodings(
 
         # debug = False
         # if debug:
-            # # TODO: cleaan up
-            # print("*" * 100)
-            # print(f"DEBUG: {graph_type}")
-            # print("*" * 100)
+        # # TODO: cleaan up
+        # print("*" * 100)
+        # print(f"DEBUG: {graph_type}")
+        # print("*" * 100)
 
-            # # Handle encodings
-            # hg1_encodings = get_encodings(
-            #     hg1, encoder_number_one, name_of_encoding, k_rwpe=k, k_lape=k
-            # )
-            # hg2_encodings = get_encodings(
-            #     hg2, encoder_number_two, name_of_encoding, k_rwpe=k, k_lape=k
-            # )
+        # # Handle encodings
+        # hg1_encodings = get_encodings(
+        #     hg1, encoder_number_one, name_of_encoding, k_rwpe=k, k_lape=k
+        # )
+        # hg2_encodings = get_encodings(
+        #     hg2, encoder_number_two, name_of_encoding, k_rwpe=k, k_lape=k
+        # )
 
-            # keep_first_column = True
+        # keep_first_column = True
 
-            # if keep_first_column:
-            #     print(f"Truncating encodings to first 2 columns at {graph_type}")
+        # if keep_first_column:
+        #     print(f"Truncating encodings to first 2 columns at {graph_type}")
 
-            #     # Keep the first 2 columns od each encoding
-            #     hg1_encodings = hg1_encodings[:, :1]
-            #     hg2_encodings = hg2_encodings[:, :1]
+        #     # Keep the first 2 columns od each encoding
+        #     hg1_encodings = hg1_encodings[:, :1]
+        #     hg2_encodings = hg2_encodings[:, :1]
 
-            # print(f"features: \n {hg1_encodings}")
-            # print(f"features: \n {hg2_encodings}")
+        # print(f"features: \n {hg1_encodings}")
+        # print(f"features: \n {hg2_encodings}")
 
-            # # Plot and get match results
-            # is_direct_match, permuted, perm = find_encoding_match(
-            #     hg1_encodings, hg2_encodings
-            # )
-            # if not is_direct_match:
-            #     print("**-" * 20)
-            #     print(f"We are also checking up to scaling for {name_of_encoding}")
-            #     (
-            #         is_same_up_to_scaling,
-            #         scaling_factor,
-            #         perm_up_to_scaling,
-            #         permuted_up_to_scaling,
-            #     ) = check_encodings_same_up_to_scaling(
-            #         hg1_encodings,
-            #         hg2_encodings,
-            #         verbose=False,
-            #     )
-            #     if is_same_up_to_scaling and not np.isclose(
-            #         scaling_factor, 1.0, rtol=1e-10
-            #     ):
-            #         # Only print if there's actually a non-trivial scaling
-            #         print("⛔️ The encodings are the same up to scaling")
-            #         print(f"The scaling factor is {scaling_factor}")
-            #     print("**-" * 20)
-            # else:
-            #     is_same_up_to_scaling = True
-            #     scaling_factor = 1.0
+        # # Plot and get match results
+        # is_direct_match, permuted, perm = find_encoding_match(
+        #     hg1_encodings, hg2_encodings
+        # )
+        # if not is_direct_match:
+        #     print("**-" * 20)
+        #     print(f"We are also checking up to scaling for {name_of_encoding}")
+        #     (
+        #         is_same_up_to_scaling,
+        #         scaling_factor,
+        #         perm_up_to_scaling,
+        #         permuted_up_to_scaling,
+        #     ) = check_encodings_same_up_to_scaling(
+        #         hg1_encodings,
+        #         hg2_encodings,
+        #         verbose=False,
+        #     )
+        #     if is_same_up_to_scaling and not np.isclose(
+        #         scaling_factor, 1.0, rtol=1e-10
+        #     ):
+        #         # Only print if there's actually a non-trivial scaling
+        #         print("⛔️ The encodings are the same up to scaling")
+        #         print(f"The scaling factor is {scaling_factor}")
+        #     print("**-" * 20)
+        # else:
+        #     is_same_up_to_scaling = True
+        #     scaling_factor = 1.0
 
-            # plot_matched_encodings(
-            #     is_direct_match,
-            #     is_same_up_to_scaling,
-            #     scaling_factor,
-            #     permuted,
-            #     perm,
-            #     hg1_encodings,
-            #     hg2_encodings,
-            #     name1,
-            #     name2,
-            #     modified_name,  # Pass modified name as title
-            #     graph_type,
-            # )
+        # plot_matched_encodings(
+        #     is_direct_match,
+        #     is_same_up_to_scaling,
+        #     scaling_factor,
+        #     permuted,
+        #     perm,
+        #     hg1_encodings,
+        #     hg2_encodings,
+        #     name1,
+        #     name2,
+        #     modified_name,  # Pass modified name as title
+        #     graph_type,
+        # )
 
-            # # Print results
-            # print_comparison_results(
-            #     is_direct_match,
-            #     name_of_encoding,
-            #     perm,
-            #     permuted,
-            #     {"features": hg1_encodings},
-            #     {"features": hg2_encodings},
-            # )
+        # # Print results
+        # print_comparison_results(
+        #     is_direct_match,
+        #     name_of_encoding,
+        #     perm,
+        #     permuted,
+        #     {"features": hg1_encodings},
+        #     {"features": hg2_encodings},
+        # )
 
-            # print("*" * 100)
-            # print(f"END DEBUG: {graph_type}")
-            # print("*" * 100)
+        # print("*" * 100)
+        # print(f"END DEBUG: {graph_type}")
+        # print("*" * 100)
 
     # Save plot if requested - This will handle both LAPE and non-LAPE cases
     if save_plots:
