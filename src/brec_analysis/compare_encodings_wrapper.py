@@ -34,6 +34,12 @@ def compare_encodings_wrapper(
             The category of the pair.
         is_isomorphic (bool):
             Whether the graphs are isomorphic.
+        level (str):
+            The level of the comparison: graph or hypergraph.
+        node_mapping (dict):
+            The node mapping between the two graphs.
+        encoding_type (str):
+            The type of encoding to use.
 
     Returns:
         dict:

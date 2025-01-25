@@ -38,6 +38,8 @@ def analyze_graph_pair(
             The category of the pair.
         is_isomorphic (bool):
             Whether the graphs are isomorphic.
+        encoding (str):
+            The encoding to use.
     """
     if not already_in_nx:
         # Convert PyG data to NetworkX graphs
@@ -157,7 +159,7 @@ def write_results(f, results: dict, json_results: dict) -> None:
         
         for encoding_type, result in results[level]["encodings"].items():
             # Write to text file
-            f.write(f"\n=== {result['description']} ===\n")
+            f.write(f"\n=== {result[level]['encodings']} ===\n")
             is_same = result['status'] in [MatchStatus.EXACT_MATCH, MatchStatus.SCALED_MATCH]
             f.write(f"Result: {'Same' if is_same else 'Different'}\n")
             if result['status'] == MatchStatus.SCALED_MATCH:
@@ -346,6 +348,152 @@ def main(encodings: str) -> None:
             "4-Vertex_Condition": (235, 255),
             "Distance_Regular": (255, 275),
         }
+    
+    # Check each pair in each category
+    for category, (start, end) in part_dict.items():
+        print(f"\nChecking connectivity for {category} category...")
+        for pair_idx in range(start, end):
+            # Get both graphs in the pair
+            G1 = to_networkx(dataset[pair_idx * 2], to_undirected=True)
+            G2 = to_networkx(dataset[pair_idx * 2 + 1], to_undirected=True)
+            
+            # Check connectivity
+            is_G1_connected = nx.is_connected(G1)
+            is_G2_connected = nx.is_connected(G2)
+            
+            connectivity_stats[category]['total_pairs'] += 1
+            
+            # If both graphs are connected
+            if is_G1_connected and is_G2_connected:
+                connectivity_stats[category]['connected'] += 1
+            else:
+                connectivity_stats[category]['disconnected'] += 1
+                # Print which graphs are disconnected and plot them
+                if not is_G1_connected and not is_G2_connected:
+                    print(f"  Pair {pair_idx}: Both graphs are disconnected")
+                elif not is_G1_connected:
+                    print(f"  Pair {pair_idx}: First graph is disconnected")
+                else:
+                    print(f"  Pair {pair_idx}: Second graph is disconnected")
+                
+                # Plot the disconnected pair
+                plot_disconnected_pair(G1, G2, pair_idx, category)
+                print(f"  Plot saved to: plots/disconnected_pairs/pair_{pair_idx}_{category.lower()}.png")
+    
+    # Print summary
+    print("\nConnectivity Summary:")
+    print("-" * 60)
+    print(f"{'Category':<20} {'Connected':<12} {'Disconnected':<12} {'Total':<12}")
+    print("-" * 60)
+    
+    for category in connectivity_stats:
+        stats = connectivity_stats[category]
+        connected_percent = (stats['connected'] / stats['total_pairs']) * 100
+        print(f"{category:<20} {stats['connected']:<12} {stats['disconnected']:<12} {stats['total_pairs']:<12} ({connected_percent:.1f}% connected)")
+    
+    return connectivity_stats
+
+def process_pair(dataset: BRECDataset, encoding: str, pair_info: tuple) -> dict:
+    """Process a single pair of graphs."""
+    category, pair_idx = pair_info
+    print(f"\nDEBUG: Processing pair_info: {pair_info}")
+    print(f"DEBUG: Category: {category}, Pair Index: {pair_idx}")
+    print(f"DEBUG: Dataset indices: {pair_idx * 2} and {pair_idx * 2 + 1}")
+    
+    # Get both graphs and check connectivity
+    G1 = to_networkx(dataset[pair_idx * 2], to_undirected=True)
+    G2 = to_networkx(dataset[pair_idx * 2 + 1], to_undirected=True)
+    
+    # Check regularity for Regular category
+    if category == "Regular":
+        is_reg1, deg1 = is_regular(G1)
+        is_reg2, deg2 = is_regular(G2)
+        assert is_reg1, f"Graph 1 in Regular pair {pair_idx} is not regular! Degrees: {[d for _, d in G1.degree()]}"
+        assert is_reg2, f"Graph 2 in Regular pair {pair_idx} is not regular! Degrees: {[d for _, d in G2.degree()]}"
+        print(f"Regular graphs confirmed: degrees {deg1} and {deg2}")
+    
+    # Skip if either graph is disconnected
+    if not (nx.is_connected(G1) and nx.is_connected(G2)):
+        print(f"Skipping pair {pair_idx} ({category}): Contains disconnected graph(s)")
+        return None
+    
+    # Analyze connected pair
+    pair_results = analyze_graph_pair(
+        dataset[pair_idx * 2],
+        dataset[pair_idx * 2 + 1],
+        pair_idx,
+        category,
+        is_isomorphic=False,
+        encoding=encoding,
+    )
+    
+    return pair_results
+
+@click.command()
+@click.option(
+    '--encoding',
+    type=str,
+    default="LAPE-Normalized",
+    required=True,
+    help='Encoding to analyze (e.g., "LAPE-Normalized", "LDP", etc.)'
+)
+@click.option(
+    '--test-mode',
+    is_flag=True, # default is False
+    help='Run only 3 test pairs instead of full dataset'
+)
+@click.option(
+    '--num-workers',
+    type=int,
+    default=mp.cpu_count() - 2,
+    help='Number of worker processes to use'
+)
+def main(encoding: str, test_mode: bool, num_workers: int) -> None:
+    """Analyze BREC dataset with specified encoding."""
+    # Validate encoding
+    valid_encodings = [enc[0] for enc in ENCODINGS_TO_CHECK]
+    if encoding not in valid_encodings:
+        raise click.BadParameter(
+            f"Invalid encoding. Choose from: {', '.join(valid_encodings)}"
+        )
+    
+    print(f"\nAnalyzing BREC dataset with {encoding} encoding...")
+    print(f"Using {num_workers} worker processes")
+    
+    create_output_dirs()
+    dataset : BRECDataset = BRECDataset()
+    
+    # First check connectivity
+    print("\nAnalyzing connectivity of BREC dataset...")
+    connectivity_stats : dict= check_connectivity_stats(dataset)
+    
+    # Save connectivity stats to JSON
+    connectivity_file : str= "results/connectivity_stats.json"
+    with open(connectivity_file, 'w') as f:
+        json.dump(connectivity_stats, f, indent=2)
+    print(f"\nConnectivity statistics saved to: {connectivity_file}")
+    
+    # Create results files with encoding-specific names
+    results_file : str= f"results/comparisons_{encoding}.txt"
+    json_file : str= f"results/statistics_{encoding}.json"
+    
+    # Initialize JSON results
+    json_results : dict= {}
+    
+    with open(results_file, "w") as f:
+        if test_mode:
+            pairs_to_process : list[tuple[str, int]] = [
+                ("Basic", 0),
+                ("Basic", 1),
+                ("Basic", 2)
+            ]
+        else:
+            # Full analysis
+            pairs_to_process : list[tuple[str, int]] = [
+                (category, idx)
+                for category, (start, end) in part_dict.items()
+                for idx in range(start, end)
+            ]
 
 
         print("\nBreakdown by category:")
@@ -403,10 +551,10 @@ def main(encodings: str) -> None:
         final_stats : dict = {}
         for category in json_results:
             final_stats[category] = {}
-            for encoding in json_results[category]:
-                stats = json_results[category][encoding]
+            for enc in json_results[category]:
+                stats = json_results[category][enc]
                 percentage = (stats['different'] / stats['total']) * 100 if stats['total'] > 0 else 0
-                final_stats[category][encoding] = round(percentage, 2)
+                final_stats[category][enc] = round(percentage, 2)
         
         # Save JSON file
         with open(json_file, 'w') as json_f:
@@ -420,8 +568,8 @@ def main(encodings: str) -> None:
 
 def generate_latex_table(stats: dict) -> None:
     """Generate LaTeX table from statistics."""
-    categories = ["Basic", "Regular", "Extension", "CFI", "4-Vertex_Condition"]
-    encodings = [
+    categories : list[str] = ["Basic", "Regular", "Extension", "CFI", "4-Vertex_Condition"]
+    encodings : list[str] = [
         "Graph (1-WL)",
         "Hypergraph (1-WL)",
         "Graph (LDP)",
@@ -434,7 +582,7 @@ def generate_latex_table(stats: dict) -> None:
         "Graph (Normalized LAPE)"
     ]
     
-    latex_file = "results/comparison_table.tex"
+    latex_file : str = "results/comparison_table.tex"
     with open(latex_file, 'w') as f:
         f.write("\\begin{table*}[h!]\n\\centering\n\\tiny\n")
         f.write("\\begin{tabular}{|l|" + "c|"*len(categories) + "}\n\\hline\n")
@@ -459,5 +607,27 @@ def generate_latex_table(stats: dict) -> None:
         
     print(f"\nLaTeX table saved to: {latex_file}")
 
+def is_regular(G: nx.Graph) -> tuple[bool, int]:
+    """Check if a graph is regular (all nodes have same degree).
+    
+    Args:
+        G: NetworkX graph
+        
+    Returns:
+        tuple[bool, int]: (is_regular, degree if regular else -1)
+    """
+    if len(G) == 0:  # Empty graph
+        return True, 0
+        
+    degrees = [d for _, d in G.degree()]
+    first_degree = degrees[0]
+    
+    # Check if all degrees are equal to the first degree
+    is_reg = all(d == first_degree for d in degrees)
+    
+    return is_reg, first_degree if is_reg else -1
+
 if __name__ == "__main__":
+    # Required for Windows compatibility
+    mp.freeze_support()
     main()
