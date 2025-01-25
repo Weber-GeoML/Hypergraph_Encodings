@@ -31,7 +31,9 @@ def save_comparison_plot(
     filename_base = (
         f"pair_{pair_idx}_{category.lower()}" if pair_idx is not None else "comparison"
     )
-    print(f"Saving plot to {plot_dir}/{filename_base}_{name_of_encoding.lower()}_comparison.png")
+    print(
+        f"Saving plot to {plot_dir}/{filename_base}_{name_of_encoding.lower()}_comparison.png"
+    )
     plt.savefig(
         f"{plot_dir}/{filename_base}_{name_of_encoding.lower()}_comparison.png",
         bbox_inches="tight",

@@ -13,10 +13,6 @@ from brec_analysis.plotting_graphs_and_hgraphs_for_brec import plot_graph_pair, 
 from brec_analysis.compare_encodings_wrapper import compare_encodings_wrapper
 from brec_analysis.match_status import MatchStatus
 import json
-from scipy.stats import ks_2samp
-from encodings_hnns.orc_from_southern import ollivier_ricci_curvature, prob_rw, prob_two_hop
-import numpy as np
-import os
 from brec_analysis.analyse_brec_categories import analyze_brec_categories
 from brec_analysis.southern_orc_example import southern_orc_example
 import click
@@ -323,13 +319,13 @@ def main(encodings: str) -> None:
     json_results : dict = {}
     
 
-    print(f"*-" * 25)
-    print(f"*-" * 25)
-    print(f"*-" * 25)
-    print(f"*-" * 25)
-    print(f"*-" * 25)
-    print(f"*-" * 25)
-    print(f"Systematically analyzing the BREC dataset")
+    print("*-" * 25)
+    print("*-" * 25)
+    print("*-" * 25)
+    print("*-" * 25)
+    print("*-" * 25)
+    print("*-" * 25)
+    print("Systematically analyzing the BREC dataset")
     
     # Create results directory first
     create_output_dirs()
