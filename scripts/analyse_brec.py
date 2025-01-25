@@ -445,6 +445,10 @@ def main(encodings: str, categories: str) -> None:
     # Get the graphs for analysis
     graphs_read_from_files: dict[str, list[nx.Graph]] = analyze_brec_categories()
     quick_eda_from_github(graphs_read_from_files, verbose=False)
+    # loop through all graphs_read_from_files, assert the grabs are connected
+    for category, graphs in graphs_read_from_files.items():
+        for graph in graphs:
+            assert nx.is_connected(graph), f"Graph in {category} is not connected"
 
     # BREC with pip package
     # help(BRECDataset)
@@ -542,7 +546,7 @@ def main(encodings: str, categories: str) -> None:
                     continue
 
                 print(f"\nProcessing {category} category...")
-                num_pairs_to_process = (len(graphs) // 2)
+                num_pairs_to_process = len(graphs) // 2
                 print(f"Number of pairs to process: {num_pairs_to_process}")
 
                 if len(selected_encodings) == 1:

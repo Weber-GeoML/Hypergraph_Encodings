@@ -69,6 +69,16 @@ def analyze_brec_categories(verbose: bool = False) -> dict:
                         else:  # regular and cfi
                             for g6_bytes in pair:
                                 G = nx.from_graph6_bytes(g6_bytes)
+                                # if category == "cfi" and i in [5, 6]:
+                                #     print(
+                                #         f"DEBUG - {category} pair {i}: {G.number_of_nodes()}"
+                                #     )
+                                #     print(
+                                #         f"DEBUG - {category} pair {i}: {nx.is_connected(G)}"
+                                #     )
+                                #     # plot
+                                #     nx.draw(G)
+                                #     plt.show()
                                 if not nx.is_connected(G):
                                     if verbose:
                                         print(
