@@ -51,28 +51,61 @@ def analyze_brec_categories(verbose: bool = False) -> dict:
                 if verbose:
                     print(f"DEBUG - {category} special handling:")
                     print(f"Number of pairs in data: {len(data)}")
+
+                # loop through pairs
                 for i, pair in enumerate(data):
+                    pair_graphs = []
+                    try:
+                        if category == "extension":
+                            for g6_str in pair:
+                                G = nx.from_graph6_bytes(g6_str.encode())
+                                if not nx.is_connected(G):
+                                    if verbose:
+                                        print(
+                                            f"Skipping disconnected graph in pair {i} of {category}"
+                                        )
+                                    raise nx.NetworkXError("Graph is not connected")
+                                pair_graphs.append(G)
+                        else:  # regular and cfi
+                            for g6_bytes in pair:
+                                G = nx.from_graph6_bytes(g6_bytes)
+                                if not nx.is_connected(G):
+                                    if verbose:
+                                        print(
+                                            f"Skipping disconnected graph in pair {i} of {category}"
+                                        )
+                                    raise nx.NetworkXError("Graph is not connected")
+                                pair_graphs.append(G)
 
-                    if category == "extension":
-                        for g6_str in pair:
-                            G = nx.from_graph6_bytes(g6_str.encode())
-                            nx_graphs.append(G)
-                    else:  # regular and cfi
-                        for g6_bytes in pair:
-                            G = nx.from_graph6_bytes(g6_bytes)
-                            nx_graphs.append(G)
+                        # If we get here, both graphs in the pair are connected
+                        nx_graphs.extend(pair_graphs)
 
-                print(f"Total graphs loaded for {category}: {len(nx_graphs)}")
+                    except nx.NetworkXError:
+                        if verbose:
+                            print(f"Skipping pair {i} due to disconnected graph")
+                        continue
+
+                print(f"Total connected graphs loaded for {category}: {len(nx_graphs)}")
             else:
                 # Handle basic format (alternating graphs)
                 assert len(data) % 2 == 0, "Expected even number of pairs for basic"
-                for g6_str in data:
-                    if isinstance(g6_str, bytes):
-                        G = nx.from_graph6_bytes(g6_str)
-                    else:
-                        G = nx.from_graph6_bytes(g6_str.encode())
-                    nx_graphs.append(G)
-                    # they don't come in pairs.
+                for i, g6_str in enumerate(data):
+                    try:
+                        if isinstance(g6_str, bytes):
+                            G = nx.from_graph6_bytes(g6_str)
+                        else:
+                            G = nx.from_graph6_bytes(g6_str.encode())
+
+                        if not nx.is_connected(G):
+                            if verbose:
+                                print(f"Skipping disconnected graph {i} in {category}")
+                            continue
+
+                        nx_graphs.append(G)
+                    except Exception as e:
+                        if verbose:
+                            print(f"Error loading graph {i} in {category}: {e}")
+                        continue
 
             num_pairs = len(nx_graphs) // 2
             total_pairs += num_pairs

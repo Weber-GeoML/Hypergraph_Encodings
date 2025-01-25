@@ -3,13 +3,13 @@
 # Define valid categories with their ranges
 # (0,60) is number of pairs (ie 120 graphs)
 VALID_CATEGORIES = [
-    ("basic", (0, 60), "Basic"),  # 60 pairs
-    ("regular", (60, 110), "Regular"),  # 50 pairs
-    ("str", (110, 160), "Strongly Regular"),  # 50 pairs
-    ("cfi", (160, 260), "CFI"),  # 100 pairs
-    ("extension", (260, 360), "Extension"),  # 100 pairs
-    ("4vtx", (360, 380), "4-Vertex Condition"),  # 20 pairs
-    ("dr", (380, 400), "Distance Regular"),  # 20 pairs
+    ("basic", (0, 56), "Basic"),  # 56 pairs
+    ("regular", (56, 106), "Regular"),  # 50 pairs
+    ("str", (106, 156), "Strongly Regular"),  # 50 pairs
+    ("cfi", (156, 253), "CFI"),  # 97 pairs
+    ("extension", (253, 350), "Extension"),  # 97 pairs
+    ("4vtx", (350, 370), "4-Vertex Condition"),  # 20 pairs
+    ("dr", (370, 390), "Distance Regular"),  # 20 pairs
 ]
 
 
