@@ -6,6 +6,12 @@
 [![Python package](https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/python-package.yml/badge.svg)](https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/python-package.yml)
 
 
+![Random Walk on Graph](gifs/random_walk.gif)
+
+![Random Walk on Hypergraph](gifs/hypergraph_random_walk.gif)
+
+
+
 # Hypergraph_Encodings
 
 ## Organisation of repo
