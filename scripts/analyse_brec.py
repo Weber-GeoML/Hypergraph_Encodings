@@ -13,6 +13,7 @@ from brec_analysis.utils_for_brec import (
     convert_nx_to_hypergraph_dict,
     nx_to_pyg,
 )
+import os
 from brec_analysis.plotting_graphs_and_hgraphs_for_brec import (
     plot_graph_pair,
     plot_hypergraph_pair,
@@ -175,10 +176,18 @@ def analyze_graph_pair(
     return final_results
 
 
-def write_results(f, results: dict, json_results: dict) -> None:
-    """Write results for a pair to the file and update JSON results."""
+def write_results(f, filepath_json, results: dict, json_results: dict) -> dict:
+    """Write results for a pair to the file and update JSON results.
+
+
+    results = {'pair_idx': 'rook_vs_shrikhande', 'category': 'Special', 'is_isomorphic': False, 'graph_level': {'encodings': {...}}, 'hypergraph_level': {'encodings': {...}}}
+
+    results["graph_level"]["encodings"]
+    {'LDP': {'description': 'Local Degree Profile', 'status': <MatchStatus.EXACT_MATCH: 'EXACT_MATCH'>, 'scaling_factor': 1.0, 'permutation': (...)}, 'LCP-FRC': {'description': 'Local Curvature Profile - FRC', 'status': <MatchStatus.EXACT_MATCH: 'EXACT_MATCH'>, 'scaling_factor': 1.0, 'permutation': (...)}, 'RWPE': {'description': 'Random Walk Encodings', 'status': <MatchStatus.EXACT_MATCH: 'EXACT_MATCH'>, 'scaling_factor': 1.0, 'permutation': (...)}, 'LCP-ORC': {'description': 'Local Curvature Profile - ORC', 'status': <MatchStatus.SCALED_MATCH: 'SCALED_MATCH'>, 'scaling_factor': 0.4954381921284782, 'permutation': (...)}, 'LAPE-Normalized': {'description': 'Normalized Laplacian', 'status': <MatchStatus.NO_MATCH: 'NO_MATCH'>, 'scaling_factor': None, 'permutation': None}, 'LAPE-RW': {'description': 'Random Walk Laplacian', 'status': <MatchStatus.NO_MATCH: 'NO_MATCH'>, 'scaling_factor': None, 'permutation': None}, 'LAPE-Hodge': {'description': 'Hodge Laplacian', 'status': <MatchStatus.NO_MATCH: 'NO_MATCH'>, 'scaling_factor': None, 'permutation': None}}
+    """
     # Print the file path at the start
     print(f"\nWriting results to: {f.name}")
+    print(f"Results: {results}")
 
     # Get pair info
     pair_idx = results["pair_idx"]
@@ -188,21 +197,35 @@ def write_results(f, results: dict, json_results: dict) -> None:
     if category not in json_results:
         json_results[category] = {}
 
+    # Initialize simple JSON format
+    simple_result = {
+        "pair": pair_idx,
+        "category": category,
+        "encodings": {"graph": {}, "hypergraph": {}},
+    }
+
     for level in ["graph_level", "hypergraph_level"]:
         f.write(f"\nAnalysis for pair {pair_idx} ({category}) - {level}\n")
+        level_key = "graph" if level == "graph_level" else "hypergraph"
 
-        for encoding_type, result in results[level]["encodings"].items():
+        for encoding_type, encoding_results in results[level]["encodings"].items():
             # Write to text file
-            f.write(f"\n=== {result[level]['encodings']} ===\n")
-            is_same = result["status"] in [
-                MatchStatus.EXACT_MATCH,
-                MatchStatus.SCALED_MATCH,
-            ]
-            f.write(f"Result: {'Same' if is_same else 'Different'}\n")
-            if result["status"] == MatchStatus.SCALED_MATCH:
-                f.write(f"Scaling factor: {result['scaling_factor']}\n")
+            f.write(f"\n=== {encoding_type} ({encoding_results['description']}) ===\n")
 
-            # Update JSON structure
+            status = encoding_results["status"]
+            result = {
+                MatchStatus.EXACT_MATCH: "Same",
+                MatchStatus.SCALED_MATCH: "Scaled",
+                MatchStatus.NO_MATCH: "Different",
+            }.get(
+                status, "Different"
+            )  # Default to "Different" for unknown status
+            f.write(f"Result: {result}\n")
+            is_same = result == "Same"
+            if encoding_results["status"] == MatchStatus.SCALED_MATCH:
+                f.write(f"Scaling factor: {encoding_results['scaling_factor']}\n")
+
+            # Update complex JSON structure
             encoding_key = f"{level.split('_')[0].capitalize()} ({encoding_type})"
             if encoding_key not in json_results[category]:
                 json_results[category][encoding_key] = {"different": 0, "total": 0}
@@ -210,6 +233,22 @@ def write_results(f, results: dict, json_results: dict) -> None:
             json_results[category][encoding_key]["total"] += 1
             if not is_same:
                 json_results[category][encoding_key]["different"] += 1
+
+            # Update simple JSON structure
+            simple_result["encodings"][level_key][encoding_type] = {
+                "result": "Same" if is_same else "Different",
+                "scaling_factor": (
+                    encoding_results["scaling_factor"]
+                    if encoding_results["status"] == MatchStatus.SCALED_MATCH
+                    else None
+                ),
+            }
+
+    # save the json
+    with open(filepath_json, "w") as json_f:
+        json.dump(simple_result, json_f, indent=2)
+
+    return simple_result
 
 
 def quick_eda_from_github(graphs):
@@ -265,8 +304,9 @@ def rook_and_shrikhande_special_case() -> None:
         category="Special",
         is_isomorphic=False,
     )
+    json_path = "results/brec/rook_vs_shrikhande_statistics.json"
     with open(results_file, "w") as f:
-        write_results(f, special_results, json_results)
+        write_results(f, json_path, special_results, json_results)
 
 
 def parse_encoding(encodings: str) -> list[tuple[str, str]]:
@@ -463,7 +503,9 @@ def main(encodings: str, categories: str) -> None:
                         is_isomorphic=False,
                         types_of_encoding=selected_encodings,
                     )
-                    write_results(f, pair_results, json_results)
+                    if len(selected_encodings) == 1:
+                        json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{pair_idx}_statistics.json"
+                        write_results(f, json_path, pair_results, json_results)
 
         else:
             print(f"Only checking these types of encodings: {selected_encodings}")
@@ -477,6 +519,16 @@ def main(encodings: str, categories: str) -> None:
 
                 print(f"\nProcessing {category} category...")
                 num_pairs_to_process = min(5, len(graphs) // 2)
+
+                if len(selected_encodings) == 1:
+                    # check if the json_path = f"results/brec/ran/{category}_pair_{total_pair_idx}_statistics.json"
+                    # already exists
+                    json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{total_pair_idx}_statistics.json"
+                    if os.path.exists(json_path):
+                        print(
+                            f"Skipping {category} category as {json_path} already exists"
+                        )
+                        continue
 
                 for local_pair_idx in range(num_pairs_to_process):
                     g1 = graphs[local_pair_idx * 2]
@@ -505,7 +557,9 @@ def main(encodings: str, categories: str) -> None:
                         already_in_nx=True,
                         types_of_encoding=selected_encodings,
                     )
-                    write_results(f, pair_results, json_results)
+                    if len(selected_encodings) == 1:
+                        json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{total_pair_idx}_statistics.json"
+                        write_results(f, json_path, pair_results, json_results)
 
                     total_pair_idx += 1  # Increment the global counter
 
