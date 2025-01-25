@@ -77,8 +77,8 @@ def plot_hypergraph_and_expansion() -> None:
     plt.subplot(121)
     H = hnx.Hypergraph(hypergraph)
     pos = nx.spring_layout(H.bipartite())
-    hnx.draw(H, with_node_labels=True, with_edge_labels=True, pos=pos)
-    plt.title("Original Hypergraph")
+    hnx.draw(H, with_node_labels=True, with_edge_labels=False, pos=pos)
+    plt.title("Original Hypergraph", fontsize=20)
 
     # Compute and plot clique expansion
     plt.subplot(122)
@@ -92,7 +92,7 @@ def plot_hypergraph_and_expansion() -> None:
         font_size=12,
         font_weight="bold",
     )
-    plt.title("Clique Expansion")
+    plt.title("Clique Expansion", fontsize=20)
 
     plt.tight_layout()
     plt.show()
