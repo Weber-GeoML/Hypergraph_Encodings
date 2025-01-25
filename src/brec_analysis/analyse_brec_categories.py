@@ -111,12 +111,13 @@ def quick_eda_from_github(graphs, verbose: bool = False):
 
     # Print initial counts
     for category, graph_list in graphs.items():
-        print(f"\nDEBUG 2 - {category}:")
-        print(f"Initial graph list length: {len(graph_list)}")
-        if len(graph_list) >= 2:
-            print(
-                f"First two graphs nodes: {graph_list[0].number_of_nodes()}, {graph_list[1].number_of_nodes()}"
-            )
+        if verbose:
+            print(f"\nDEBUG 2 - {category}:")
+            print(f"Initial graph list length: {len(graph_list)}")
+            if len(graph_list) >= 2:
+                print(
+                    f"First two graphs nodes: {graph_list[0].number_of_nodes()}, {graph_list[1].number_of_nodes()}"
+                )
 
     # Create lists to store node counts for each category
     node_counts: dict = {category: [] for category in graphs.keys()}
@@ -125,8 +126,7 @@ def quick_eda_from_github(graphs, verbose: bool = False):
     for category, graph_list in graphs.items():
         if verbose:
             print(f"\nDEBUG 3 - Processing {category}:")
-
-        print(f"Category: {category} has {len(graph_list)} graphs")
+            print(f"Category: {category} has {len(graph_list)} graphs")
         for G in graph_list:
             node_counts[category].append(G.number_of_nodes())
 
