@@ -16,6 +16,8 @@ setup(
         "torch-scatter",
         "torch-sparse",
         "path",
+        "fastjsonschema",
+        "shapely",
         "tabulate",
         "matplotlib",
         "path",
@@ -31,7 +33,7 @@ setup(
             "isort",
             "docformatter",
             "ruff",
-            "pylint"
+            "pylint",
         ],
         "test": [
             "pytest",
@@ -42,7 +44,7 @@ setup(
             "torch-geometric",
             "torch-scatter",
             "torch-sparse",
-            "numpy"
+            "numpy",
         ],
     },
 )
