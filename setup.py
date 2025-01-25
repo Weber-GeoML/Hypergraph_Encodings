@@ -22,6 +22,8 @@ setup(
         "matplotlib",
         "path",
         "brec",
+        "imageio",
+        "imageio-ffmpeg",
     ],
     extras_require={
         "dev": [
