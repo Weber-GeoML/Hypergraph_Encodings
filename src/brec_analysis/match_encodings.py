@@ -19,7 +19,7 @@ def find_encoding_match(
     encoding1: np.ndarray,
     encoding2: np.ndarray,
     verbose: bool = True,
-    timeout_seconds: float = 0.0000001,
+    timeout_seconds: float = 60 * 4,
 ) -> tuple[
     bool, np.ndarray | None, tuple[int, ...] | None, np.ndarray | None, str | None
 ]:
@@ -84,11 +84,11 @@ def find_encoding_match(
         return False, None, None, None, None
 
     # Vectorized column comparisons for both max and min
-    t0 = time.time()
+    # t0 = time.time()
     max_cols1 = np.max(abs_enc1, axis=0)
     max_cols2 = np.max(abs_enc2, axis=0)
-    if verbose:
-        print(f"Max computation time: {time.time() - t0:.4f} seconds")
+    # if verbose:
+    #     print(f"Max computation time: {time.time() - t0:.4f} seconds")
 
     # Check max values
     if not np.allclose(max_cols1, max_cols2, rtol=1e-12):
@@ -99,11 +99,11 @@ def find_encoding_match(
             print(f"Max values enc2: {max_cols2[diff_cols]}")
         return False, None, None, None, None
 
-    t0 = time.time()
+    # t0 = time.time()
     min_cols1 = np.min(abs_enc1, axis=0)
     min_cols2 = np.min(abs_enc2, axis=0)
-    if verbose:
-        print(f"Min computation time: {time.time() - t0:.4f} seconds")
+    # if verbose:
+    #     print(f"Min computation time: {time.time() - t0:.4f} seconds")
 
     # Check min values
     if not np.allclose(min_cols1, min_cols2, rtol=1e-12):
@@ -114,11 +114,11 @@ def find_encoding_match(
             print(f"Min values enc2: {min_cols2[diff_cols]}")
         return False, None, None, None, None
 
-    t0 = time.time()
+    # t0 = time.time()
     mean_cols1 = np.mean(abs_enc1, axis=0)
     mean_cols2 = np.mean(abs_enc2, axis=0)
-    if verbose:
-        print(f"Mean computation time: {time.time() - t0:.4f} seconds")
+    # if verbose:
+    #     print(f"Mean computation time: {time.time() - t0:.4f} seconds")
 
     # Check mean values
     if not np.allclose(mean_cols1, mean_cols2, rtol=1e-12):
@@ -129,11 +129,11 @@ def find_encoding_match(
             print(f"Mean values enc2: {mean_cols2[diff_cols]}")
         return False, None, None, None, None
 
-    t0 = time.time()
+    # t0 = time.time()
     std_cols1 = np.std(abs_enc1, axis=0)
     std_cols2 = np.std(abs_enc2, axis=0)
-    if verbose:
-        print(f"Std computation time: {time.time() - t0:.4f} seconds")
+    # if verbose:
+    #     print(f"Std computation time: {time.time() - t0:.4f} seconds")
 
     # Check standard deviation values
     if not np.allclose(std_cols1, std_cols2, rtol=1e-12):
@@ -144,12 +144,18 @@ def find_encoding_match(
             print(f"Std values enc2: {std_cols2[diff_cols]}")
         return False, None, None, None, None
 
+    if n_rows <= 10:  # Adjust this threshold based on your needs
+        for perm_ in permutations(range(n_rows)):
+            permuted = encoding1[list(perm_), :]
+            if np.allclose(permuted, encoding2, rtol=1e-13):
+                return True, permuted, tuple(perm_), encoding2, None
+
     # kurtosis
-    t0 = time.time()
+    # t0 = time.time()
     kurtosis_cols1 = kurtosis(abs_enc1, axis=0)
     kurtosis_cols2 = kurtosis(abs_enc2, axis=0)
-    if verbose:
-        print(f"Kurtosis computation time: {time.time() - t0:.4f} seconds")
+    # if verbose:
+    #     print(f"Kurtosis computation time: {time.time() - t0:.4f} seconds")
 
     # check kurtosis
     if not np.allclose(kurtosis_cols1, kurtosis_cols2, rtol=1e-12):
@@ -161,11 +167,11 @@ def find_encoding_match(
         return False, None, None, None, None
 
     # Additional statistical measures
-    t0 = time.time()
+    # t0 = time.time()
     median_cols1 = np.median(abs_enc1, axis=0)
     median_cols2 = np.median(abs_enc2, axis=0)
-    if verbose:
-        print(f"Median computation time: {time.time() - t0:.4f} seconds")
+    # if verbose:
+    #     print(f"Median computation time: {time.time() - t0:.4f} seconds")
 
     # check median
     if not np.allclose(median_cols1, median_cols2, rtol=1e-12):
@@ -177,11 +183,11 @@ def find_encoding_match(
         return False, None, None, None, None
 
     # Skewness
-    t0 = time.time()
+    # t0 = time.time()
     skew_cols1 = skew(abs_enc1, axis=0)
     skew_cols2 = skew(abs_enc2, axis=0)
-    if verbose:
-        print(f"Skewness computation time: {time.time() - t0:.4f} seconds")
+    # if verbose:
+    #     print(f"Skewness computation time: {time.time() - t0:.4f} seconds")
 
     # check skew
     if not np.allclose(skew_cols1, skew_cols2, rtol=1e-12):
@@ -193,11 +199,11 @@ def find_encoding_match(
         return False, None, None, None, None
 
     # Sum of squares
-    t0 = time.time()
+    # t0 = time.time()
     sum_sq_cols1 = np.sum(abs_enc1**2, axis=0)
     sum_sq_cols2 = np.sum(abs_enc2**2, axis=0)
-    if verbose:
-        print(f"Sum of squares computation time: {time.time() - t0:.4f} seconds")
+    # if verbose:
+    #     print(f"Sum of squares computation time: {time.time() - t0:.4f} seconds")
 
     # check sum of squares
     if not np.allclose(sum_sq_cols1, sum_sq_cols2, rtol=1e-12):
@@ -233,17 +239,9 @@ def find_encoding_match(
 
     n_rows = encoding1.shape[0]
 
-    start_time = time.time()
+    # start_time = time.time()
     # For small matrices, we can try all permutations
-    if n_rows <= 5:  # Adjust this threshold based on your needs
-        for perm_ in permutations(range(n_rows)):
-            if time.time() - start_time > timeout_seconds:
-                print(f"🚨 Timeout after {time.time() - start_time:.2f} seconds")
-                return True, None, None, None, "timeout"
-            permuted = encoding1[list(perm_), :]
-            if np.allclose(permuted, encoding2, rtol=1e-13):
-                return True, permuted, tuple(perm_), encoding2, None
-    long_timeout = True
+    long_timeout = False
     if not long_timeout:
         print("🚨 Assume same")
         return True, encoding1, tuple(range(n_rows)), encoding2, "timeout"
@@ -333,7 +331,7 @@ def check_encodings_same_up_to_scaling(
         encoding1, encoding2, verbose=verbose
     )
     if is_match:
-        if timeout:
+        if timeout is not None:
             print(f"🚨 Warning: Timeout after {timeout}")
         if verbose:
             print("✅ Encodings match directly (no scaling needed)")
@@ -345,7 +343,7 @@ def check_encodings_same_up_to_scaling(
         encoding1, -encoding2, verbose=verbose
     )
     if is_match:
-        if timeout:
+        if timeout is not None:
             print(f"🚨 Warning: Timeout after {timeout}")
         if verbose:
             print("✅ Encodings match directly (with -1 scaling)")
@@ -377,7 +375,7 @@ def check_encodings_same_up_to_scaling(
     )
 
     if is_match:
-        if timeout:
+        if timeout is not None:
             print(f"🚨 Warning: Timeout after {timeout}")
         if verbose:
             print(f"✅ Found match after scaling by {scaling_factor:.4e}")
@@ -396,7 +394,7 @@ def check_encodings_same_up_to_scaling(
     )
 
     if is_match:
-        if timeout:
+        if timeout is not None:
             print(f"🚨 Warning: Timeout after {timeout}")
         if verbose:
             print("✅ Found match after normalization")
