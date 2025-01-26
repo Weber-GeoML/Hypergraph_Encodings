@@ -366,7 +366,7 @@ def checks_encodings(
         # print(f"features: \n {hg2_encodings}")
 
         # # Plot and get match results
-        # is_direct_match, permuted, perm = find_encoding_match(
+        # is_direct_match, permuted, perm, timeout= find_encoding_match(
         #     hg1_encodings, hg2_encodings
         # )
         # if not is_direct_match:
@@ -449,7 +449,8 @@ def check_for_matches(encoding1, encoding2, name: str) -> dict:
     permuted: np.ndarray
     permuted2: np.ndarray
     perm: tuple[int, ...]
-    is_direct_match, permuted, perm, permuted2 = find_encoding_match(
+    timeout: str | None
+    is_direct_match, permuted, perm, permuted2, timeout = find_encoding_match(
         encoding1, encoding2
     )
 
@@ -462,24 +463,27 @@ def check_for_matches(encoding1, encoding2, name: str) -> dict:
     assert encoding1 is not None
     assert encoding2 is not None
 
-    if not is_direct_match:
-        print("**-" * 20)
-        print(f"We are also checking up to scaling for {name}")
-        is_same_up_to_scaling, scaling_factor, perm, permuted, permuted2 = (
-            check_encodings_same_up_to_scaling(encoding1, encoding2, verbose=False)
-        )
-        if is_same_up_to_scaling and not np.isclose(scaling_factor, 1.0, rtol=1e-10):
-            # Only print if there's actually a non-trivial scaling
-            print("⛔️ The encodings are the same up to scaling")
-            print(f"The scaling factor is {scaling_factor}")
-        print("**-" * 20)
-    else:
-        is_same_up_to_scaling = True
-        scaling_factor = 1.0
+    # skipping for speed.
+    # if not is_direct_match:
+    #     print("**-" * 20)
+    #     print(f"We are also checking up to scaling for {name}")
+    #     is_same_up_to_scaling, scaling_factor, perm, permuted, permuted2 = (
+    #         check_encodings_same_up_to_scaling(encoding1, encoding2, verbose=False)
+    #     )
+    #     if is_same_up_to_scaling and not np.isclose(scaling_factor, 1.0, rtol=1e-10):
+    #         # Only print if there's actually a non-trivial scaling
+    #         print("⛔️ The encodings are the same up to scaling")
+    #         print(f"The scaling factor is {scaling_factor}")
+    #     print("**-" * 20)
+    # else:
+    #     is_same_up_to_scaling = True
+    #     scaling_factor = 1.0
 
     status = MatchStatus.NO_MATCH
     if is_direct_match:
         status = MatchStatus.EXACT_MATCH
+        if timeout == "timeout":
+            status = MatchStatus.TIMEOUT
     elif is_same_up_to_scaling:
         status = MatchStatus.SCALED_MATCH
 

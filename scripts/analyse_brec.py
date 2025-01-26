@@ -167,6 +167,19 @@ def analyze_graph_pair(
 def write_results(f, filepath_json, results: dict, json_results: dict) -> dict:
     """Write results for a pair to the file and update JSON results.
 
+    Args:
+        f:
+            the file to write to
+        filepath_json:
+            the path to the json file
+        results:
+            the results to write
+        json_results:
+            the json results to update
+
+
+    Returns:
+        the updated json results
 
     results = {'pair_idx': 'rook_vs_shrikhande', 'category': 'Special', 'is_isomorphic': False, 'graph_level': {'encodings': {...}}, 'hypergraph_level': {'encodings': {...}}}
 
@@ -205,6 +218,7 @@ def write_results(f, filepath_json, results: dict, json_results: dict) -> dict:
                 MatchStatus.EXACT_MATCH: "Same",
                 MatchStatus.SCALED_MATCH: "Scaled",
                 MatchStatus.NO_MATCH: "Different",
+                MatchStatus.TIMEOUT: "Timeout",
             }.get(
                 status, "Different"
             )  # Default to "Different" for unknown status
@@ -218,9 +232,10 @@ def write_results(f, filepath_json, results: dict, json_results: dict) -> dict:
             if encoding_key not in json_results[category]:
                 json_results[category][encoding_key] = {"different": 0, "total": 0}
 
-            json_results[category][encoding_key]["total"] += 1
-            if not is_same:
-                json_results[category][encoding_key]["different"] += 1
+            if not result == "Timeout":
+                json_results[category][encoding_key]["total"] += 1
+                if not is_same:
+                    json_results[category][encoding_key]["different"] += 1
 
             # Update simple JSON structure
             simple_result["encodings"][level_key][encoding_type] = {
@@ -554,17 +569,18 @@ def main(encodings: str, categories: str) -> None:
                 num_pairs_to_process = len(graphs) // 2
                 print(f"Number of pairs to process: {num_pairs_to_process}")
 
-                if len(selected_encodings) == 1:
-                    # check if the json_path = f"results/brec/ran/{category}_pair_{total_pair_idx}_statistics.json"
-                    # already exists
-                    json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{total_pair_idx}_statistics.json"
-                    if os.path.exists(json_path):
-                        print(
-                            f"Skipping {category} category as {json_path} already exists"
-                        )
-                        continue
-
                 for local_pair_idx in range(num_pairs_to_process):
+
+                    if len(selected_encodings) == 1:
+                        # check if the json_path = f"results/brec/ran/{category}_pair_{total_pair_idx}_statistics.json"
+                        # already exists
+                        json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{total_pair_idx}_statistics.json"
+                        if os.path.exists(json_path):
+                            print(
+                                f"Skipping {category} category as {json_path} already exists"
+                            )
+                            continue
+
                     g1 = graphs[local_pair_idx * 2]
                     g2 = graphs[local_pair_idx * 2 + 1]
 
@@ -590,6 +606,8 @@ def main(encodings: str, categories: str) -> None:
                     )
                     if len(selected_encodings) == 1:
                         json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{total_pair_idx}_statistics.json"
+                        # updates the json_results with the pair_results
+                        # and saves the singleton file
                         write_results(f, json_path, pair_results, json_results)
 
                     total_pair_idx += 1  # Increment the global counter

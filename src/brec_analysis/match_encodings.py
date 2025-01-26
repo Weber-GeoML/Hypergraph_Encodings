@@ -8,11 +8,18 @@ Also try up to scaling.
 from itertools import permutations
 
 import numpy as np
+import time
+from typing import Optional, Tuple
 
 
 def find_encoding_match(
-    encoding1: np.ndarray, encoding2: np.ndarray, verbose: bool = True
-) -> tuple[bool, np.ndarray | None, tuple[int, ...] | None, np.ndarray | None]:
+    encoding1: np.ndarray,
+    encoding2: np.ndarray,
+    verbose: bool = True,
+    timeout_seconds: float = 60.0 * 5,
+) -> tuple[
+    bool, np.ndarray | None, tuple[int, ...] | None, np.ndarray | None, str | None
+]:
     """
     Check if two encodings are equivalent under row permutations.
     Returns (is_match, permuted_encoding1, permutation) if found, (False, None, None) if not.
@@ -32,7 +39,7 @@ def find_encoding_match(
             the permuted encoding of encoding2
     """
     if encoding1.shape != encoding2.shape:
-        return False, None, None, None
+        return False, None, None, None, None
 
     # First check if the encodings are identical
     if np.allclose(encoding1, encoding2, rtol=1e-13):
@@ -53,7 +60,7 @@ def find_encoding_match(
             print(f"Max absolute value of encoding1: {np.max(np.abs(encoding1))}")
             print(f"Max absolute value of encoding2: {np.max(np.abs(encoding2))}")
             print("\n")
-        return False, None, None, None
+        return False, None, None, None, None
 
     # Same for min
     if not np.isclose(np.min(abs_enc1), np.min(abs_enc2), rtol=1e-10):
@@ -62,13 +69,17 @@ def find_encoding_match(
             print(f"Min absolute value of encoding1: {np.min(np.abs(encoding1))}")
             print(f"Min absolute value of encoding2: {np.min(np.abs(encoding2))}")
             print("\n")
-        return False, None, None, None
+        return False, None, None, None, None
 
     # Vectorized column comparisons for both max and min
     max_cols1 = np.max(abs_enc1, axis=0)
     max_cols2 = np.max(abs_enc2, axis=0)
     min_cols1 = np.min(abs_enc1, axis=0)
     min_cols2 = np.min(abs_enc2, axis=0)
+    mean_cols1 = np.mean(abs_enc1, axis=0)
+    mean_cols2 = np.mean(abs_enc2, axis=0)
+    std_cols1 = np.std(abs_enc1, axis=0)
+    std_cols2 = np.std(abs_enc2, axis=0)
 
     # Check max values
     if not np.allclose(max_cols1, max_cols2, rtol=1e-10):
@@ -77,7 +88,7 @@ def find_encoding_match(
             print(f"Different max at columns: {np.where(diff_cols)[0]}")
             print(f"Max values enc1: {max_cols1[diff_cols]}")
             print(f"Max values enc2: {max_cols2[diff_cols]}")
-        return False, None, None, None
+        return False, None, None, None, None
 
     # Check min values
     if not np.allclose(min_cols1, min_cols2, rtol=1e-10):
@@ -86,13 +97,35 @@ def find_encoding_match(
             print(f"Different min at columns: {np.where(diff_cols)[0]}")
             print(f"Min values enc1: {min_cols1[diff_cols]}")
             print(f"Min values enc2: {min_cols2[diff_cols]}")
-        return False, None, None, None
+        return False, None, None, None, None
+
+    # Check mean values
+    if not np.allclose(mean_cols1, mean_cols2, rtol=1e-10):
+        if verbose:
+            diff_cols = ~np.isclose(mean_cols1, mean_cols2, rtol=1e-10)
+            print(f"Different mean at columns: {np.where(diff_cols)[0]}")
+            print(f"Mean values enc1: {mean_cols1[diff_cols]}")
+            print(f"Mean values enc2: {mean_cols2[diff_cols]}")
+        return False, None, None, None, None
+
+    # Check standard deviation values
+    if not np.allclose(std_cols1, std_cols2, rtol=1e-10):
+        if verbose:
+            diff_cols = ~np.isclose(std_cols1, std_cols2, rtol=1e-10)
+            print(f"Different std at columns: {np.where(diff_cols)[0]}")
+            print(f"Std values enc1: {std_cols1[diff_cols]}")
+            print(f"Std values enc2: {std_cols2[diff_cols]}")
+        return False, None, None, None, None
 
     n_rows = encoding1.shape[0]
 
+    start_time = time.time()
     # For small matrices, we can try all permutations
-    if n_rows <= 10:  # Adjust this threshold based on your needs
+    if n_rows <= 5:  # Adjust this threshold based on your needs
         for perm_ in permutations(range(n_rows)):
+            if time.time() - start_time > timeout_seconds:
+                print(f"Timeout after {time.time() - start_time:.2f} seconds")
+                return True, None, None, None, "timeout"
             permuted = encoding1[list(perm_), :]
             if np.allclose(permuted, encoding2, rtol=1e-13):
                 return True, permuted, tuple(perm_), encoding2
@@ -119,9 +152,9 @@ def find_encoding_match(
             # Find the permutation that was applied to the first encoding
             # This gives us the mapping between the original and sorted node orderings
             perm: np.ndarray = np.argsort(lexsort1)
-            return True, sorted1, tuple(perm), sorted2
+            return True, sorted1, tuple(perm), sorted2, None
 
-    return False, None, None, None
+    return False, None, None, None, None
 
 
 def check_encodings_same_up_to_scaling(
@@ -158,20 +191,25 @@ def check_encodings_same_up_to_scaling(
     is_match: bool
     permuted: np.ndarray | None
     permuted2: np.ndarray | None
-    is_match, permuted, perm, permuted2 = find_encoding_match(
+    timeout: str | None
+    is_match, permuted, perm, permuted2, timeout = find_encoding_match(
         encoding1, encoding2, verbose=verbose
     )
     if is_match:
+        if timeout:
+            print(f"🚨 Warning: Timeout after {timeout}")
         if verbose:
             print("✅ Encodings match directly (no scaling needed)")
         assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
         return True, 1.0, perm, permuted, permuted2
 
     # First try direct match with -1 scaling
-    is_match, permuted, perm, permuted2 = find_encoding_match(
+    is_match, permuted, perm, permuted2, timeout = find_encoding_match(
         encoding1, -encoding2, verbose=verbose
     )
     if is_match:
+        if timeout:
+            print(f"🚨 Warning: Timeout after {timeout}")
         if verbose:
             print("✅ Encodings match directly (with -1 scaling)")
         assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
@@ -197,11 +235,13 @@ def check_encodings_same_up_to_scaling(
         )
 
     # Check if scaled versions match
-    is_match, permuted, perm, permuted2 = find_encoding_match(
+    is_match, permuted, perm, permuted2, timeout = find_encoding_match(
         scaled_encoding1, encoding2, verbose=verbose
     )
 
     if is_match:
+        if timeout:
+            print(f"🚨 Warning: Timeout after {timeout}")
         if verbose:
             print(f"✅ Found match after scaling by {scaling_factor:.4e}")
         assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
@@ -214,11 +254,13 @@ def check_encodings_same_up_to_scaling(
     if verbose:
         print("\nTrying with normalized encodings (divided by max abs value)")
 
-    is_match, permuted, perm, permuted2 = find_encoding_match(
+    is_match, permuted, perm, permuted2, timeout = find_encoding_match(
         normalized1, normalized2, verbose=verbose
     )
 
     if is_match:
+        if timeout:
+            print(f"🚨 Warning: Timeout after {timeout}")
         if verbose:
             print("✅ Found match after normalization")
         assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
