@@ -20,9 +20,9 @@ from brec_analysis.analyse_brec_categories import (
 from brec_analysis.categories_to_check import PART_DICT
 from brec_analysis.compare_encodings_wrapper import compare_encodings_wrapper
 from brec_analysis.encodings_to_check import ENCODINGS_TO_CHECK
+from brec_analysis.isomorphism_mapping import find_isomorphism_mapping
 from brec_analysis.match_status import MatchStatus
 from brec_analysis.parse_click_args import parse_categories, parse_encoding
-from brec_analysis.isomorphism_mapping import find_isomorphism_mapping
 from brec_analysis.plotting_graphs_and_hgraphs_for_brec import (
     plot_graph_pair,
     plot_hypergraph_pair,

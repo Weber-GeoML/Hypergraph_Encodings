@@ -4,7 +4,7 @@ from brec_analysis.categories_to_check import VALID_CATEGORIES
 from brec_analysis.encodings_to_check import ENCODINGS_TO_CHECK
 
 
-def parse_encoding(encodings: str) -> list[tuple[str, str]]:
+def parse_encoding(encodings: str) -> list[tuple[str, str]] | None:
     """Parse encoding indices"""
     # Parse encoding indices
     try:
@@ -34,7 +34,7 @@ def parse_encoding(encodings: str) -> list[tuple[str, str]]:
         print("\nAvailable encodings:")
         for i, (code, name) in enumerate(ENCODINGS_TO_CHECK):
             print(f"{i}: {code} ({name})")
-        return
+        return None
 
 
 def parse_categories(categories_str: str) -> list[str]:
