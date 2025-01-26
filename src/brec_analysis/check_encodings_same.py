@@ -216,10 +216,10 @@ def checks_encodings(
     name2: str = "Graph B",
     save_plots: bool = True,
     plot_dir: str = "plots/encodings",
-    pair_idx: int = None,
-    category: str = None,
-    is_isomorphic: bool = None,
-    node_mapping: dict = None,
+    pair_idx: int | str | None = None,
+    category: str | None = None,
+    is_isomorphic: bool | None = None,
+    node_mapping: dict | None = None,
     graph_type: str = "Graph",
     k: int = 3,
     verbose: bool = False,
@@ -317,6 +317,7 @@ def checks_encodings(
         name_of_encoding,
         match_result["permutation"],
         match_result["permuted"],
+        match_result["permuted2"],
         {"features": hg1_encodings},
         {"features": hg2_encodings},
     )
@@ -367,6 +368,7 @@ def checks_encodings(
         #         scaling_factor,
         #         perm_up_to_scaling,
         #         permuted_up_to_scaling,
+        #         permuted2_up_to_scaling,
         #     ) = check_encodings_same_up_to_scaling(
         #         hg1_encodings,
         #         hg2_encodings,
@@ -422,7 +424,9 @@ def checks_encodings(
 
 def check_for_matches(encoding1, encoding2, name: str) -> dict:
     """Check for direct matches and scaling matches."""
-    is_direct_match, permuted, perm = find_encoding_match(encoding1, encoding2)
+    is_direct_match, permuted, perm, permuted2 = find_encoding_match(
+        encoding1, encoding2
+    )
 
     is_same_up_to_scaling = False
     scaling_factor = None
@@ -433,7 +437,7 @@ def check_for_matches(encoding1, encoding2, name: str) -> dict:
     if not is_direct_match:
         print("**-" * 20)
         print(f"We are also checking up to scaling for {name}")
-        is_same_up_to_scaling, scaling_factor, perm, permuted = (
+        is_same_up_to_scaling, scaling_factor, perm, permuted, permuted2 = (
             check_encodings_same_up_to_scaling(encoding1, encoding2, verbose=False)
         )
         if is_same_up_to_scaling and not np.isclose(scaling_factor, 1.0, rtol=1e-10):
@@ -458,4 +462,5 @@ def check_for_matches(encoding1, encoding2, name: str) -> dict:
         "scaling_factor": scaling_factor if is_same_up_to_scaling else None,
         "permutation": perm,
         "permuted": permuted,
+        "permuted2": permuted2,
     }

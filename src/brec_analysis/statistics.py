@@ -17,7 +17,7 @@ def calculate_statistics(
     Returns:
         Dictionary with statistics by category and encoding
     """
-    stats = {}
+    stats: dict[str, dict[str, float]] = {}
     for category in results_by_category:
         stats[category] = {}
         for level in ["graph_level", "hypergraph_level"]:

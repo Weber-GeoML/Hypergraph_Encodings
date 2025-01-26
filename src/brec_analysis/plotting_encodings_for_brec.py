@@ -7,9 +7,9 @@ import numpy as np
 
 
 def save_comparison_plot(
-    plt: plt.Axes,
+    plt,
     plot_dir: str,
-    pair_idx: str,
+    pair_idx: str | float | None,
     category: str,
     name_of_encoding: str,
 ):

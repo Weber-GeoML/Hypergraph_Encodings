@@ -20,9 +20,9 @@ from brec_analysis.analyse_brec_categories import (
 from brec_analysis.categories_to_check import PART_DICT
 from brec_analysis.compare_encodings_wrapper import compare_encodings_wrapper
 from brec_analysis.encodings_to_check import ENCODINGS_TO_CHECK
+from brec_analysis.isomorphism_mapping import find_isomorphism_mapping
 from brec_analysis.match_status import MatchStatus
 from brec_analysis.parse_click_args import parse_categories, parse_encoding
-from brec_analysis.isomorphism_mapping import find_isomorphism_mapping
 from brec_analysis.plotting_graphs_and_hgraphs_for_brec import (
     plot_graph_pair,
     plot_hypergraph_pair,
@@ -326,7 +326,7 @@ def rook_and_shrikhande_special_case() -> None:
     # return connectivity_stats
 
 
-def process_pair(dataset: BRECDataset, encoding: str, pair_info: tuple) -> dict:
+def process_pair(dataset: BRECDataset, encoding: str, pair_info: tuple) -> dict | None:
     """Process a single pair of graphs."""
     category, pair_idx = pair_info
     print(f"\nDEBUG: Processing pair_info: {pair_info}")
@@ -361,7 +361,7 @@ def process_pair(dataset: BRECDataset, encoding: str, pair_info: tuple) -> dict:
         pair_idx,
         category,
         is_isomorphic=False,
-        encoding=encoding,
+        types_of_encoding=list(encoding),
     )
 
     return pair_results
@@ -409,13 +409,13 @@ def is_regular(G: nx.Graph) -> tuple[bool, int]:
     "--encodings",
     "-e",
     help='Indices of encodings to check (e.g., "0" or "0,3" or "0-3")',
-    default="1",
+    default="0",
 )
 @click.option(
     "--categories",
     "-c",
     help='Indices of categories to analyze (e.g., "0" or "0,3" or "0-3")',
-    default="0-1",
+    default="0",
 )
 def main(encodings: str, categories: str) -> None:
     """Analyze BREC dataset with specified encodings and categories

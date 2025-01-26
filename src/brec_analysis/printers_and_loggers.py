@@ -8,6 +8,7 @@ def print_comparison_results(
     name_of_encoding: str,
     perm: np.ndarray,
     permuted: np.ndarray,
+    permuted2: np.ndarray,
     hg1_encodings: dict,
     hg2_encodings: dict,
 ) -> None:
@@ -22,6 +23,8 @@ def print_comparison_results(
             the permutation that was applied
         permuted:
             the permuted encoding
+        permuted2:
+            the permuted encoding of the second graph
         hg1_encodings:
             the encodings of the first graph
         hg2_encodings:
@@ -32,10 +35,10 @@ def print_comparison_results(
         print(f"\n✅ Found matching permutation for {name_of_encoding}!")
         print(f"Permutation: {perm}")
         print("Statistics after permutation:")
-        max_diff = np.max(np.abs(permuted - hg2_encodings["features"]))
+        max_diff = np.max(np.abs(permuted - permuted2))
         print(f"Max difference: {max_diff}")
         assert np.isclose(max_diff, 0, rtol=1e-9)
-        mean_diff = np.mean(np.abs(permuted - hg2_encodings["features"]))
+        mean_diff = np.mean(np.abs(permuted - permuted2))
         # print(
         #     f"Mean difference: {mean_diff}"
         # )
