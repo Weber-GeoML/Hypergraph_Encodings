@@ -19,7 +19,7 @@ def find_encoding_match(
     encoding1: np.ndarray,
     encoding2: np.ndarray,
     verbose: bool = True,
-    timeout_seconds: float = 60.0 * 4,
+    timeout_seconds: float = 60.0 * 3,
 ) -> tuple[
     bool, np.ndarray | None, tuple[int, ...] | None, np.ndarray | None, str | None
 ]:
