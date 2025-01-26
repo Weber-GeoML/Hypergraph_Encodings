@@ -326,7 +326,7 @@ def rook_and_shrikhande_special_case() -> None:
     # return connectivity_stats
 
 
-def process_pair(dataset: BRECDataset, encoding: str, pair_info: tuple) -> dict:
+def process_pair(dataset: BRECDataset, encoding: str, pair_info: tuple) -> dict | None:
     """Process a single pair of graphs."""
     category, pair_idx = pair_info
     print(f"\nDEBUG: Processing pair_info: {pair_info}")
@@ -361,7 +361,7 @@ def process_pair(dataset: BRECDataset, encoding: str, pair_info: tuple) -> dict:
         pair_idx,
         category,
         is_isomorphic=False,
-        encoding=encoding,
+        types_of_encoding=list(encoding),
     )
 
     return pair_results
