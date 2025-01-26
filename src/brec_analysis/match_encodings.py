@@ -50,7 +50,7 @@ def find_encoding_match(
         if verbose:
             print("Free lunch!")
         n_rows = encoding1.shape[0]
-        return True, encoding1, tuple(range(n_rows)), encoding2
+        return True, encoding1, tuple(range(n_rows)), encoding2, None
 
     # Pre-compute expensive operations
     abs_enc1 = np.abs(encoding1)

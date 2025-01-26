@@ -615,14 +615,30 @@ def main(encodings: str, categories: str) -> None:
                         already_in_nx=True,
                         types_of_encoding=selected_encodings,
                     )
-                    print(f"pair_results: {pair_results}")
-                    if pair_results["status"] != MatchStatus.TIMEOUT:
+                    print(
+                        f"pair_results: {pair_results['graph_level']['encodings']} and {pair_results['hypergraph_level']['encodings']}"
+                    )
+                    # Get first key's values using next() and iter()
+                    first_encoding_graph = next(
+                        iter(pair_results["graph_level"]["encodings"].values())
+                    )
+                    status_graph = first_encoding_graph["status"]
+                    first_encoding_hypergraph = next(
+                        iter(pair_results["hypergraph_level"]["encodings"].values())
+                    )
+                    status_hypergraph = first_encoding_hypergraph["status"]
+                    print(f"status_graph: {status_graph}")
+                    print(f"status_hypergraph: {status_hypergraph}")
+                    if (
+                        status_graph != MatchStatus.TIMEOUT
+                        and status_hypergraph != MatchStatus.TIMEOUT
+                    ):
                         if len(selected_encodings) == 1:
                             json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{total_pair_idx}_statistics.json"
                             # updates the json_results with the pair_results
                             # and saves the singleton file
                             write_results(f, json_path, pair_results, json_results)
-                    elif pair_results["status"] == MatchStatus.TIMEOUT:
+                    else:
                         print("🚨 Timeout")
                         if len(selected_encodings) == 1:
                             json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{total_pair_idx}_statistics_TIMEOUT.json"
