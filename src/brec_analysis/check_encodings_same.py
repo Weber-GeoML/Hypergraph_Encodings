@@ -454,7 +454,7 @@ def check_for_matches(encoding1, encoding2, name: str) -> dict:
     perm: tuple[int, ...]
     timeout: str | None
     is_direct_match, permuted, perm, permuted2, timeout = find_encoding_match(
-        encoding1, encoding2
+        encoding1, encoding2, verbose=True
     )
 
     if is_direct_match:

@@ -6,6 +6,7 @@ It is used to compare the encodings of the graphs in the BREC dataset.
 import json
 import multiprocessing as mp
 import os
+import time
 
 import click
 import networkx as nx
@@ -186,14 +187,14 @@ def write_results(f, filepath_json, results: dict, json_results: dict) -> dict:
     results["graph_level"]["encodings"]
     {'LDP': {'description': 'Local Degree Profile', 'status': <MatchStatus.EXACT_MATCH: 'EXACT_MATCH'>, 'scaling_factor': 1.0, 'permutation': (...)}, 'LCP-FRC': {'description': 'Local Curvature Profile - FRC', 'status': <MatchStatus.EXACT_MATCH: 'EXACT_MATCH'>, 'scaling_factor': 1.0, 'permutation': (...)}, 'RWPE': {'description': 'Random Walk Encodings', 'status': <MatchStatus.EXACT_MATCH: 'EXACT_MATCH'>, 'scaling_factor': 1.0, 'permutation': (...)}, 'LCP-ORC': {'description': 'Local Curvature Profile - ORC', 'status': <MatchStatus.SCALED_MATCH: 'SCALED_MATCH'>, 'scaling_factor': 0.4954381921284782, 'permutation': (...)}, 'LAPE-Normalized': {'description': 'Normalized Laplacian', 'status': <MatchStatus.NO_MATCH: 'NO_MATCH'>, 'scaling_factor': None, 'permutation': None}, 'LAPE-RW': {'description': 'Random Walk Laplacian', 'status': <MatchStatus.NO_MATCH: 'NO_MATCH'>, 'scaling_factor': None, 'permutation': None}, 'LAPE-Hodge': {'description': 'Hodge Laplacian', 'status': <MatchStatus.NO_MATCH: 'NO_MATCH'>, 'scaling_factor': None, 'permutation': None}}
     """
-    # Print the file path at the start
+    t_start = time.time()
     print(f"\nWriting results to: {f.name}")
-    print(f"Results: {results}")
 
     # Get pair info
     pair_idx = results["pair_idx"]
     category = results["category"]
 
+    t1 = time.time()
     # Initialize this pair in json_results if needed
     if category not in json_results:
         json_results[category] = {}
@@ -204,14 +205,16 @@ def write_results(f, filepath_json, results: dict, json_results: dict) -> dict:
         "category": category,
         "encodings": {"graph": {}, "hypergraph": {}},
     }
+    t2 = time.time()
+    print(f"Initialization time: {t2 - t1:.4f} seconds")
 
+    # Time the main processing loops
     for level in ["graph_level", "hypergraph_level"]:
-        f.write(f"\nAnalysis for pair {pair_idx} ({category}) - {level}\n")
+        t_level_start = time.time()
         level_key = "graph" if level == "graph_level" else "hypergraph"
 
         for encoding_type, encoding_results in results[level]["encodings"].items():
-            # Write to text file
-            f.write(f"\n=== {encoding_type} ({encoding_results['description']}) ===\n")
+            t_encoding_start = time.time()
 
             status = encoding_results["status"]
             result = {
@@ -219,14 +222,11 @@ def write_results(f, filepath_json, results: dict, json_results: dict) -> dict:
                 MatchStatus.SCALED_MATCH: "Scaled",
                 MatchStatus.NO_MATCH: "Different",
                 MatchStatus.TIMEOUT: "Timeout",
-            }.get(
-                status, "Different"
-            )  # Default to "Different" for unknown status
-            f.write(f"Result: {result}\n")
+            }.get(status, "Different")
             is_same = result == "Same"
-            if encoding_results["status"] == MatchStatus.SCALED_MATCH:
-                f.write(f"Scaling factor: {encoding_results['scaling_factor']}\n")
 
+            # Time JSON structure updates
+            t_json_start = time.time()
             # Update complex JSON structure
             encoding_key = f"{level.split('_')[0].capitalize()} ({encoding_type})"
             if encoding_key not in json_results[category]:
@@ -247,11 +247,14 @@ def write_results(f, filepath_json, results: dict, json_results: dict) -> dict:
             else:
                 json_results[category][encoding_key]["same_with_timeout"] += 1
             json_results[category][encoding_key]["total_with_timeout"] += 1
+            t_json_end = time.time()
 
-            # Update simple JSON structure
+            # Time simple result update
+            t_simple_start = time.time()
             if is_same:
                 result_to_write = "Same"
             elif result == "Timeout":
+                print("🚨 Timeout")
                 result_to_write = result
             else:
                 result_to_write = "Different"
@@ -263,10 +266,18 @@ def write_results(f, filepath_json, results: dict, json_results: dict) -> dict:
                     else None
                 ),
             }
+            t_simple_end = time.time()
+
+            t_encoding_end = time.time()
+            print(
+                f"  Encoding {encoding_type} processing time: {t_encoding_end - t_encoding_start:.4f} seconds"
+            )
 
     # save the json
     with open(filepath_json, "w") as json_f:
         json.dump(simple_result, json_f, indent=2)
+
+    print(f"FINISHED WRITING RESULTS TO {filepath_json}")
 
     return simple_result
 
@@ -441,13 +452,13 @@ def is_regular(G: nx.Graph) -> tuple[bool, int]:
     "--encodings",
     "-e",
     help='Indices of encodings to check (e.g., "0" or "0,3" or "0-3")',
-    default="0",
+    default="1",
 )
 @click.option(
     "--categories",
     "-c",
     help='Indices of categories to analyze (e.g., "0" or "0,3" or "0-3")',
-    default="0",
+    default="2",
 )
 def main(encodings: str, categories: str) -> None:
     """Analyze BREC dataset with specified encodings and categories
@@ -583,7 +594,7 @@ def main(encodings: str, categories: str) -> None:
                     continue
 
                 print(f"\nProcessing {category} category...")
-                num_pairs_to_process = len(graphs) // 2
+                num_pairs_to_process = min(2, len(graphs) // 2)
                 print(f"Number of pairs to process: {num_pairs_to_process}")
 
                 for local_pair_idx in range(num_pairs_to_process):
@@ -621,9 +632,6 @@ def main(encodings: str, categories: str) -> None:
                         already_in_nx=True,
                         types_of_encoding=selected_encodings,
                     )
-                    print(
-                        f"pair_results: {pair_results['graph_level']['encodings']} and {pair_results['hypergraph_level']['encodings']}"
-                    )
                     # Get first key's values using next() and iter()
                     first_encoding_graph = next(
                         iter(pair_results["graph_level"]["encodings"].values())
@@ -657,6 +665,7 @@ def main(encodings: str, categories: str) -> None:
         # Save JSON results with percentages
         # keys are categories
         # this I should be able to recreate from results/brec/ran/
+        time_start_final_file = time.time()
         final_stats: dict = {}
         # loop over categories
         for category in json_results:
@@ -678,6 +687,10 @@ def main(encodings: str, categories: str) -> None:
                     stats["total"],
                     stats["total_with_timeout"],
                 ]
+        time_end_final_file = time.time()
+        print(
+            f"Time taken to write final file: {time_end_final_file - time_start_final_file:.2f} seconds"
+        )
 
         # all results (all pairs) for the chosen encodings and categories
         # Save JSON file

@@ -19,7 +19,7 @@ def find_encoding_match(
     encoding1: np.ndarray,
     encoding2: np.ndarray,
     verbose: bool = True,
-    timeout_seconds: float = 60.0 * 3,
+    timeout_seconds: float = 0.0000001,
 ) -> tuple[
     bool, np.ndarray | None, tuple[int, ...] | None, np.ndarray | None, str | None
 ]:
@@ -57,7 +57,7 @@ def find_encoding_match(
     abs_enc2 = np.abs(encoding2)
 
     # Check the max absolute value of each encodings. If they are different, return False
-    if not np.isclose(np.max(abs_enc1), np.max(abs_enc2), rtol=1e-10):
+    if not np.isclose(np.max(abs_enc1), np.max(abs_enc2), rtol=1e-12):
         if verbose:
             print("Different because:")
             print(f"Max absolute value of encoding1: {np.max(np.abs(encoding1))}")
@@ -66,7 +66,7 @@ def find_encoding_match(
         return False, None, None, None, None
 
     # Same for min
-    if not np.isclose(np.min(abs_enc1), np.min(abs_enc2), rtol=1e-10):
+    if not np.isclose(np.min(abs_enc1), np.min(abs_enc2), rtol=1e-12):
         if verbose:
             print("Different because:")
             print(f"Min absolute value of encoding1: {np.min(np.abs(encoding1))}")
@@ -75,7 +75,7 @@ def find_encoding_match(
         return False, None, None, None, None
 
     # Same for mean
-    if not np.isclose(np.mean(abs_enc1), np.mean(abs_enc2), rtol=1e-10):
+    if not np.isclose(np.mean(abs_enc1), np.mean(abs_enc2), rtol=1e-12):
         if verbose:
             print("Different because:")
             print(f"Mean absolute value of encoding1: {np.mean(np.abs(encoding1))}")
@@ -84,94 +84,125 @@ def find_encoding_match(
         return False, None, None, None, None
 
     # Vectorized column comparisons for both max and min
+    t0 = time.time()
     max_cols1 = np.max(abs_enc1, axis=0)
     max_cols2 = np.max(abs_enc2, axis=0)
-    min_cols1 = np.min(abs_enc1, axis=0)
-    min_cols2 = np.min(abs_enc2, axis=0)
-    mean_cols1 = np.mean(abs_enc1, axis=0)
-    mean_cols2 = np.mean(abs_enc2, axis=0)
-    std_cols1 = np.std(abs_enc1, axis=0)
-    std_cols2 = np.std(abs_enc2, axis=0)
-    # kurtosis
-    kurtosis_cols1 = kurtosis(abs_enc1, axis=0)
-    kurtosis_cols2 = kurtosis(abs_enc2, axis=0)
-    # Additional statistical measures
-    median_cols1 = np.median(abs_enc1, axis=0)
-    median_cols2 = np.median(abs_enc2, axis=0)
-    # Skewness
-    skew_cols1 = skew(abs_enc1, axis=0)
-    skew_cols2 = skew(abs_enc2, axis=0)
-    # Sum of squares
-    sum_sq_cols1 = np.sum(abs_enc1**2, axis=0)
-    sum_sq_cols2 = np.sum(abs_enc2**2, axis=0)
+    if verbose:
+        print(f"Max computation time: {time.time() - t0:.4f} seconds")
 
     # Check max values
-    if not np.allclose(max_cols1, max_cols2, rtol=1e-10):
+    if not np.allclose(max_cols1, max_cols2, rtol=1e-12):
         if verbose:
-            diff_cols = ~np.isclose(max_cols1, max_cols2, rtol=1e-10)
+            diff_cols = ~np.isclose(max_cols1, max_cols2, rtol=1e-12)
             print(f"Different max at columns: {np.where(diff_cols)[0]}")
             print(f"Max values enc1: {max_cols1[diff_cols]}")
             print(f"Max values enc2: {max_cols2[diff_cols]}")
         return False, None, None, None, None
 
+    t0 = time.time()
+    min_cols1 = np.min(abs_enc1, axis=0)
+    min_cols2 = np.min(abs_enc2, axis=0)
+    if verbose:
+        print(f"Min computation time: {time.time() - t0:.4f} seconds")
+
     # Check min values
-    if not np.allclose(min_cols1, min_cols2, rtol=1e-10):
+    if not np.allclose(min_cols1, min_cols2, rtol=1e-12):
         if verbose:
-            diff_cols = ~np.isclose(min_cols1, min_cols2, rtol=1e-10)
+            diff_cols = ~np.isclose(min_cols1, min_cols2, rtol=1e-12)
             print(f"Different min at columns: {np.where(diff_cols)[0]}")
             print(f"Min values enc1: {min_cols1[diff_cols]}")
             print(f"Min values enc2: {min_cols2[diff_cols]}")
         return False, None, None, None, None
 
+    t0 = time.time()
+    mean_cols1 = np.mean(abs_enc1, axis=0)
+    mean_cols2 = np.mean(abs_enc2, axis=0)
+    if verbose:
+        print(f"Mean computation time: {time.time() - t0:.4f} seconds")
+
     # Check mean values
-    if not np.allclose(mean_cols1, mean_cols2, rtol=1e-10):
+    if not np.allclose(mean_cols1, mean_cols2, rtol=1e-12):
         if verbose:
-            diff_cols = ~np.isclose(mean_cols1, mean_cols2, rtol=1e-10)
+            diff_cols = ~np.isclose(mean_cols1, mean_cols2, rtol=1e-12)
             print(f"Different mean at columns: {np.where(diff_cols)[0]}")
             print(f"Mean values enc1: {mean_cols1[diff_cols]}")
             print(f"Mean values enc2: {mean_cols2[diff_cols]}")
         return False, None, None, None, None
 
+    t0 = time.time()
+    std_cols1 = np.std(abs_enc1, axis=0)
+    std_cols2 = np.std(abs_enc2, axis=0)
+    if verbose:
+        print(f"Std computation time: {time.time() - t0:.4f} seconds")
+
     # Check standard deviation values
-    if not np.allclose(std_cols1, std_cols2, rtol=1e-10):
+    if not np.allclose(std_cols1, std_cols2, rtol=1e-12):
         if verbose:
-            diff_cols = ~np.isclose(std_cols1, std_cols2, rtol=1e-10)
+            diff_cols = ~np.isclose(std_cols1, std_cols2, rtol=1e-12)
             print(f"Different std at columns: {np.where(diff_cols)[0]}")
             print(f"Std values enc1: {std_cols1[diff_cols]}")
             print(f"Std values enc2: {std_cols2[diff_cols]}")
         return False, None, None, None, None
 
+    # kurtosis
+    t0 = time.time()
+    kurtosis_cols1 = kurtosis(abs_enc1, axis=0)
+    kurtosis_cols2 = kurtosis(abs_enc2, axis=0)
+    if verbose:
+        print(f"Kurtosis computation time: {time.time() - t0:.4f} seconds")
+
     # check kurtosis
-    if not np.allclose(kurtosis_cols1, kurtosis_cols2, rtol=1e-10):
+    if not np.allclose(kurtosis_cols1, kurtosis_cols2, rtol=1e-12):
         if verbose:
-            diff_cols = ~np.isclose(kurtosis_cols1, kurtosis_cols2, rtol=1e-10)
+            diff_cols = ~np.isclose(kurtosis_cols1, kurtosis_cols2, rtol=1e-12)
             print(f"Different kurtosis at columns: {np.where(diff_cols)[0]}")
             print(f"Kurtosis values enc1: {kurtosis_cols1[diff_cols]}")
             print(f"Kurtosis values enc2: {kurtosis_cols2[diff_cols]}")
         return False, None, None, None, None
 
+    # Additional statistical measures
+    t0 = time.time()
+    median_cols1 = np.median(abs_enc1, axis=0)
+    median_cols2 = np.median(abs_enc2, axis=0)
+    if verbose:
+        print(f"Median computation time: {time.time() - t0:.4f} seconds")
+
     # check median
-    if not np.allclose(median_cols1, median_cols2, rtol=1e-10):
+    if not np.allclose(median_cols1, median_cols2, rtol=1e-12):
         if verbose:
-            diff_cols = ~np.isclose(median_cols1, median_cols2, rtol=1e-10)
+            diff_cols = ~np.isclose(median_cols1, median_cols2, rtol=1e-12)
             print(f"Different median at columns: {np.where(diff_cols)[0]}")
             print(f"Median values enc1: {median_cols1[diff_cols]}")
             print(f"Median values enc2: {median_cols2[diff_cols]}")
         return False, None, None, None, None
 
+    # Skewness
+    t0 = time.time()
+    skew_cols1 = skew(abs_enc1, axis=0)
+    skew_cols2 = skew(abs_enc2, axis=0)
+    if verbose:
+        print(f"Skewness computation time: {time.time() - t0:.4f} seconds")
+
     # check skew
-    if not np.allclose(skew_cols1, skew_cols2, rtol=1e-10):
+    if not np.allclose(skew_cols1, skew_cols2, rtol=1e-12):
         if verbose:
-            diff_cols = ~np.isclose(skew_cols1, skew_cols2, rtol=1e-10)
+            diff_cols = ~np.isclose(skew_cols1, skew_cols2, rtol=1e-12)
             print(f"Different skew at columns: {np.where(diff_cols)[0]}")
             print(f"Skew values enc1: {skew_cols1[diff_cols]}")
             print(f"Skew values enc2: {skew_cols2[diff_cols]}")
         return False, None, None, None, None
 
+    # Sum of squares
+    t0 = time.time()
+    sum_sq_cols1 = np.sum(abs_enc1**2, axis=0)
+    sum_sq_cols2 = np.sum(abs_enc2**2, axis=0)
+    if verbose:
+        print(f"Sum of squares computation time: {time.time() - t0:.4f} seconds")
+
     # check sum of squares
-    if not np.allclose(sum_sq_cols1, sum_sq_cols2, rtol=1e-10):
+    if not np.allclose(sum_sq_cols1, sum_sq_cols2, rtol=1e-12):
         if verbose:
-            diff_cols = ~np.isclose(sum_sq_cols1, sum_sq_cols2, rtol=1e-10)
+            diff_cols = ~np.isclose(sum_sq_cols1, sum_sq_cols2, rtol=1e-12)
             print(f"Different sum of squares at columns: {np.where(diff_cols)[0]}")
             print(f"Sum of squares values enc1: {sum_sq_cols1[diff_cols]}")
             print(f"Sum of squares values enc2: {sum_sq_cols2[diff_cols]}")
@@ -181,7 +212,7 @@ def find_encoding_match(
     last_col1 = np.sort(encoding1[:, -1])
     last_col2 = np.sort(encoding2[:, -1])
 
-    if not np.allclose(last_col1, last_col2, rtol=1e-13):
+    if not np.allclose(last_col1, last_col2, rtol=1e-12):
         if verbose:
             print("Different because last columns don't match when sorted")
             print(f"Sorted last column 1: {last_col1}")
@@ -197,7 +228,7 @@ def find_encoding_match(
         permuted2 = encoding2[sort_idx2]
 
         # Check if this permutation works for the whole encoding
-        if np.allclose(permuted, encoding2[sort_idx2], rtol=1e-13):
+        if np.allclose(permuted, encoding2[sort_idx2], rtol=1e-12):
             return True, permuted, tuple(sort_idx1), permuted2, None
 
     n_rows = encoding1.shape[0]
@@ -207,12 +238,16 @@ def find_encoding_match(
     if n_rows <= 5:  # Adjust this threshold based on your needs
         for perm_ in permutations(range(n_rows)):
             if time.time() - start_time > timeout_seconds:
-                print(f"Timeout after {time.time() - start_time:.2f} seconds")
+                print(f"🚨 Timeout after {time.time() - start_time:.2f} seconds")
                 return True, None, None, None, "timeout"
             permuted = encoding1[list(perm_), :]
             if np.allclose(permuted, encoding2, rtol=1e-13):
-                return True, permuted, tuple(perm_), encoding2
-    else:
+                return True, permuted, tuple(perm_), encoding2, None
+    long_timeout = True
+    if not long_timeout:
+        print("🚨 Assume same")
+        return True, encoding1, tuple(range(n_rows)), encoding2, "timeout"
+    if long_timeout:
         # For larger matrices, use a heuristic approach based on row sorting
         # This works because:
         # 1. If two graphs are isomorphic, their encodings differ only by row permutation
@@ -252,7 +287,7 @@ def find_encoding_match(
                     return True, sorted1, tuple(perm), sorted2, None
         except TimeoutError:
             print(
-                f"Timeout during lexsort after {time.time() - start_time:.2f} seconds"
+                f"🚨 Timeout during lexsort after {time.time() - start_time:.2f} seconds"
             )
             return True, None, None, None, "timeout"
 
