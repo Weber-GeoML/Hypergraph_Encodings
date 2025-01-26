@@ -230,16 +230,27 @@ def write_results(f, filepath_json, results: dict, json_results: dict) -> dict:
             # Update complex JSON structure
             encoding_key = f"{level.split('_')[0].capitalize()} ({encoding_type})"
             if encoding_key not in json_results[category]:
-                json_results[category][encoding_key] = {"different": 0, "total": 0}
+                json_results[category][encoding_key] = {
+                    "different": 0,
+                    "total": 0,
+                    "total_with_timeout": 0,
+                }
 
             if not result == "Timeout":
                 json_results[category][encoding_key]["total"] += 1
                 if not is_same:
                     json_results[category][encoding_key]["different"] += 1
+            json_results[category][encoding_key]["total_with_timeout"] += 1
 
             # Update simple JSON structure
+            if is_same:
+                result_to_write = "Same"
+            elif result == "Timeout":
+                result_to_write = result
+            else:
+                result_to_write = "Different"
             simple_result["encodings"][level_key][encoding_type] = {
-                "result": "Same" if is_same else "Different",
+                "result": result_to_write,
                 "scaling_factor": (
                     encoding_results["scaling_factor"]
                     if encoding_results["status"] == MatchStatus.SCALED_MATCH
@@ -341,61 +352,61 @@ def rook_and_shrikhande_special_case() -> None:
     # return connectivity_stats
 
 
-def process_pair(dataset: BRECDataset, encoding: str, pair_info: tuple) -> dict | None:
-    """Process a single pair of graphs."""
-    category, pair_idx = pair_info
-    print(f"\nDEBUG: Processing pair_info: {pair_info}")
-    print(f"DEBUG: Category: {category}, Pair Index: {pair_idx}")
-    print(f"DEBUG: Dataset indices: {pair_idx * 2} and {pair_idx * 2 + 1}")
+# def process_pair(dataset: BRECDataset, encoding: str, pair_info: tuple) -> dict | None:
+#     """Process a single pair of graphs."""
+#     category, pair_idx = pair_info
+#     print(f"\nDEBUG: Processing pair_info: {pair_info}")
+#     print(f"DEBUG: Category: {category}, Pair Index: {pair_idx}")
+#     print(f"DEBUG: Dataset indices: {pair_idx * 2} and {pair_idx * 2 + 1}")
 
-    # Get both graphs and check connectivity
-    G1 = to_networkx(dataset[pair_idx * 2], to_undirected=True)
-    G2 = to_networkx(dataset[pair_idx * 2 + 1], to_undirected=True)
+#     # Get both graphs and check connectivity
+#     G1 = to_networkx(dataset[pair_idx * 2], to_undirected=True)
+#     G2 = to_networkx(dataset[pair_idx * 2 + 1], to_undirected=True)
 
-    # Check regularity for Regular category
-    if category == "Regular":
-        is_reg1, deg1 = is_regular(G1)
-        is_reg2, deg2 = is_regular(G2)
-        assert (
-            is_reg1
-        ), f"Graph 1 in Regular pair {pair_idx} is not regular! Degrees: {[d for _, d in G1.degree()]}"
-        assert (
-            is_reg2
-        ), f"Graph 2 in Regular pair {pair_idx} is not regular! Degrees: {[d for _, d in G2.degree()]}"
-        print(f"Regular graphs confirmed: degrees {deg1} and {deg2}")
+#     # Check regularity for Regular category
+#     if category == "Regular":
+#         is_reg1, deg1 = is_regular(G1)
+#         is_reg2, deg2 = is_regular(G2)
+#         assert (
+#             is_reg1
+#         ), f"Graph 1 in Regular pair {pair_idx} is not regular! Degrees: {[d for _, d in G1.degree()]}"
+#         assert (
+#             is_reg2
+#         ), f"Graph 2 in Regular pair {pair_idx} is not regular! Degrees: {[d for _, d in G2.degree()]}"
+#         print(f"Regular graphs confirmed: degrees {deg1} and {deg2}")
 
-    # Skip if either graph is disconnected
-    if not (nx.is_connected(G1) and nx.is_connected(G2)):
-        print(f"Skipping pair {pair_idx} ({category}): Contains disconnected graph(s)")
-        return None
+#     # Skip if either graph is disconnected
+#     if not (nx.is_connected(G1) and nx.is_connected(G2)):
+#         print(f"Skipping pair {pair_idx} ({category}): Contains disconnected graph(s)")
+#         return None
 
-    # Analyze connected pair
-    pair_results = analyze_graph_pair(
-        dataset[pair_idx * 2],
-        dataset[pair_idx * 2 + 1],
-        pair_idx,
-        category,
-        is_isomorphic=False,
-        types_of_encoding=list(encoding),
-    )
+#     # Analyze connected pair
+#     pair_results = analyze_graph_pair(
+#         dataset[pair_idx * 2],
+#         dataset[pair_idx * 2 + 1],
+#         pair_idx,
+#         category,
+#         is_isomorphic=False,
+#         types_of_encoding=list(encoding),
+#     )
 
-    return pair_results
+#     return pair_results
 
-    # print(f"\nAnalyzing BREC dataset with {encoding} encoding...")
-    # print(f"Using {num_workers} worker processes")
+# print(f"\nAnalyzing BREC dataset with {encoding} encoding...")
+# print(f"Using {num_workers} worker processes")
 
-    # create_output_dirs()
-    # dataset: BRECDataset = BRECDataset()
+# create_output_dirs()
+# dataset: BRECDataset = BRECDataset()
 
-    # # First check connectivity
-    # print("\nAnalyzing connectivity of BREC dataset...")
-    # connectivity_stats: dict = check_connectivity_stats(dataset)
+# # First check connectivity
+# print("\nAnalyzing connectivity of BREC dataset...")
+# connectivity_stats: dict = check_connectivity_stats(dataset)
 
-    # # Save connectivity stats to JSON
-    # connectivity_file: str = "results/brec/connectivity_stats.json"
-    # with open(connectivity_file, "w") as f:
-    #     json.dump(connectivity_stats, f, indent=2)
-    # print(f"\nConnectivity statistics saved to: {connectivity_file}")
+# # Save connectivity stats to JSON
+# connectivity_file: str = "results/brec/connectivity_stats.json"
+# with open(connectivity_file, "w") as f:
+#     json.dump(connectivity_stats, f, indent=2)
+# print(f"\nConnectivity statistics saved to: {connectivity_file}")
 
 
 def is_regular(G: nx.Graph) -> tuple[bool, int]:
@@ -604,16 +615,26 @@ def main(encodings: str, categories: str) -> None:
                         already_in_nx=True,
                         types_of_encoding=selected_encodings,
                     )
-                    if len(selected_encodings) == 1:
-                        json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{total_pair_idx}_statistics.json"
-                        # updates the json_results with the pair_results
-                        # and saves the singleton file
-                        write_results(f, json_path, pair_results, json_results)
+                    print(f"pair_results: {pair_results}")
+                    if pair_results["status"] != MatchStatus.TIMEOUT:
+                        if len(selected_encodings) == 1:
+                            json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{total_pair_idx}_statistics.json"
+                            # updates the json_results with the pair_results
+                            # and saves the singleton file
+                            write_results(f, json_path, pair_results, json_results)
+                    elif pair_results["status"] == MatchStatus.TIMEOUT:
+                        print("🚨 Timeout")
+                        if len(selected_encodings) == 1:
+                            json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{total_pair_idx}_statistics_TIMEOUT.json"
+                            # updates the json_results with the pair_results
+                            # and saves the singleton file
+                            write_results(f, json_path, pair_results, json_results)
 
                     total_pair_idx += 1  # Increment the global counter
 
         # Save JSON results with percentages
         # keys are categories
+        # this I should be able to recreate from results/brec/ran/
         final_stats: dict = {}
         # loop over categories
         for category in json_results:
@@ -630,7 +651,11 @@ def main(encodings: str, categories: str) -> None:
                     if stats["total"] > 0
                     else 0
                 )
-                final_stats[category][enc] = [round(percentage, 2), stats["total"]]
+                final_stats[category][enc] = [
+                    round(percentage, 2),
+                    stats["total"],
+                    stats["total_with_timeout"],
+                ]
 
         # all results (all pairs) for the chosen encodings and categories
         # Save JSON file

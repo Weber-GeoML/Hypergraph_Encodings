@@ -10,13 +10,16 @@ from itertools import permutations
 import numpy as np
 import time
 from typing import Optional, Tuple
+import signal
+from contextlib import contextmanager
+from scipy.stats import kurtosis, skew
 
 
 def find_encoding_match(
     encoding1: np.ndarray,
     encoding2: np.ndarray,
     verbose: bool = True,
-    timeout_seconds: float = 60.0 * 5,
+    timeout_seconds: float = 60.0 * 4,
 ) -> tuple[
     bool, np.ndarray | None, tuple[int, ...] | None, np.ndarray | None, str | None
 ]:
@@ -71,6 +74,15 @@ def find_encoding_match(
             print("\n")
         return False, None, None, None, None
 
+    # Same for mean
+    if not np.isclose(np.mean(abs_enc1), np.mean(abs_enc2), rtol=1e-10):
+        if verbose:
+            print("Different because:")
+            print(f"Mean absolute value of encoding1: {np.mean(np.abs(encoding1))}")
+            print(f"Mean absolute value of encoding2: {np.mean(np.abs(encoding2))}")
+            print("\n")
+        return False, None, None, None, None
+
     # Vectorized column comparisons for both max and min
     max_cols1 = np.max(abs_enc1, axis=0)
     max_cols2 = np.max(abs_enc2, axis=0)
@@ -80,6 +92,18 @@ def find_encoding_match(
     mean_cols2 = np.mean(abs_enc2, axis=0)
     std_cols1 = np.std(abs_enc1, axis=0)
     std_cols2 = np.std(abs_enc2, axis=0)
+    # kurtosis
+    kurtosis_cols1 = kurtosis(abs_enc1, axis=0)
+    kurtosis_cols2 = kurtosis(abs_enc2, axis=0)
+    # Additional statistical measures
+    median_cols1 = np.median(abs_enc1, axis=0)
+    median_cols2 = np.median(abs_enc2, axis=0)
+    # Skewness
+    skew_cols1 = skew(abs_enc1, axis=0)
+    skew_cols2 = skew(abs_enc2, axis=0)
+    # Sum of squares
+    sum_sq_cols1 = np.sum(abs_enc1**2, axis=0)
+    sum_sq_cols2 = np.sum(abs_enc2**2, axis=0)
 
     # Check max values
     if not np.allclose(max_cols1, max_cols2, rtol=1e-10):
@@ -117,6 +141,65 @@ def find_encoding_match(
             print(f"Std values enc2: {std_cols2[diff_cols]}")
         return False, None, None, None, None
 
+    # check kurtosis
+    if not np.allclose(kurtosis_cols1, kurtosis_cols2, rtol=1e-10):
+        if verbose:
+            diff_cols = ~np.isclose(kurtosis_cols1, kurtosis_cols2, rtol=1e-10)
+            print(f"Different kurtosis at columns: {np.where(diff_cols)[0]}")
+            print(f"Kurtosis values enc1: {kurtosis_cols1[diff_cols]}")
+            print(f"Kurtosis values enc2: {kurtosis_cols2[diff_cols]}")
+        return False, None, None, None, None
+
+    # check median
+    if not np.allclose(median_cols1, median_cols2, rtol=1e-10):
+        if verbose:
+            diff_cols = ~np.isclose(median_cols1, median_cols2, rtol=1e-10)
+            print(f"Different median at columns: {np.where(diff_cols)[0]}")
+            print(f"Median values enc1: {median_cols1[diff_cols]}")
+            print(f"Median values enc2: {median_cols2[diff_cols]}")
+        return False, None, None, None, None
+
+    # check skew
+    if not np.allclose(skew_cols1, skew_cols2, rtol=1e-10):
+        if verbose:
+            diff_cols = ~np.isclose(skew_cols1, skew_cols2, rtol=1e-10)
+            print(f"Different skew at columns: {np.where(diff_cols)[0]}")
+            print(f"Skew values enc1: {skew_cols1[diff_cols]}")
+            print(f"Skew values enc2: {skew_cols2[diff_cols]}")
+        return False, None, None, None, None
+
+    # check sum of squares
+    if not np.allclose(sum_sq_cols1, sum_sq_cols2, rtol=1e-10):
+        if verbose:
+            diff_cols = ~np.isclose(sum_sq_cols1, sum_sq_cols2, rtol=1e-10)
+            print(f"Different sum of squares at columns: {np.where(diff_cols)[0]}")
+            print(f"Sum of squares values enc1: {sum_sq_cols1[diff_cols]}")
+            print(f"Sum of squares values enc2: {sum_sq_cols2[diff_cols]}")
+        return False, None, None, None, None
+
+    # check only the last columns of each, sorted. see if they are allclose:
+    last_col1 = np.sort(encoding1[:, -1])
+    last_col2 = np.sort(encoding2[:, -1])
+
+    if not np.allclose(last_col1, last_col2, rtol=1e-13):
+        if verbose:
+            print("Different because last columns don't match when sorted")
+            print(f"Sorted last column 1: {last_col1}")
+            print(f"Sorted last column 2: {last_col2}")
+        return False, None, None, None, None
+    else:  # try to find a permutation that makes the last columns match and try this one next on the whole thing
+        # Get indices that would sort the last columns
+        sort_idx1 = np.argsort(encoding1[:, -1])
+        sort_idx2 = np.argsort(encoding2[:, -1])
+
+        # Apply this permutation to encoding1
+        permuted = encoding1[sort_idx1]
+        permuted2 = encoding2[sort_idx2]
+
+        # Check if this permutation works for the whole encoding
+        if np.allclose(permuted, encoding2[sort_idx2], rtol=1e-13):
+            return True, permuted, tuple(sort_idx1), permuted2, None
+
     n_rows = encoding1.shape[0]
 
     start_time = time.time()
@@ -136,23 +219,42 @@ def find_encoding_match(
         # 2. Lexicographical sorting will arrange rows in a canonical order
         # 3. After sorting, isomorphic graphs will have identical encodings
 
-        # Sort rows lexicographically for both matrices
-        # This creates a canonical form independent of original node ordering
-        lexsort1: np.ndarray = np.lexsort(encoding1.T)
-        lexsort2: np.ndarray = np.lexsort(encoding2.T)
-        sorted1 = encoding1[lexsort1]
-        sorted2 = encoding2[lexsort2]
+        @contextmanager
+        def timeout(seconds):
+            def signal_handler(signum, frame):
+                raise TimeoutError("Timed out!")
 
-        # Compare sorted matrices
-        # If they're equal (up to numerical precision), the graphs are isomorphic
-        # This is valid because:
-        # - Isomorphic graphs must have the same multiset of row vectors
-        # - Lexicographical sorting creates the same ordering for identical multisets
-        if np.allclose(sorted1, sorted2, rtol=1e-13):
-            # Find the permutation that was applied to the first encoding
-            # This gives us the mapping between the original and sorted node orderings
-            perm: np.ndarray = np.argsort(lexsort1)
-            return True, sorted1, tuple(perm), sorted2, None
+            signal.signal(signal.SIGALRM, signal_handler)
+            signal.alarm(int(seconds))
+            try:
+                yield
+            finally:
+                signal.alarm(0)
+
+        remaining_time = timeout_seconds - (time.time() - start_time)
+        try:
+            with timeout(remaining_time):
+                t0_lexsort = time.time()
+                lexsort1: np.ndarray = np.lexsort(encoding1.T)
+                lexsort2: np.ndarray = np.lexsort(encoding2.T)
+                t1_lexsort = time.time()
+                print(f"Lex sort time: {t1_lexsort - t0_lexsort:.2f} seconds")
+                sorted1 = encoding1[lexsort1]
+                sorted2 = encoding2[lexsort2]
+                t3_lexsort = time.time()
+                print(
+                    f"Lex sort time (selection): {t3_lexsort - t1_lexsort:.2f} seconds"
+                )
+
+                # Compare sorted matrices
+                if np.allclose(sorted1, sorted2, rtol=1e-13):
+                    perm: np.ndarray = np.argsort(lexsort1)
+                    return True, sorted1, tuple(perm), sorted2, None
+        except TimeoutError:
+            print(
+                f"Timeout during lexsort after {time.time() - start_time:.2f} seconds"
+            )
+            return True, None, None, None, "timeout"
 
     return False, None, None, None, None
 

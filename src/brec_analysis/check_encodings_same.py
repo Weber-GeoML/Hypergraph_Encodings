@@ -297,39 +297,42 @@ def checks_encodings(
 
     print(f"Encoding name: {name_of_encoding}")
     match_result = check_for_matches(hg1_encodings, hg2_encodings, name_of_encoding)
+    if match_result["status"] == MatchStatus.TIMEOUT:
+        print("🚨 Timeout")
     comparison_result.update(match_result)
 
-    # Plot and get match results
-    plot_matched_encodings(
-        match_result["is_direct_match"],
-        match_result["is_same_up_to_scaling"],
-        match_result["scaling_factor"],
-        match_result["permuted"],
-        match_result["permutation"],
-        hg1_encodings,
-        hg2_encodings,
-        name1,
-        name2,
-        modified_name,  # Pass modified name as title
-        graph_type,
-    )
+    if match_result["status"] != MatchStatus.TIMEOUT:
+        # Plot and get match results
+        plot_matched_encodings(
+            match_result["is_direct_match"],
+            match_result["is_same_up_to_scaling"],
+            match_result["scaling_factor"],
+            match_result["permuted"],
+            match_result["permutation"],
+            hg1_encodings,
+            hg2_encodings,
+            name1,
+            name2,
+            modified_name,  # Pass modified name as title
+            graph_type,
+        )
 
-    if match_result["is_direct_match"]:
-        print(match_result["status"])
-        assert np.allclose(
-            match_result["permuted"], match_result["permuted2"], rtol=1e-9
-        )  # type: ignore
+        if match_result["is_direct_match"]:
+            print(match_result["status"])
+            assert np.allclose(
+                match_result["permuted"], match_result["permuted2"], rtol=1e-9
+            )  # type: ignore
 
-    # Print results
-    print_comparison_results(
-        match_result["is_direct_match"],
-        name_of_encoding,
-        match_result["permutation"],
-        match_result["permuted"],
-        match_result["permuted2"],
-        {"features": hg1_encodings},
-        {"features": hg2_encodings},
-    )
+        # Print results
+        print_comparison_results(
+            match_result["is_direct_match"],
+            name_of_encoding,
+            match_result["permutation"],
+            match_result["permuted"],
+            match_result["permuted2"],
+            {"features": hg1_encodings},
+            {"features": hg2_encodings},
+        )
 
     if name_of_encoding.startswith("LAPE-"):
         eigenvectors1, eigenvectors2 = lap_checks_to_clean_up(
@@ -422,11 +425,11 @@ def checks_encodings(
         # print(f"END DEBUG: {graph_type}")
         # print("*" * 100)
 
-    # Save plot if requested - This will handle both LAPE and non-LAPE cases
-    if save_plots:
-        plt.tight_layout()
-        save_comparison_plot(plt, plot_dir, pair_idx, category, modified_name)
-    plt.close()  # Only close the figure once at the end
+        # Save plot if requested - This will handle both LAPE and non-LAPE cases
+        if save_plots:
+            plt.tight_layout()
+            save_comparison_plot(plt, plot_dir, pair_idx, category, modified_name)
+        plt.close()  # Only close the figure once at the end
 
     return comparison_result
 
