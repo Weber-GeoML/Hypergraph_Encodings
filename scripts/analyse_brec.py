@@ -232,6 +232,8 @@ def write_results(f, filepath_json, results: dict, json_results: dict) -> dict:
             if encoding_key not in json_results[category]:
                 json_results[category][encoding_key] = {
                     "different": 0,
+                    "same": 0,
+                    "same_with_timeout": 0,
                     "total": 0,
                     "total_with_timeout": 0,
                 }
@@ -240,6 +242,10 @@ def write_results(f, filepath_json, results: dict, json_results: dict) -> dict:
                 json_results[category][encoding_key]["total"] += 1
                 if not is_same:
                     json_results[category][encoding_key]["different"] += 1
+                else:
+                    json_results[category][encoding_key]["same"] += 1
+            else:
+                json_results[category][encoding_key]["same_with_timeout"] += 1
             json_results[category][encoding_key]["total_with_timeout"] += 1
 
             # Update simple JSON structure
