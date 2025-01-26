@@ -164,6 +164,7 @@ def check_encodings_same_up_to_scaling(
     if is_match:
         if verbose:
             print("✅ Encodings match directly (no scaling needed)")
+        assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
         return True, 1.0, perm, permuted, permuted2
 
     # First try direct match with -1 scaling
@@ -173,6 +174,7 @@ def check_encodings_same_up_to_scaling(
     if is_match:
         if verbose:
             print("✅ Encodings match directly (with -1 scaling)")
+        assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
         return True, -1.0, perm, permuted, permuted2
 
     # If no direct match, try scaling
@@ -202,6 +204,7 @@ def check_encodings_same_up_to_scaling(
     if is_match:
         if verbose:
             print(f"✅ Found match after scaling by {scaling_factor:.4e}")
+        assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
         return True, scaling_factor, perm, permuted, permuted2
 
     # If still no match, try with normalized versions
@@ -218,6 +221,7 @@ def check_encodings_same_up_to_scaling(
     if is_match:
         if verbose:
             print("✅ Found match after normalization")
+        assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
         return True, max_abs2 / max_abs1, perm, permuted, permuted2
 
     # If we get here, the encodings are truly different
