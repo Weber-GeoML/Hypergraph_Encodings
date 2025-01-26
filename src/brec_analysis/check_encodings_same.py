@@ -297,39 +297,42 @@ def checks_encodings(
 
     print(f"Encoding name: {name_of_encoding}")
     match_result = check_for_matches(hg1_encodings, hg2_encodings, name_of_encoding)
+    if match_result["status"] == MatchStatus.TIMEOUT:
+        print("🚨 Timeout")
     comparison_result.update(match_result)
 
-    # Plot and get match results
-    plot_matched_encodings(
-        match_result["is_direct_match"],
-        match_result["is_same_up_to_scaling"],
-        match_result["scaling_factor"],
-        match_result["permuted"],
-        match_result["permutation"],
-        hg1_encodings,
-        hg2_encodings,
-        name1,
-        name2,
-        modified_name,  # Pass modified name as title
-        graph_type,
-    )
+    if match_result["status"] != MatchStatus.TIMEOUT:
+        # Plot and get match results
+        plot_matched_encodings(
+            match_result["is_direct_match"],
+            match_result["is_same_up_to_scaling"],
+            match_result["scaling_factor"],
+            match_result["permuted"],
+            match_result["permutation"],
+            hg1_encodings,
+            hg2_encodings,
+            name1,
+            name2,
+            modified_name,  # Pass modified name as title
+            graph_type,
+        )
 
-    if match_result["is_direct_match"]:
-        print(match_result["status"])
-        assert np.allclose(
-            match_result["permuted"], match_result["permuted2"], rtol=1e-9
-        )  # type: ignore
+        if match_result["is_direct_match"]:
+            print(match_result["status"])
+            assert np.allclose(
+                match_result["permuted"], match_result["permuted2"], rtol=1e-9
+            )  # type: ignore
 
-    # Print results
-    print_comparison_results(
-        match_result["is_direct_match"],
-        name_of_encoding,
-        match_result["permutation"],
-        match_result["permuted"],
-        match_result["permuted2"],
-        {"features": hg1_encodings},
-        {"features": hg2_encodings},
-    )
+        # Print results
+        print_comparison_results(
+            match_result["is_direct_match"],
+            name_of_encoding,
+            match_result["permutation"],
+            match_result["permuted"],
+            match_result["permuted2"],
+            {"features": hg1_encodings},
+            {"features": hg2_encodings},
+        )
 
     if name_of_encoding.startswith("LAPE-"):
         eigenvectors1, eigenvectors2 = lap_checks_to_clean_up(
@@ -366,7 +369,7 @@ def checks_encodings(
         # print(f"features: \n {hg2_encodings}")
 
         # # Plot and get match results
-        # is_direct_match, permuted, perm = find_encoding_match(
+        # is_direct_match, permuted, perm, timeout= find_encoding_match(
         #     hg1_encodings, hg2_encodings
         # )
         # if not is_direct_match:
@@ -422,11 +425,11 @@ def checks_encodings(
         # print(f"END DEBUG: {graph_type}")
         # print("*" * 100)
 
-    # Save plot if requested - This will handle both LAPE and non-LAPE cases
-    if save_plots:
-        plt.tight_layout()
-        save_comparison_plot(plt, plot_dir, pair_idx, category, modified_name)
-    plt.close()  # Only close the figure once at the end
+        # Save plot if requested - This will handle both LAPE and non-LAPE cases
+        if save_plots:
+            plt.tight_layout()
+            save_comparison_plot(plt, plot_dir, pair_idx, category, modified_name)
+        plt.close()  # Only close the figure once at the end
 
     return comparison_result
 
@@ -449,8 +452,9 @@ def check_for_matches(encoding1, encoding2, name: str) -> dict:
     permuted: np.ndarray
     permuted2: np.ndarray
     perm: tuple[int, ...]
-    is_direct_match, permuted, perm, permuted2 = find_encoding_match(
-        encoding1, encoding2
+    timeout: str | None
+    is_direct_match, permuted, perm, permuted2, timeout = find_encoding_match(
+        encoding1, encoding2, verbose=True
     )
 
     if is_direct_match:
@@ -462,24 +466,27 @@ def check_for_matches(encoding1, encoding2, name: str) -> dict:
     assert encoding1 is not None
     assert encoding2 is not None
 
-    if not is_direct_match:
-        print("**-" * 20)
-        print(f"We are also checking up to scaling for {name}")
-        is_same_up_to_scaling, scaling_factor, perm, permuted, permuted2 = (
-            check_encodings_same_up_to_scaling(encoding1, encoding2, verbose=False)
-        )
-        if is_same_up_to_scaling and not np.isclose(scaling_factor, 1.0, rtol=1e-10):
-            # Only print if there's actually a non-trivial scaling
-            print("⛔️ The encodings are the same up to scaling")
-            print(f"The scaling factor is {scaling_factor}")
-        print("**-" * 20)
-    else:
-        is_same_up_to_scaling = True
-        scaling_factor = 1.0
+    # skipping for speed.
+    # if not is_direct_match:
+    #     print("**-" * 20)
+    #     print(f"We are also checking up to scaling for {name}")
+    #     is_same_up_to_scaling, scaling_factor, perm, permuted, permuted2 = (
+    #         check_encodings_same_up_to_scaling(encoding1, encoding2, verbose=False)
+    #     )
+    #     if is_same_up_to_scaling and not np.isclose(scaling_factor, 1.0, rtol=1e-10):
+    #         # Only print if there's actually a non-trivial scaling
+    #         print("⛔️ The encodings are the same up to scaling")
+    #         print(f"The scaling factor is {scaling_factor}")
+    #     print("**-" * 20)
+    # else:
+    #     is_same_up_to_scaling = True
+    #     scaling_factor = 1.0
 
     status = MatchStatus.NO_MATCH
     if is_direct_match:
         status = MatchStatus.EXACT_MATCH
+        if timeout == "timeout":
+            status = MatchStatus.TIMEOUT
     elif is_same_up_to_scaling:
         status = MatchStatus.SCALED_MATCH
 

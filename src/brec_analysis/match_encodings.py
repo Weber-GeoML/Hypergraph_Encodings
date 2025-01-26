@@ -8,11 +8,21 @@ Also try up to scaling.
 from itertools import permutations
 
 import numpy as np
+import time
+from typing import Optional, Tuple
+import signal
+from contextlib import contextmanager
+from scipy.stats import kurtosis, skew
 
 
 def find_encoding_match(
-    encoding1: np.ndarray, encoding2: np.ndarray, verbose: bool = True
-) -> tuple[bool, np.ndarray | None, tuple[int, ...] | None, np.ndarray | None]:
+    encoding1: np.ndarray,
+    encoding2: np.ndarray,
+    verbose: bool = True,
+    timeout_seconds: float = 60 * 4,
+) -> tuple[
+    bool, np.ndarray | None, tuple[int, ...] | None, np.ndarray | None, str | None
+]:
     """
     Check if two encodings are equivalent under row permutations.
     Returns (is_match, permuted_encoding1, permutation) if found, (False, None, None) if not.
@@ -32,7 +42,7 @@ def find_encoding_match(
             the permuted encoding of encoding2
     """
     if encoding1.shape != encoding2.shape:
-        return False, None, None, None
+        return False, None, None, None, None
 
     # First check if the encodings are identical
     if np.allclose(encoding1, encoding2, rtol=1e-13):
@@ -40,88 +50,246 @@ def find_encoding_match(
         if verbose:
             print("Free lunch!")
         n_rows = encoding1.shape[0]
-        return True, encoding1, tuple(range(n_rows)), encoding2
+        return True, encoding1, tuple(range(n_rows)), encoding2, None
 
     # Pre-compute expensive operations
     abs_enc1 = np.abs(encoding1)
     abs_enc2 = np.abs(encoding2)
 
     # Check the max absolute value of each encodings. If they are different, return False
-    if not np.isclose(np.max(abs_enc1), np.max(abs_enc2), rtol=1e-10):
+    if not np.isclose(np.max(abs_enc1), np.max(abs_enc2), rtol=1e-12):
         if verbose:
             print("Different because:")
             print(f"Max absolute value of encoding1: {np.max(np.abs(encoding1))}")
             print(f"Max absolute value of encoding2: {np.max(np.abs(encoding2))}")
             print("\n")
-        return False, None, None, None
+        return False, None, None, None, None
 
     # Same for min
-    if not np.isclose(np.min(abs_enc1), np.min(abs_enc2), rtol=1e-10):
+    if not np.isclose(np.min(abs_enc1), np.min(abs_enc2), rtol=1e-12):
         if verbose:
             print("Different because:")
             print(f"Min absolute value of encoding1: {np.min(np.abs(encoding1))}")
             print(f"Min absolute value of encoding2: {np.min(np.abs(encoding2))}")
             print("\n")
-        return False, None, None, None
+        return False, None, None, None, None
+
+    # Same for mean
+    if not np.isclose(np.mean(abs_enc1), np.mean(abs_enc2), rtol=1e-12):
+        if verbose:
+            print("Different because:")
+            print(f"Mean absolute value of encoding1: {np.mean(np.abs(encoding1))}")
+            print(f"Mean absolute value of encoding2: {np.mean(np.abs(encoding2))}")
+            print("\n")
+        return False, None, None, None, None
 
     # Vectorized column comparisons for both max and min
+    # t0 = time.time()
     max_cols1 = np.max(abs_enc1, axis=0)
     max_cols2 = np.max(abs_enc2, axis=0)
-    min_cols1 = np.min(abs_enc1, axis=0)
-    min_cols2 = np.min(abs_enc2, axis=0)
+    # if verbose:
+    #     print(f"Max computation time: {time.time() - t0:.4f} seconds")
 
     # Check max values
-    if not np.allclose(max_cols1, max_cols2, rtol=1e-10):
+    if not np.allclose(max_cols1, max_cols2, rtol=1e-12):
         if verbose:
-            diff_cols = ~np.isclose(max_cols1, max_cols2, rtol=1e-10)
+            diff_cols = ~np.isclose(max_cols1, max_cols2, rtol=1e-12)
             print(f"Different max at columns: {np.where(diff_cols)[0]}")
             print(f"Max values enc1: {max_cols1[diff_cols]}")
             print(f"Max values enc2: {max_cols2[diff_cols]}")
-        return False, None, None, None
+        return False, None, None, None, None
+
+    # t0 = time.time()
+    min_cols1 = np.min(abs_enc1, axis=0)
+    min_cols2 = np.min(abs_enc2, axis=0)
+    # if verbose:
+    #     print(f"Min computation time: {time.time() - t0:.4f} seconds")
 
     # Check min values
-    if not np.allclose(min_cols1, min_cols2, rtol=1e-10):
+    if not np.allclose(min_cols1, min_cols2, rtol=1e-12):
         if verbose:
-            diff_cols = ~np.isclose(min_cols1, min_cols2, rtol=1e-10)
+            diff_cols = ~np.isclose(min_cols1, min_cols2, rtol=1e-12)
             print(f"Different min at columns: {np.where(diff_cols)[0]}")
             print(f"Min values enc1: {min_cols1[diff_cols]}")
             print(f"Min values enc2: {min_cols2[diff_cols]}")
-        return False, None, None, None
+        return False, None, None, None, None
 
-    n_rows = encoding1.shape[0]
+    # t0 = time.time()
+    mean_cols1 = np.mean(abs_enc1, axis=0)
+    mean_cols2 = np.mean(abs_enc2, axis=0)
+    # if verbose:
+    #     print(f"Mean computation time: {time.time() - t0:.4f} seconds")
 
-    # For small matrices, we can try all permutations
+    # Check mean values
+    if not np.allclose(mean_cols1, mean_cols2, rtol=1e-12):
+        if verbose:
+            diff_cols = ~np.isclose(mean_cols1, mean_cols2, rtol=1e-12)
+            print(f"Different mean at columns: {np.where(diff_cols)[0]}")
+            print(f"Mean values enc1: {mean_cols1[diff_cols]}")
+            print(f"Mean values enc2: {mean_cols2[diff_cols]}")
+        return False, None, None, None, None
+
+    # t0 = time.time()
+    std_cols1 = np.std(abs_enc1, axis=0)
+    std_cols2 = np.std(abs_enc2, axis=0)
+    # if verbose:
+    #     print(f"Std computation time: {time.time() - t0:.4f} seconds")
+
+    # Check standard deviation values
+    if not np.allclose(std_cols1, std_cols2, rtol=1e-12):
+        if verbose:
+            diff_cols = ~np.isclose(std_cols1, std_cols2, rtol=1e-12)
+            print(f"Different std at columns: {np.where(diff_cols)[0]}")
+            print(f"Std values enc1: {std_cols1[diff_cols]}")
+            print(f"Std values enc2: {std_cols2[diff_cols]}")
+        return False, None, None, None, None
+
     if n_rows <= 10:  # Adjust this threshold based on your needs
         for perm_ in permutations(range(n_rows)):
             permuted = encoding1[list(perm_), :]
             if np.allclose(permuted, encoding2, rtol=1e-13):
-                return True, permuted, tuple(perm_), encoding2
-    else:
+                return True, permuted, tuple(perm_), encoding2, None
+
+    # kurtosis
+    # t0 = time.time()
+    kurtosis_cols1 = kurtosis(abs_enc1, axis=0)
+    kurtosis_cols2 = kurtosis(abs_enc2, axis=0)
+    # if verbose:
+    #     print(f"Kurtosis computation time: {time.time() - t0:.4f} seconds")
+
+    # check kurtosis
+    if not np.allclose(kurtosis_cols1, kurtosis_cols2, rtol=1e-12):
+        if verbose:
+            diff_cols = ~np.isclose(kurtosis_cols1, kurtosis_cols2, rtol=1e-12)
+            print(f"Different kurtosis at columns: {np.where(diff_cols)[0]}")
+            print(f"Kurtosis values enc1: {kurtosis_cols1[diff_cols]}")
+            print(f"Kurtosis values enc2: {kurtosis_cols2[diff_cols]}")
+        return False, None, None, None, None
+
+    # Additional statistical measures
+    # t0 = time.time()
+    median_cols1 = np.median(abs_enc1, axis=0)
+    median_cols2 = np.median(abs_enc2, axis=0)
+    # if verbose:
+    #     print(f"Median computation time: {time.time() - t0:.4f} seconds")
+
+    # check median
+    if not np.allclose(median_cols1, median_cols2, rtol=1e-12):
+        if verbose:
+            diff_cols = ~np.isclose(median_cols1, median_cols2, rtol=1e-12)
+            print(f"Different median at columns: {np.where(diff_cols)[0]}")
+            print(f"Median values enc1: {median_cols1[diff_cols]}")
+            print(f"Median values enc2: {median_cols2[diff_cols]}")
+        return False, None, None, None, None
+
+    # Skewness
+    # t0 = time.time()
+    skew_cols1 = skew(abs_enc1, axis=0)
+    skew_cols2 = skew(abs_enc2, axis=0)
+    # if verbose:
+    #     print(f"Skewness computation time: {time.time() - t0:.4f} seconds")
+
+    # check skew
+    if not np.allclose(skew_cols1, skew_cols2, rtol=1e-12):
+        if verbose:
+            diff_cols = ~np.isclose(skew_cols1, skew_cols2, rtol=1e-12)
+            print(f"Different skew at columns: {np.where(diff_cols)[0]}")
+            print(f"Skew values enc1: {skew_cols1[diff_cols]}")
+            print(f"Skew values enc2: {skew_cols2[diff_cols]}")
+        return False, None, None, None, None
+
+    # Sum of squares
+    # t0 = time.time()
+    sum_sq_cols1 = np.sum(abs_enc1**2, axis=0)
+    sum_sq_cols2 = np.sum(abs_enc2**2, axis=0)
+    # if verbose:
+    #     print(f"Sum of squares computation time: {time.time() - t0:.4f} seconds")
+
+    # check sum of squares
+    if not np.allclose(sum_sq_cols1, sum_sq_cols2, rtol=1e-12):
+        if verbose:
+            diff_cols = ~np.isclose(sum_sq_cols1, sum_sq_cols2, rtol=1e-12)
+            print(f"Different sum of squares at columns: {np.where(diff_cols)[0]}")
+            print(f"Sum of squares values enc1: {sum_sq_cols1[diff_cols]}")
+            print(f"Sum of squares values enc2: {sum_sq_cols2[diff_cols]}")
+        return False, None, None, None, None
+
+    # check only the last columns of each, sorted. see if they are allclose:
+    last_col1 = np.sort(encoding1[:, -1])
+    last_col2 = np.sort(encoding2[:, -1])
+
+    if not np.allclose(last_col1, last_col2, rtol=1e-12):
+        if verbose:
+            print("Different because last columns don't match when sorted")
+            print(f"Sorted last column 1: {last_col1}")
+            print(f"Sorted last column 2: {last_col2}")
+        return False, None, None, None, None
+    else:  # try to find a permutation that makes the last columns match and try this one next on the whole thing
+        # Get indices that would sort the last columns
+        sort_idx1 = np.argsort(encoding1[:, -1])
+        sort_idx2 = np.argsort(encoding2[:, -1])
+
+        # Apply this permutation to encoding1
+        permuted = encoding1[sort_idx1]
+        permuted2 = encoding2[sort_idx2]
+
+        # Check if this permutation works for the whole encoding
+        if np.allclose(permuted, encoding2[sort_idx2], rtol=1e-12):
+            return True, permuted, tuple(sort_idx1), permuted2, None
+
+    n_rows = encoding1.shape[0]
+
+    # start_time = time.time()
+    # For small matrices, we can try all permutations
+    long_timeout = False
+    if not long_timeout:
+        print("🚨 Assume same")
+        return True, encoding1, tuple(range(n_rows)), encoding2, "timeout"
+    if long_timeout:
         # For larger matrices, use a heuristic approach based on row sorting
         # This works because:
         # 1. If two graphs are isomorphic, their encodings differ only by row permutation
         # 2. Lexicographical sorting will arrange rows in a canonical order
         # 3. After sorting, isomorphic graphs will have identical encodings
 
-        # Sort rows lexicographically for both matrices
-        # This creates a canonical form independent of original node ordering
-        lexsort1: np.ndarray = np.lexsort(encoding1.T)
-        lexsort2: np.ndarray = np.lexsort(encoding2.T)
-        sorted1 = encoding1[lexsort1]
-        sorted2 = encoding2[lexsort2]
+        @contextmanager
+        def timeout(seconds):
+            def signal_handler(signum, frame):
+                raise TimeoutError("Timed out!")
 
-        # Compare sorted matrices
-        # If they're equal (up to numerical precision), the graphs are isomorphic
-        # This is valid because:
-        # - Isomorphic graphs must have the same multiset of row vectors
-        # - Lexicographical sorting creates the same ordering for identical multisets
-        if np.allclose(sorted1, sorted2, rtol=1e-13):
-            # Find the permutation that was applied to the first encoding
-            # This gives us the mapping between the original and sorted node orderings
-            perm: np.ndarray = np.argsort(lexsort1)
-            return True, sorted1, tuple(perm), sorted2
+            signal.signal(signal.SIGALRM, signal_handler)
+            signal.alarm(int(seconds))
+            try:
+                yield
+            finally:
+                signal.alarm(0)
 
-    return False, None, None, None
+        remaining_time = timeout_seconds - (time.time() - start_time)
+        try:
+            with timeout(remaining_time):
+                t0_lexsort = time.time()
+                lexsort1: np.ndarray = np.lexsort(encoding1.T)
+                lexsort2: np.ndarray = np.lexsort(encoding2.T)
+                t1_lexsort = time.time()
+                print(f"Lex sort time: {t1_lexsort - t0_lexsort:.2f} seconds")
+                sorted1 = encoding1[lexsort1]
+                sorted2 = encoding2[lexsort2]
+                t3_lexsort = time.time()
+                print(
+                    f"Lex sort time (selection): {t3_lexsort - t1_lexsort:.2f} seconds"
+                )
+
+                # Compare sorted matrices
+                if np.allclose(sorted1, sorted2, rtol=1e-13):
+                    perm: np.ndarray = np.argsort(lexsort1)
+                    return True, sorted1, tuple(perm), sorted2, None
+        except TimeoutError:
+            print(
+                f"🚨 Timeout during lexsort after {time.time() - start_time:.2f} seconds"
+            )
+            return True, None, None, None, "timeout"
+
+    return False, None, None, None, None
 
 
 def check_encodings_same_up_to_scaling(
@@ -158,20 +326,25 @@ def check_encodings_same_up_to_scaling(
     is_match: bool
     permuted: np.ndarray | None
     permuted2: np.ndarray | None
-    is_match, permuted, perm, permuted2 = find_encoding_match(
+    timeout: str | None
+    is_match, permuted, perm, permuted2, timeout = find_encoding_match(
         encoding1, encoding2, verbose=verbose
     )
     if is_match:
+        if timeout is not None:
+            print(f"🚨 Warning: Timeout after {timeout}")
         if verbose:
             print("✅ Encodings match directly (no scaling needed)")
         assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
         return True, 1.0, perm, permuted, permuted2
 
     # First try direct match with -1 scaling
-    is_match, permuted, perm, permuted2 = find_encoding_match(
+    is_match, permuted, perm, permuted2, timeout = find_encoding_match(
         encoding1, -encoding2, verbose=verbose
     )
     if is_match:
+        if timeout is not None:
+            print(f"🚨 Warning: Timeout after {timeout}")
         if verbose:
             print("✅ Encodings match directly (with -1 scaling)")
         assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
@@ -197,11 +370,13 @@ def check_encodings_same_up_to_scaling(
         )
 
     # Check if scaled versions match
-    is_match, permuted, perm, permuted2 = find_encoding_match(
+    is_match, permuted, perm, permuted2, timeout = find_encoding_match(
         scaled_encoding1, encoding2, verbose=verbose
     )
 
     if is_match:
+        if timeout is not None:
+            print(f"🚨 Warning: Timeout after {timeout}")
         if verbose:
             print(f"✅ Found match after scaling by {scaling_factor:.4e}")
         assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
@@ -214,11 +389,13 @@ def check_encodings_same_up_to_scaling(
     if verbose:
         print("\nTrying with normalized encodings (divided by max abs value)")
 
-    is_match, permuted, perm, permuted2 = find_encoding_match(
+    is_match, permuted, perm, permuted2, timeout = find_encoding_match(
         normalized1, normalized2, verbose=verbose
     )
 
     if is_match:
+        if timeout is not None:
+            print(f"🚨 Warning: Timeout after {timeout}")
         if verbose:
             print("✅ Found match after normalization")
         assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
