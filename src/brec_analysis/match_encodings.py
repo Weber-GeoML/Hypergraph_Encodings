@@ -30,7 +30,7 @@ def find_encoding_match(
             the permutation that was applied
     """
     if encoding1.shape != encoding2.shape:
-        return False, None, None
+        return False, None, None, None
 
     # First check if the encodings are identical
     if np.allclose(encoding1, encoding2, rtol=1e-13):
@@ -38,7 +38,7 @@ def find_encoding_match(
         if verbose:
             print("Free lunch!")
         n_rows = encoding1.shape[0]
-        return True, encoding1, tuple(range(n_rows))
+        return True, encoding1, tuple(range(n_rows)), encoding2
 
     # Pre-compute expensive operations
     abs_enc1 = np.abs(encoding1)
@@ -51,7 +51,7 @@ def find_encoding_match(
             print(f"Max absolute value of encoding1: {np.max(np.abs(encoding1))}")
             print(f"Max absolute value of encoding2: {np.max(np.abs(encoding2))}")
             print("\n")
-        return False, None, None
+        return False, None, None, None
 
     # Same for min
     if not np.isclose(np.min(abs_enc1), np.min(abs_enc2), rtol=1e-10):
@@ -60,7 +60,7 @@ def find_encoding_match(
             print(f"Min absolute value of encoding1: {np.min(np.abs(encoding1))}")
             print(f"Min absolute value of encoding2: {np.min(np.abs(encoding2))}")
             print("\n")
-        return False, None, None
+        return False, None, None, None
 
     # Vectorized column comparisons for both max and min
     max_cols1 = np.max(abs_enc1, axis=0)
@@ -75,7 +75,7 @@ def find_encoding_match(
             print(f"Different max at columns: {np.where(diff_cols)[0]}")
             print(f"Max values enc1: {max_cols1[diff_cols]}")
             print(f"Max values enc2: {max_cols2[diff_cols]}")
-        return False, None, None
+        return False, None, None, None
 
     # Check min values
     if not np.allclose(min_cols1, min_cols2, rtol=1e-10):
@@ -84,7 +84,7 @@ def find_encoding_match(
             print(f"Different min at columns: {np.where(diff_cols)[0]}")
             print(f"Min values enc1: {min_cols1[diff_cols]}")
             print(f"Min values enc2: {min_cols2[diff_cols]}")
-        return False, None, None
+        return False, None, None, None
 
     n_rows = encoding1.shape[0]
 
@@ -93,7 +93,7 @@ def find_encoding_match(
         for perm in permutations(range(n_rows)):
             permuted = encoding1[list(perm), :]
             if np.allclose(permuted, encoding2, rtol=1e-13):
-                return True, permuted, perm
+                return True, permuted, perm, encoding2
     else:
         # For larger matrices, use a heuristic approach based on row sorting
         # This works because:
@@ -103,8 +103,10 @@ def find_encoding_match(
 
         # Sort rows lexicographically for both matrices
         # This creates a canonical form independent of original node ordering
-        sorted1 = encoding1[np.lexsort(encoding1.T)]
-        sorted2 = encoding2[np.lexsort(encoding2.T)]
+        lexsort1 = np.lexsort(encoding1.T)
+        lexsort2 = np.lexsort(encoding2.T)
+        sorted1 = encoding1[lexsort1]
+        sorted2 = encoding2[lexsort2]
 
         # Compare sorted matrices
         # If they're equal (up to numerical precision), the graphs are isomorphic
@@ -115,14 +117,14 @@ def find_encoding_match(
             # Find the permutation that was applied to the first encoding
             # This gives us the mapping between the original and sorted node orderings
             perm = np.argsort(np.lexsort(encoding1.T))
-            return True, sorted1, perm
+            return True, sorted1, perm, sorted2
 
-    return False, None, None
+    return False, None, None, None
 
 
 def check_encodings_same_up_to_scaling(
     encoding1: np.ndarray, encoding2: np.ndarray, verbose: bool = False
-) -> tuple[bool, float, np.ndarray, np.ndarray]:
+) -> tuple[bool, float, np.ndarray, np.ndarray, np.ndarray]:
     """
     Check if two encodings are equivalent under row permutations and scaling.
 
@@ -140,29 +142,31 @@ def check_encodings_same_up_to_scaling(
             the permutation that was applied (None if no match)
         permuted_encoding:
             the permuted and scaled encoding1 (None if no match)
+        permuted_encoding2:
+            the permuted and scaled encoding2 (None if no match)
     """
     if encoding1.shape != encoding2.shape:
         if verbose:
             print("❌ Encodings have different shapes")
-        return False, None, None, None
+        return False, None, None, None, None
 
     # First try direct match
-    is_match, permuted, perm = find_encoding_match(
+    is_match, permuted, perm, permuted2 = find_encoding_match(
         encoding1, encoding2, verbose=verbose
     )
     if is_match:
         if verbose:
             print("✅ Encodings match directly (no scaling needed)")
-        return True, 1.0, perm, permuted
+        return True, 1.0, perm, permuted, permuted2
 
     # First try direct match with -1 scaling
-    is_match, permuted, perm = find_encoding_match(
+    is_match, permuted, perm, permuted2 = find_encoding_match(
         encoding1, -encoding2, verbose=verbose
     )
     if is_match:
         if verbose:
             print("✅ Encodings match directly (with -1 scaling)")
-        return True, -1.0, perm, permuted
+        return True, -1.0, perm, permuted, permuted2
 
     # If no direct match, try scaling
     max_abs1 = np.max(np.abs(encoding1))
@@ -171,7 +175,7 @@ def check_encodings_same_up_to_scaling(
     if max_abs1 == 0 or max_abs2 == 0:
         if verbose:
             print("❌ One of the encodings is all zeros")
-        return False, None, None, None
+        return False, None, None, None, None
 
     scaling_factor = max_abs2 / max_abs1
     scaled_encoding1 = encoding1 * scaling_factor
@@ -184,14 +188,14 @@ def check_encodings_same_up_to_scaling(
         )
 
     # Check if scaled versions match
-    is_match, permuted, perm = find_encoding_match(
+    is_match, permuted, perm, permuted2 = find_encoding_match(
         scaled_encoding1, encoding2, verbose=verbose
     )
 
     if is_match:
         if verbose:
             print(f"✅ Found match after scaling by {scaling_factor:.4e}")
-        return True, scaling_factor, perm, permuted
+        return True, scaling_factor, perm, permuted, permuted2
 
     # If still no match, try with normalized versions
     normalized1 = encoding1 / max_abs1
@@ -200,14 +204,14 @@ def check_encodings_same_up_to_scaling(
     if verbose:
         print("\nTrying with normalized encodings (divided by max abs value)")
 
-    is_match, permuted, perm = find_encoding_match(
+    is_match, permuted, perm, permuted2 = find_encoding_match(
         normalized1, normalized2, verbose=verbose
     )
 
     if is_match:
         if verbose:
             print("✅ Found match after normalization")
-        return True, max_abs2 / max_abs1, perm, permuted
+        return True, max_abs2 / max_abs1, perm, permuted, permuted2
 
     # If we get here, the encodings are truly different
     if verbose:
@@ -226,4 +230,4 @@ def check_encodings_same_up_to_scaling(
             f"Ratio of min values (E2/E1): {np.min(np.abs(encoding2))/np.min(np.abs(encoding1)):.4e}"
         )
 
-    return False, None, None, None
+    return False, None, None, None, None
