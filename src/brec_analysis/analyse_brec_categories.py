@@ -167,6 +167,7 @@ def quick_eda_from_github(graphs, verbose: bool = False):
 
     # Collect node counts for each category
     for category, graph_list in graphs.items():
+        print(f"🔍 {category} has {len(graph_list)} graphs")
         if verbose:
             print(f"\nDEBUG 3 - Processing {category}:")
             print(f"Category: {category} has {len(graph_list)} graphs")
@@ -183,9 +184,20 @@ def quick_eda_from_github(graphs, verbose: bool = False):
     plt.figure(figsize=(12, 6))
 
     # Plot histogram for each category with different colors
-    colors = ["skyblue", "lightgreen", "salmon", "lightgray", "wheat"]
+    colors = [
+        "skyblue",
+        "lightgreen",
+        "salmon",
+        "lightgray",
+        "wheat",
+        "orange",
+        "purple",
+    ]
     for (category, counts), color in zip(node_counts.items(), colors):
+        if not counts:
+            print(f"DEBUG - {category} has no counts")
         if counts:  # Only plot if category has graphs
+            print(f"Plotting {category} with {len(counts)} counts")
             plt.hist(
                 counts,
                 bins="auto",

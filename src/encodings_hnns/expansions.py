@@ -44,6 +44,75 @@ def compute_clique_expansion(dataset: dict) -> Data:
     return graph
 
 
+def compute_star_expansion(dataset: dict) -> Data:
+    """Compute the star expansion of a hypergraph.
+
+    In star expansion, each hyperedge becomes a new vertex that connects to all vertices
+    in that hyperedge, creating a bipartite graph.
+
+    Args:
+        dataset (dict): The dataset dictionary containing:
+            - hypergraph: dict mapping hyperedge IDs to lists of node indices
+            - n: number of original nodes
+            - features: node features
+            - labels: node labels
+
+    Returns:
+        Data: PyG Data object containing the expanded graph with:
+            - Original node features for original nodes
+            - Zero features for hyperedge nodes
+            - Original labels for original nodes
+            - Zero labels for hyperedge nodes
+    """
+    hypergraph = dataset["hypergraph"]
+    num_orig_nodes = dataset["n"]
+
+    # Create networkx graph for the bipartite expansion
+    G = nx.Graph()
+
+    # Add original nodes
+    G.add_nodes_from(range(num_orig_nodes), bipartite=0)  # Original nodes
+
+    # Add hyperedge nodes and their connections
+    current_idx = num_orig_nodes
+    for he_id, nodes in hypergraph.items():
+        # Add new node for this hyperedge
+        G.add_node(current_idx, bipartite=1)  # Hyperedge nodes
+
+        # Connect to all nodes in the hyperedge
+        G.add_edges_from([(current_idx, v) for v in nodes])
+        current_idx += 1
+
+    # Convert to PyG graph
+    graph = from_networkx(G)
+
+    # Handle node features
+    num_he_nodes = len(hypergraph)
+    orig_features = torch.tensor(dataset["features"]).float()
+    feature_dim = orig_features.shape[1]
+
+    # Create zero features for hyperedge nodes
+    he_features = torch.zeros((num_he_nodes, feature_dim))
+
+    # Combine original and hyperedge features
+    graph.x = torch.cat([orig_features, he_features], dim=0)
+
+    # Handle node labels similarly
+    orig_labels = torch.tensor(dataset["labels"])
+    he_labels = torch.zeros((num_he_nodes, orig_labels.shape[1]))
+    graph.y = torch.cat([orig_labels, he_labels], dim=0)
+
+    # Add a mask to identify original vs hyperedge nodes
+    graph.original_mask = torch.cat(
+        [
+            torch.ones(num_orig_nodes, dtype=torch.bool),
+            torch.zeros(num_he_nodes, dtype=torch.bool),
+        ]
+    )
+
+    return graph
+
+
 def plot_hypergraph_and_expansion() -> None:
     """Plot the hypergraph and its clique expansion on an example dataset."""
     # Create a simple example hypergraph

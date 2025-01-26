@@ -40,8 +40,12 @@ def find_encoding_match(
         n_rows = encoding1.shape[0]
         return True, encoding1, tuple(range(n_rows))
 
+    # Pre-compute expensive operations
+    abs_enc1 = np.abs(encoding1)
+    abs_enc2 = np.abs(encoding2)
+
     # Check the max absolute value of each encodings. If they are different, return False
-    if not np.isclose(np.max(np.abs(encoding1)), np.max(np.abs(encoding2)), rtol=1e-3):
+    if not np.isclose(np.max(abs_enc1), np.max(abs_enc2), rtol=1e-10):
         if verbose:
             print("Different because:")
             print(f"Max absolute value of encoding1: {np.max(np.abs(encoding1))}")
@@ -50,7 +54,7 @@ def find_encoding_match(
         return False, None, None
 
     # Same for min
-    if not np.isclose(np.min(np.abs(encoding1)), np.min(np.abs(encoding2)), rtol=1e-3):
+    if not np.isclose(np.min(abs_enc1), np.min(abs_enc2), rtol=1e-10):
         if verbose:
             print("Different because:")
             print(f"Min absolute value of encoding1: {np.min(np.abs(encoding1))}")
@@ -58,55 +62,58 @@ def find_encoding_match(
             print("\n")
         return False, None, None
 
-    # Compare the last column only. IF the max absolute value of the last column is different, return False
-    if not np.isclose(
-        np.max(np.abs(encoding1[:, -1])),
-        np.max(np.abs(encoding2[:, -1])),
-        rtol=1e-3,
-    ):
+    # Vectorized column comparisons for both max and min
+    max_cols1 = np.max(abs_enc1, axis=0)
+    max_cols2 = np.max(abs_enc2, axis=0)
+    min_cols1 = np.min(abs_enc1, axis=0)
+    min_cols2 = np.min(abs_enc2, axis=0)
+
+    # Check max values
+    if not np.allclose(max_cols1, max_cols2, rtol=1e-10):
         if verbose:
-            print("Different because:")
-            print(
-                f"Max absolute value of last column of encoding1: {np.max(np.abs(encoding1[:, -1]))}"
-            )
-            print(
-                f"Max absolute value of last column of encoding2: {np.max(np.abs(encoding2[:, -1]))}"
-            )
-            print("\n")
+            diff_cols = ~np.isclose(max_cols1, max_cols2, rtol=1e-10)
+            print(f"Different max at columns: {np.where(diff_cols)[0]}")
+            print(f"Max values enc1: {max_cols1[diff_cols]}")
+            print(f"Max values enc2: {max_cols2[diff_cols]}")
         return False, None, None
 
-    # Compare the first column only. If the max absolute value of the first column is different, return False
-    if not np.isclose(
-        np.max(np.abs(encoding1[:, 0])),
-        np.max(np.abs(encoding2[:, 0])),
-        rtol=1e-3,
-    ):
+    # Check min values
+    if not np.allclose(min_cols1, min_cols2, rtol=1e-10):
         if verbose:
-            print("Different because:")
-            print(
-                f"Max absolute value of first column of encoding1: {np.max(np.abs(encoding1[:, 0]))}"
-            )
-            print(
-                f"Max absolute value of first column of encoding2: {np.max(np.abs(encoding2[:, 0]))}"
-            )
-            print("\n")
+            diff_cols = ~np.isclose(min_cols1, min_cols2, rtol=1e-10)
+            print(f"Different min at columns: {np.where(diff_cols)[0]}")
+            print(f"Min values enc1: {min_cols1[diff_cols]}")
+            print(f"Min values enc2: {min_cols2[diff_cols]}")
         return False, None, None
 
     n_rows = encoding1.shape[0]
 
     # For small matrices, we can try all permutations
-    if n_rows <= 10:  # Adjust this threshold based on your needs
+    if n_rows <= 5:  # Adjust this threshold based on your needs
         for perm in permutations(range(n_rows)):
             permuted = encoding1[list(perm), :]
             if np.allclose(permuted, encoding2, rtol=1e-13):
                 return True, permuted, perm
     else:
-        # For larger matrices, use a heuristic approach
-        # Sort rows lexicographically and compare
+        # For larger matrices, use a heuristic approach based on row sorting
+        # This works because:
+        # 1. If two graphs are isomorphic, their encodings differ only by row permutation
+        # 2. Lexicographical sorting will arrange rows in a canonical order
+        # 3. After sorting, isomorphic graphs will have identical encodings
+
+        # Sort rows lexicographically for both matrices
+        # This creates a canonical form independent of original node ordering
         sorted1 = encoding1[np.lexsort(encoding1.T)]
         sorted2 = encoding2[np.lexsort(encoding2.T)]
+
+        # Compare sorted matrices
+        # If they're equal (up to numerical precision), the graphs are isomorphic
+        # This is valid because:
+        # - Isomorphic graphs must have the same multiset of row vectors
+        # - Lexicographical sorting creates the same ordering for identical multisets
         if np.allclose(sorted1, sorted2, rtol=1e-13):
-            # Find the permutation that was applied
+            # Find the permutation that was applied to the first encoding
+            # This gives us the mapping between the original and sorted node orderings
             perm = np.argsort(np.lexsort(encoding1.T))
             return True, sorted1, perm
 

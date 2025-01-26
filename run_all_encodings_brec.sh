@@ -32,6 +32,6 @@ mkdir -p "$log_dir"
 log_file="$log_dir/brec_encoding${encoding}_category${category}.log"
 
 echo "Running analysis with encoding: $encoding, category: $category"
-python scripts/analyse_brec.py -e "$encoding" -c "$category" &> "$log_file"
+python scripts/analyse_brec.py -e "$encoding" -c "$category" > "$log_file" 2>&1
 
 echo "Analysis complete!" 
