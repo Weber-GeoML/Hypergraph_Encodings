@@ -180,8 +180,22 @@ def quick_eda_from_github(graphs, verbose: bool = False):
                 f"First two node counts: {node_counts[category][0]}, {node_counts[category][1]}"
             )
 
-    # Create histogram
-    plt.figure(figsize=(12, 6))
+    # First determine global min and max for all categories
+    all_counts = []
+    for counts in node_counts.values():
+        if counts:
+            all_counts.extend(counts)
+
+    if all_counts:
+        # Calculate global bins
+        global_min = min(all_counts)
+        global_max = max(all_counts)
+        # You can adjust the number of bins or bin width as needed
+        n_bins = 50  # or use a specific bin width: bin_width = 5
+        bins = np.linspace(global_min, global_max, n_bins)
+
+        # Create histogram
+        plt.figure(figsize=(12, 6))
 
     # Plot histogram for each category with different colors
     colors = [
@@ -193,19 +207,25 @@ def quick_eda_from_github(graphs, verbose: bool = False):
         "orange",
         "purple",
     ]
-    for (category, counts), color in zip(node_counts.items(), colors):
-        if not counts:
-            print(f"DEBUG - {category} has no counts")
-        if counts:  # Only plot if category has graphs
-            print(f"Plotting {category} with {len(counts)} counts")
-            plt.hist(
-                counts,
-                bins="auto",
-                alpha=0.5,
-                label=category,
-                color=color,
-                edgecolor="black",
-            )
+    # Reverse the order of categories for better stacking visualization
+    items = list(node_counts.items())[::-1]  # Reverse order
+    categories = [item[0] for item in items if item[1]]  # Only categories with counts
+    counts_list = [item[1] for item in items if item[1]]  # Only non-empty counts
+    colors = colors[: len(categories)][::-1]  # Match colors to reversed categories
+
+    if counts_list:  # Only plot if we have data
+        print(
+            f"Plotting stacked histogram with categories: {categories[::-1]}"
+        )  # Show in original order
+        plt.hist(
+            counts_list,
+            bins=bins,
+            alpha=0.7,  # Increased alpha for better visibility when stacked
+            label=categories,
+            color=colors,
+            edgecolor="black",
+            stacked=True,  # This creates the stacked histogram
+        )
 
     plt.xlabel("Number of Nodes", fontsize=12)
     plt.ylabel("Frequency", fontsize=12)
