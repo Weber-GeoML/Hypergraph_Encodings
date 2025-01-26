@@ -259,6 +259,9 @@ def checks_encodings(
             k value for the encodings
         verbose:
             whether to print verbose output
+
+    Returns:
+        the comparison results
     """
 
     assert hg1 is not None
@@ -310,6 +313,12 @@ def checks_encodings(
         modified_name,  # Pass modified name as title
         graph_type,
     )
+
+    if match_result["is_direct_match"]:
+        print(match_result["status"])
+        assert np.allclose(
+            match_result["permuted"], match_result["permuted2"], rtol=1e-9
+        )  # type: ignore
 
     # Print results
     print_comparison_results(
@@ -423,13 +432,32 @@ def checks_encodings(
 
 
 def check_for_matches(encoding1, encoding2, name: str) -> dict:
-    """Check for direct matches and scaling matches."""
+    """Check for direct matches and scaling matches.
+
+    Args:
+        encoding1:
+            the first encoding
+        encoding2:
+            the second encoding
+        name:
+            the name of the encoding
+
+    Returns:
+        the comparison results
+    """
+    is_direct_match: bool
+    permuted: np.ndarray
+    permuted2: np.ndarray
+    perm: tuple[int, ...]
     is_direct_match, permuted, perm, permuted2 = find_encoding_match(
         encoding1, encoding2
     )
 
-    is_same_up_to_scaling = False
-    scaling_factor = None
+    if is_direct_match:
+        assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
+
+    is_same_up_to_scaling: bool = False
+    scaling_factor: float | None = None
 
     assert encoding1 is not None
     assert encoding2 is not None

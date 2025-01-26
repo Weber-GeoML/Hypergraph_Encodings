@@ -577,10 +577,7 @@ def main(encodings: str, categories: str) -> None:
                     #     )
                     #     continue
 
-                    print(
-                        f"Processing pair {local_pair_idx + 1}/5 in {category} "
-                        f"(global pair index: {total_pair_idx})"
-                    )
+                    print(f"(global pair index: {total_pair_idx})")
 
                     pair_results = analyze_graph_pair(
                         g1,
