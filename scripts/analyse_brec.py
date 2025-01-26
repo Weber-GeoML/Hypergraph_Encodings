@@ -91,7 +91,9 @@ def analyze_graph_pair(
 
     # Plot original graphs
     # in graph space
-    plot_graph_pair(G1, G2, pair_idx, category, is_isomorphic, "plots/graph_pairs")
+    plot_figures = False
+    if plot_figures:
+        plot_graph_pair(G1, G2, pair_idx, category, is_isomorphic, "plots/graph_pairs")
 
     # Convert to hypergraph dictionaries
     # THESE ARE STILL GRAPHS!!!
@@ -138,16 +140,18 @@ def analyze_graph_pair(
     hg1_lifted = lift_to_hypergraph(data1, verbose=False, already_in_nx=already_in_nx)
     hg2_lifted = lift_to_hypergraph(data2, verbose=False, already_in_nx=already_in_nx)
 
-    plot_hypergraph_pair(
-        G1,
-        G2,
-        hg1_lifted,
-        hg2_lifted,
-        pair_idx,
-        category,
-        is_isomorphic,
-        "plots/hypergraph_pairs",
-    )
+    plot_figures = False
+    if plot_figures:
+        plot_hypergraph_pair(
+            G1,
+            G2,
+            hg1_lifted,
+            hg2_lifted,
+            pair_idx,
+            category,
+            is_isomorphic,
+            "plots/hypergraph_pairs",
+        )
 
     # Compare hypergraph-level encodings
     hypergraph_results = compare_encodings_wrapper(
@@ -238,6 +242,7 @@ def write_results(f, filepath_json, results: dict, json_results: dict) -> dict:
                     "total_with_timeout": 0,
                 }
 
+            print(f"result: {result}")
             if not result == "Timeout":
                 json_results[category][encoding_key]["total"] += 1
                 if not is_same:
@@ -607,6 +612,7 @@ def main(encodings: str, categories: str) -> None:
                             print(
                                 f"Skipping {category} category as {json_path} already exists"
                             )
+                            total_pair_idx += 1
                             continue
 
                     g1 = graphs[local_pair_idx * 2]
@@ -687,10 +693,10 @@ def main(encodings: str, categories: str) -> None:
                     stats["total"],
                     stats["total_with_timeout"],
                 ]
-        time_end_final_file = time.time()
-        print(
-            f"Time taken to write final file: {time_end_final_file - time_start_final_file:.2f} seconds"
-        )
+        # time_end_final_file = time.time()
+        # print(
+        #     f"Time taken to write final file: {time_end_final_file - time_start_final_file:.2f} seconds"
+        # )
 
         # all results (all pairs) for the chosen encodings and categories
         # Save JSON file
