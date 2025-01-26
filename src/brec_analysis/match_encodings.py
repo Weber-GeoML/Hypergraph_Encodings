@@ -89,7 +89,7 @@ def find_encoding_match(
     n_rows = encoding1.shape[0]
 
     # For small matrices, we can try all permutations
-    if n_rows <= 5:  # Adjust this threshold based on your needs
+    if n_rows <= 10:  # Adjust this threshold based on your needs
         for perm in permutations(range(n_rows)):
             permuted = encoding1[list(perm), :]
             if np.allclose(permuted, encoding2, rtol=1e-13):
