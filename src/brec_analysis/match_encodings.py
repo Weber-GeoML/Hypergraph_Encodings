@@ -143,6 +143,8 @@ def find_encoding_match(
             print(f"Std values enc1: {std_cols1[diff_cols]}")
             print(f"Std values enc2: {std_cols2[diff_cols]}")
         return False, None, None, None, None
+    
+    n_rows = encoding1.shape[0]
 
     if n_rows <= 10:  # Adjust this threshold based on your needs
         for perm_ in permutations(range(n_rows)):
@@ -237,7 +239,6 @@ def find_encoding_match(
         if np.allclose(permuted, encoding2[sort_idx2], rtol=1e-12):
             return True, permuted, tuple(sort_idx1), permuted2, None
 
-    n_rows = encoding1.shape[0]
 
     # start_time = time.time()
     # For small matrices, we can try all permutations
