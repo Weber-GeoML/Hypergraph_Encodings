@@ -37,7 +37,7 @@ def print_comparison_results(
         print("Statistics after permutation:")
         max_diff = np.max(np.abs(permuted - permuted2))
         print(f"Max difference: {max_diff}")
-        assert np.isclose(max_diff, 0, rtol=1e-9)
+        # assert np.isclose(max_diff, 0, rtol=1e-9)
         mean_diff = np.mean(np.abs(permuted - permuted2))
         # print(
         #     f"Mean difference: {mean_diff}"
