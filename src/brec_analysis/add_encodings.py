@@ -45,7 +45,7 @@ def get_encodings(
         return encoder.add_curvature_encodings(hg.copy(), verbose=False, type="FRC")
     elif name_of_encoding == "LAPE-Normalized":
         return encoder.add_laplacian_encodings(
-            hg.copy(), type="Normalized", verbose=False, use_same_sign=True
+            hg.copy(), type="Normalized", verbose=False, use_same_sign=True, k=k_lape
         )
     elif name_of_encoding == "LAPE-RW":
         # Add k to the name for random walk Laplacian

@@ -46,6 +46,7 @@ def analyze_graph_pair(
     is_isomorphic: bool,
     already_in_nx: bool = False,
     types_of_encoding: list[tuple[str, str]] = ENCODINGS_TO_CHECK,
+    k: int = 3,
 ) -> dict:
     """Analyze a pair of graphs: plot them and compare their encodings
 
@@ -125,6 +126,7 @@ def analyze_graph_pair(
         "graph",
         node_mapping,
         types_of_encoding=types_of_encoding,
+        k=k,
     )
     final_results["graph_level"]["encodings"] = graph_results["encodings"]
 
@@ -163,6 +165,7 @@ def analyze_graph_pair(
         "hypergraph",
         node_mapping,
         types_of_encoding=types_of_encoding,
+        k=k,
     )
     final_results["hypergraph_level"]["encodings"] = hypergraph_results["encodings"]
 
@@ -465,7 +468,7 @@ def is_regular(G: nx.Graph) -> tuple[bool, int]:
     help='Indices of categories to analyze (e.g., "0" or "0,3" or "0-3")',
     default="2",
 )
-def main(encodings: str, categories: str) -> None:
+def main(encodings: str, categories: str, k: int = 3) -> None:
     """Analyze BREC dataset with specified encodings and categories
 
     Args:
@@ -637,6 +640,7 @@ def main(encodings: str, categories: str) -> None:
                         is_isomorphic=False,
                         already_in_nx=True,
                         types_of_encoding=selected_encodings,
+                        k=k,
                     )
                     # Get first key's values using next() and iter()
                     first_encoding_graph = next(
