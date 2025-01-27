@@ -18,6 +18,7 @@ def compare_encodings_wrapper(
     level: str = "graph",
     node_mapping: dict | None = None,
     types_of_encoding: list[tuple[str, str]] = ENCODINGS_TO_CHECK,
+    k: int = 3,
 ) -> dict:
     """Compare encodings between two (hyper)graphs.
 
@@ -76,6 +77,7 @@ def compare_encodings_wrapper(
             is_isomorphic=is_isomorphic,
             node_mapping=node_mapping,
             graph_type=level,
+            k=k,
         )
         results["encodings"][encoding_type] = {
             "description": description,
