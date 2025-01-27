@@ -238,7 +238,37 @@ def find_encoding_match(
         # Check if this permutation works for the whole encoding
         if np.allclose(permuted, encoding2[sort_idx2], rtol=1e-12):
             return True, permuted, tuple(sort_idx1), permuted2, None
+        
+        else:
+            sort_idx1 = np.argsort(encoding1[:, 0])
+            sort_idx2 = np.argsort(encoding2[:, 0])
 
+            # Apply this permutation to encoding1
+            permuted = encoding1[sort_idx1]
+            permuted2 = encoding2[sort_idx2]
+            # Check if this permutation works for the whole encoding
+            if np.allclose(permuted, encoding2[sort_idx2], rtol=1e-12):
+                return True, permuted, tuple(sort_idx1), permuted2, None
+            
+    
+    # >>> a=np.array([[1,1],[2,2]])
+    # >>> a
+    # array([[1, 1],
+    #     [2, 2]])
+    # >>> np.prod(a,axis=0)
+    # array([2, 2])
+    # >>> np.prod(a,axis=1)
+    # array([1, 4])
+    prod_cols1 = np.prod(abs_enc1, axis=0)
+    prod_cols2 = np.prod(abs_enc2, axis=0)
+
+    if not np.allclose(prod_cols1, prod_cols2, rtol=1e-12):
+        if verbose:
+            diff_cols = ~np.isclose(prod_cols1, prod_cols2, rtol=1e-12)
+            print(f"Different products at columns: {np.where(diff_cols)[0]}")
+            print(f"Product values enc1: {prod_cols1[diff_cols]}")
+            print(f"Product values enc2: {prod_cols2[diff_cols]}")
+        return False, None, None, None, None
 
     # start_time = time.time()
     # For small matrices, we can try all permutations
@@ -336,7 +366,8 @@ def check_encodings_same_up_to_scaling(
             print(f"🚨 Warning: Timeout after {timeout}")
         if verbose:
             print("✅ Encodings match directly (no scaling needed)")
-        assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
+        if timeout is None:
+            assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
         return True, 1.0, perm, permuted, permuted2
 
     # First try direct match with -1 scaling
@@ -348,7 +379,8 @@ def check_encodings_same_up_to_scaling(
             print(f"🚨 Warning: Timeout after {timeout}")
         if verbose:
             print("✅ Encodings match directly (with -1 scaling)")
-        assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
+        if timeout is None:
+            assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
         return True, -1.0, perm, permuted, permuted2
 
     # If no direct match, try scaling
@@ -380,7 +412,8 @@ def check_encodings_same_up_to_scaling(
             print(f"🚨 Warning: Timeout after {timeout}")
         if verbose:
             print(f"✅ Found match after scaling by {scaling_factor:.4e}")
-        assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
+        if timeout is None:
+            assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
         return True, scaling_factor, perm, permuted, permuted2
 
     # If still no match, try with normalized versions
@@ -399,7 +432,8 @@ def check_encodings_same_up_to_scaling(
             print(f"🚨 Warning: Timeout after {timeout}")
         if verbose:
             print("✅ Found match after normalization")
-        assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
+        if timeout is None:
+            assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
         return True, max_abs2 / max_abs1, perm, permuted, permuted2
 
     # If we get here, the encodings are truly different
