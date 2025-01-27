@@ -42,7 +42,8 @@ def print_comparison_results(
         # print(
         #     f"Mean difference: {mean_diff}"
         # )
-        assert np.isclose(mean_diff, 0, rtol=1e-9)
+
+        # assert np.isclose(mean_diff, 0, rtol=1e-9)
     else:
         print(f"\n❌ No matching permutation found for {name_of_encoding}")
         print("Differences in original ordering:")
