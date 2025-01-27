@@ -46,7 +46,7 @@ def analyze_graph_pair(
     is_isomorphic: bool,
     already_in_nx: bool = False,
     types_of_encoding: list[tuple[str, str]] = ENCODINGS_TO_CHECK,
-    k: int = 3,
+    k: int = 1,
 ) -> dict:
     """Analyze a pair of graphs: plot them and compare their encodings
 
@@ -468,7 +468,7 @@ def is_regular(G: nx.Graph) -> tuple[bool, int]:
     help='Indices of categories to analyze (e.g., "0" or "0,3" or "0-3")',
     default="2",
 )
-def main(encodings: str, categories: str, k: int = 3) -> None:
+def main(encodings: str, categories: str, k: int = 1) -> None:
     """Analyze BREC dataset with specified encodings and categories
 
     Args:
