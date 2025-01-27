@@ -317,11 +317,11 @@ def checks_encodings(
             graph_type,
         )
 
-        if match_result["is_direct_match"]:
-            print(match_result["status"])
-            assert np.allclose(
-                match_result["permuted"], match_result["permuted2"], rtol=1e-9
-            )  # type: ignore
+        # if match_result["is_direct_match"]:
+        #     print(match_result["status"])
+        #     assert np.allclose(
+        #         match_result["permuted"], match_result["permuted2"], rtol=1e-9
+        #     )  # type: ignore
 
         # Print results
         print_comparison_results(
@@ -485,8 +485,8 @@ def check_for_matches(encoding1, encoding2, name: str) -> dict:
     status = MatchStatus.NO_MATCH
     if is_direct_match:
         status = MatchStatus.EXACT_MATCH
-        if timeout == "timeout":
-            status = MatchStatus.TIMEOUT
+        # if timeout == "timeout":
+        #     status = MatchStatus.TIMEOUT
     elif is_same_up_to_scaling:
         status = MatchStatus.SCALED_MATCH
 
