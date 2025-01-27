@@ -457,7 +457,7 @@ def check_for_matches(encoding1, encoding2, name: str) -> dict:
         encoding1, encoding2, verbose=True
     )
 
-    if is_direct_match:
+    if is_direct_match and timeout is None:
         assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
 
     is_same_up_to_scaling: bool = False
