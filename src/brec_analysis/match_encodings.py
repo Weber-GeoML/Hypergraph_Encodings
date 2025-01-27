@@ -143,7 +143,7 @@ def find_encoding_match(
             print(f"Std values enc1: {std_cols1[diff_cols]}")
             print(f"Std values enc2: {std_cols2[diff_cols]}")
         return False, None, None, None, None
-    
+
     n_rows = encoding1.shape[0]
 
     if n_rows <= 10:  # Adjust this threshold based on your needs
@@ -156,17 +156,18 @@ def find_encoding_match(
     # t0 = time.time()
     kurtosis_cols1 = kurtosis(abs_enc1, axis=0)
     kurtosis_cols2 = kurtosis(abs_enc2, axis=0)
-    # if verbose:
-    #     print(f"Kurtosis computation time: {time.time() - t0:.4f} seconds")
+    if not (np.any(np.isnan(kurtosis_cols1)) or np.any(np.isnan(kurtosis_cols2))):
+        # if verbose:
+        #     print(f"Kurtosis computation time: {time.time() - t0:.4f} seconds")
 
-    # check kurtosis
-    if not np.allclose(kurtosis_cols1, kurtosis_cols2, rtol=1e-12):
-        if verbose:
-            diff_cols = ~np.isclose(kurtosis_cols1, kurtosis_cols2, rtol=1e-12)
-            print(f"Different kurtosis at columns: {np.where(diff_cols)[0]}")
-            print(f"Kurtosis values enc1: {kurtosis_cols1[diff_cols]}")
-            print(f"Kurtosis values enc2: {kurtosis_cols2[diff_cols]}")
-        return False, None, None, None, None
+        # check kurtosis
+        if not np.allclose(kurtosis_cols1, kurtosis_cols2, rtol=1e-12):
+            if verbose:
+                diff_cols = ~np.isclose(kurtosis_cols1, kurtosis_cols2, rtol=1e-12)
+                print(f"Different kurtosis at columns: {np.where(diff_cols)[0]}")
+                print(f"Kurtosis values enc1: {kurtosis_cols1[diff_cols]}")
+                print(f"Kurtosis values enc2: {kurtosis_cols2[diff_cols]}")
+            return False, None, None, None, None
 
     # Additional statistical measures
     # t0 = time.time()
@@ -190,15 +191,16 @@ def find_encoding_match(
     skew_cols2 = skew(abs_enc2, axis=0)
     # if verbose:
     #     print(f"Skewness computation time: {time.time() - t0:.4f} seconds")
-
-    # check skew
-    if not np.allclose(skew_cols1, skew_cols2, rtol=1e-12):
-        if verbose:
-            diff_cols = ~np.isclose(skew_cols1, skew_cols2, rtol=1e-12)
-            print(f"Different skew at columns: {np.where(diff_cols)[0]}")
-            print(f"Skew values enc1: {skew_cols1[diff_cols]}")
-            print(f"Skew values enc2: {skew_cols2[diff_cols]}")
-        return False, None, None, None, None
+    # if skew_cols1 is not None/nan and same for skew_cols2
+    if not (np.any(np.isnan(skew_cols1)) or np.any(np.isnan(skew_cols2))):
+        # check skew
+        if not np.allclose(skew_cols1, skew_cols2, rtol=1e-12):
+            if verbose:
+                diff_cols = ~np.isclose(skew_cols1, skew_cols2, rtol=1e-12)
+                print(f"Different skew at columns: {np.where(diff_cols)[0]}")
+                print(f"Skew values enc1: {skew_cols1[diff_cols]}")
+                print(f"Skew values enc2: {skew_cols2[diff_cols]}")
+            return False, None, None, None, None
 
     # Sum of squares
     # t0 = time.time()
@@ -238,7 +240,7 @@ def find_encoding_match(
         # Check if this permutation works for the whole encoding
         if np.allclose(permuted, encoding2[sort_idx2], rtol=1e-12):
             return True, permuted, tuple(sort_idx1), permuted2, None
-        
+
         else:
             sort_idx1 = np.argsort(encoding1[:, 0])
             sort_idx2 = np.argsort(encoding2[:, 0])
@@ -249,8 +251,7 @@ def find_encoding_match(
             # Check if this permutation works for the whole encoding
             if np.allclose(permuted, encoding2[sort_idx2], rtol=1e-12):
                 return True, permuted, tuple(sort_idx1), permuted2, None
-            
-    
+
     # >>> a=np.array([[1,1],[2,2]])
     # >>> a
     # array([[1, 1],

@@ -448,6 +448,9 @@ class HypergraphEncodings:
 
             # Ensure k does not exceed the number of eigenvectors available
             k = min(k, eigenvectors.shape[1])
+            print(
+                f"In original code, k is {k}, but there is already {features_augmented.shape[1]}"
+            )
 
             # Determines the target shape
             target_shape = (

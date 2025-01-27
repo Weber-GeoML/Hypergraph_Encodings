@@ -92,7 +92,7 @@ def analyze_graph_pair(
 
     # Plot original graphs
     # in graph space
-    plot_figures = False
+    plot_figures = True
     if plot_figures:
         plot_graph_pair(G1, G2, pair_idx, category, is_isomorphic, "plots/graph_pairs")
 
@@ -142,7 +142,7 @@ def analyze_graph_pair(
     hg1_lifted = lift_to_hypergraph(data1, verbose=False, already_in_nx=already_in_nx)
     hg2_lifted = lift_to_hypergraph(data2, verbose=False, already_in_nx=already_in_nx)
 
-    plot_figures = False
+    plot_figures = True
     if plot_figures:
         plot_hypergraph_pair(
             G1,
@@ -460,13 +460,13 @@ def is_regular(G: nx.Graph) -> tuple[bool, int]:
     "--encodings",
     "-e",
     help='Indices of encodings to check (e.g., "0" or "0,3" or "0-3")',
-    default="1",
+    default="0",
 )
 @click.option(
     "--categories",
     "-c",
     help='Indices of categories to analyze (e.g., "0" or "0,3" or "0-3")',
-    default="2",
+    default="0",
 )
 def main(encodings: str, categories: str, k: int = 1) -> None:
     """Analyze BREC dataset with specified encodings and categories

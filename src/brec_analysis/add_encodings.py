@@ -55,6 +55,6 @@ def get_encodings(
         )
     elif name_of_encoding == "LAPE-Hodge":
         return encoder.add_laplacian_encodings(
-            hg.copy(), type="Hodge", verbose=False, use_same_sign=True
+            hg.copy(), type="Hodge", verbose=False, use_same_sign=True, k=k_lape
         )
     return None

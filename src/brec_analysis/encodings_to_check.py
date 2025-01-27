@@ -6,6 +6,6 @@ ENCODINGS_TO_CHECK: list[tuple[str, str]] = [
     # ("RWPE", "Random Walk Encodings"),
     # ("LCP-ORC", "Local Curvature Profile - ORC"),
     ("LAPE-Normalized", "Normalized Laplacian"),
-    ("LAPE-RW", "Random Walk Laplacian"),
+    # ("LAPE-RW", "Random Walk Laplacian"),
     ("LAPE-Hodge", "Hodge Laplacian"),
 ]

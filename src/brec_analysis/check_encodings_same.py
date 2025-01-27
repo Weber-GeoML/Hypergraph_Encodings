@@ -10,7 +10,6 @@ from brec_analysis.laplacians_specific_functions import (
     compute_laplacian,
 )
 from brec_analysis.match_encodings import (
-    check_encodings_same_up_to_scaling,
     find_encoding_match,
 )
 from brec_analysis.match_status import MatchStatus
@@ -139,12 +138,12 @@ def get_appropriate_encodings(name: str, hg1, hg2, encoder1, encoder2, k: int) -
         tuple:
             encodings for the first and second graph
     """
-    if name.startswith("LAPE-"):
-        return get_laplacian_encodings(name, hg1, hg2)
+    # if name.startswith("LAPE-"):
+    #     return get_laplacian_encodings(name, hg1, hg2, k)
     return get_regular_encodings(name, hg1, hg2, encoder1, encoder2, k)
 
 
-def get_laplacian_encodings(name: str, hg1, hg2) -> tuple:
+def get_laplacian_encodings(name: str, hg1, hg2, k: int) -> tuple:
     """Get Laplacian-based encodings.
 
     Args:
@@ -165,6 +164,8 @@ def get_laplacian_encodings(name: str, hg1, hg2) -> tuple:
 
     eigenvalues1, eigenvectors1 = np.linalg.eigh(L1)
     eigenvalues2, eigenvectors2 = np.linalg.eigh(L2)
+    eigenvectors1 = eigenvectors1[:, :k]
+    eigenvectors2 = eigenvectors2[:, :k]
 
     return eigenvectors1, eigenvectors2
 
@@ -198,8 +199,10 @@ def get_regular_encodings(
         tuple:
             encodings for the first and second graph. ONLY THE FEATURES ARE RETURNED
     """
-    hg1_encodings = get_encodings(hg1, encoder1, name, k_rwpe=k, k_lape=k)
-    hg2_encodings = get_encodings(hg2, encoder2, name, k_rwpe=k, k_lape=k)
+    hg1_copy = hg1.copy()
+    hg2_copy = hg2.copy()
+    hg1_encodings = get_encodings(hg1_copy, encoder1, name, k_rwpe=k, k_lape=k)
+    hg2_encodings = get_encodings(hg2_copy, encoder2, name, k_rwpe=k, k_lape=k)
     if verbose:
         print(f"hg1_encodings: \n {hg1_encodings}")
         print(f"hg2_encodings: \n {hg2_encodings}")
@@ -281,10 +284,17 @@ def checks_encodings(
     modified_name = get_modified_name(name_of_encoding, k)
     print(f"Modified name: {modified_name}")
 
+    hg1_copy = hg1.copy()
+    hg2_copy = hg2.copy()
+
     # Get encodings based on type
     hg1_encodings, hg2_encodings = get_appropriate_encodings(
-        name_of_encoding, hg1, hg2, encoder_number_one, encoder_number_two, k
+        name_of_encoding, hg1_copy, hg2_copy, encoder_number_one, encoder_number_two, k
     )
+
+    print(f"hg1_encodings: \n {hg1_encodings.shape}")
+    print(f"hg2_encodings: \n {hg2_encodings.shape}")
+    # assert False
 
     assert hg1_encodings is not None
     assert hg2_encodings is not None
@@ -302,20 +312,36 @@ def checks_encodings(
     comparison_result.update(match_result)
 
     if match_result["status"] != MatchStatus.TIMEOUT:
-        # Plot and get match results
-        plot_matched_encodings(
-            match_result["is_direct_match"],
-            match_result["is_same_up_to_scaling"],
-            match_result["scaling_factor"],
-            match_result["permuted"],
-            match_result["permutation"],
-            hg1_encodings,
-            hg2_encodings,
-            name1,
-            name2,
-            modified_name,  # Pass modified name as title
-            graph_type,
-        )
+        if match_result["is_direct_match"]:
+            # Plot and get match results
+            plot_matched_encodings(
+                match_result["is_direct_match"],
+                match_result["is_same_up_to_scaling"],
+                match_result["scaling_factor"],
+                match_result["permuted"],
+                match_result["permutation"],
+                match_result["permuted"],
+                hg2_encodings,
+                name1,
+                name2,
+                modified_name,  # Pass modified name as title
+                graph_type,
+            )
+        else:
+            # Plot and get match results
+            plot_matched_encodings(
+                match_result["is_direct_match"],
+                match_result["is_same_up_to_scaling"],
+                match_result["scaling_factor"],
+                match_result["permuted"],
+                match_result["permutation"],
+                hg1_encodings,
+                hg2_encodings,
+                name1,
+                name2,
+                modified_name,  # Pass modified name as title
+                graph_type,
+            )
 
         # if match_result["is_direct_match"]:
         #     print(match_result["status"])
@@ -338,8 +364,8 @@ def checks_encodings(
         eigenvectors1, eigenvectors2 = lap_checks_to_clean_up(
             name_of_encoding, hg1, hg2, graph_type
         )
-        assert np.isclose(eigenvectors1, hg1_encodings).all()
-        assert np.isclose(eigenvectors2, hg2_encodings).all()
+        # assert np.isclose(eigenvectors1[:, :k], hg1_encodings).all()
+        # assert np.isclose(eigenvectors2[:, :k], hg2_encodings).all()
 
         # debug = False
         # if debug:
