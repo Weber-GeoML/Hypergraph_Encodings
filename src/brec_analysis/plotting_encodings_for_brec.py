@@ -93,6 +93,10 @@ def plot_matched_encodings(
     # Create figure and axes
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(30, 30))
 
+    # do abs values here:
+    encoding1 = np.abs(encoding1)
+    encoding2 = np.abs(encoding2)
+
     if is_direct_match:
         vmin = min(np.min(permuted), np.min(encoding2))
         vmax = max(np.max(permuted), np.max(encoding2))

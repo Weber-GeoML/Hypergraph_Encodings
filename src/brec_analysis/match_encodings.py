@@ -273,7 +273,7 @@ def find_encoding_match(
             print(f"Product values enc2: {prod_cols2[diff_cols]}")
         return False, None, None, None, None
 
-    if n_rows < 40:
+    if n_rows < 15:
         lexsort1: np.ndarray = np.lexsort(abs_enc1.T)
         lexsort2: np.ndarray = np.lexsort(abs_enc2.T)
         sorted1 = abs_enc1[lexsort1]

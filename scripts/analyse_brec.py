@@ -468,7 +468,7 @@ def is_regular(G: nx.Graph) -> tuple[bool, int]:
     help='Indices of categories to analyze (e.g., "0" or "0,3" or "0-3")',
     default="0",
 )
-def main(encodings: str, categories: str, k: int = 2) -> None:
+def main(encodings: str, categories: str, k: int = 1) -> None:
     """Analyze BREC dataset with specified encodings and categories
 
     Args:
