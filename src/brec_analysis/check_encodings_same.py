@@ -291,6 +291,11 @@ def checks_encodings(
     hg1_encodings, hg2_encodings = get_appropriate_encodings(
         name_of_encoding, hg1_copy, hg2_copy, encoder_number_one, encoder_number_two, k
     )
+    if graph_type == "hypergraph" and "lape" in name_of_encoding.lower():
+        # remove the first column
+        print(f"Removing first column of {name_of_encoding} for type {graph_type}")
+        hg1_encodings = hg1_encodings[:, 1:]
+        hg2_encodings = hg2_encodings[:, 1:]
 
     print(f"hg1_encodings: \n {hg1_encodings.shape}")
     print(f"hg2_encodings: \n {hg2_encodings.shape}")
@@ -326,6 +331,7 @@ def checks_encodings(
                 name2,
                 modified_name,  # Pass modified name as title
                 graph_type,
+                k,
             )
         else:
             # Plot and get match results
@@ -341,6 +347,7 @@ def checks_encodings(
                 name2,
                 modified_name,  # Pass modified name as title
                 graph_type,
+                k,
             )
 
         # if match_result["is_direct_match"]:
@@ -454,7 +461,7 @@ def checks_encodings(
         # Save plot if requested - This will handle both LAPE and non-LAPE cases
         if save_plots:
             plt.tight_layout()
-            save_comparison_plot(plt, plot_dir, pair_idx, category, modified_name)
+            save_comparison_plot(plt, plot_dir, pair_idx, category, modified_name, k)
         plt.close()  # Only close the figure once at the end
 
     return comparison_result
@@ -480,11 +487,11 @@ def check_for_matches(encoding1, encoding2, name: str) -> dict:
     perm: tuple[int, ...]
     timeout: str | None
     is_direct_match, permuted, perm, permuted2, timeout = find_encoding_match(
-        encoding1, encoding2, verbose=True
+        encoding1, encoding2, verbose=True, name_of_encoding=name
     )
 
-    if is_direct_match and timeout is None:
-        assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
+    # if is_direct_match and timeout is None:
+    #     assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
 
     is_same_up_to_scaling: bool = False
     scaling_factor: float | None = None

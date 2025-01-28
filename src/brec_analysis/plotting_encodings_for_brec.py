@@ -12,6 +12,7 @@ def save_comparison_plot(
     pair_idx: str | float | None,
     category: str,
     name_of_encoding: str,
+    k: int,
 ):
     """Helper function to save the comparison plot.
 
@@ -28,9 +29,19 @@ def save_comparison_plot(
             name of the encoding
     """
     os.makedirs(plot_dir, exist_ok=True)
-    filename_base = (
-        f"pair_{pair_idx}_{category.lower()}" if pair_idx is not None else "comparison"
-    )
+    if "lape" in name_of_encoding.lower() or "rwpe" in name_of_encoding.lower():
+        filename_base = (
+            f"pair_{pair_idx}_k_{k}_{category.lower()}"
+            if pair_idx is not None
+            else "comparison"
+        )
+    else:
+        filename_base = (
+            f"pair_{pair_idx}_{category.lower()}"
+            if pair_idx is not None
+            else "comparison"
+        )
+
     print(
         f"Saving plot to {plot_dir}/{filename_base}_{name_of_encoding.lower()}_comparison.png"
     )
@@ -53,6 +64,7 @@ def plot_matched_encodings(
     name2: str = "Graph B",
     title: str = "",
     graph_type: str = "Graph",
+    k: int = 1,
 ) -> None:
     """
     Plot two encodings and their difference, attempting to match their row orderings if possible.
@@ -79,7 +91,7 @@ def plot_matched_encodings(
     """
 
     # Create figure and axes
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(30, 30))
 
     if is_direct_match:
         vmin = min(np.min(permuted), np.min(encoding2))
@@ -159,7 +171,7 @@ def plot_matched_encodings(
 
     # Add match status to the main title
     if title:
-        title = f"{graph_type} {title} \n " + "\n".join(match_status)
+        title = f"{graph_type} {title} - {k} \n " + "\n".join(match_status)
     else:
-        title = f"{graph_type} \n " + "\n".join(match_status)
+        title = f"{graph_type} - {k} \n " + "\n".join(match_status)
     plt.suptitle(title, y=1.05)

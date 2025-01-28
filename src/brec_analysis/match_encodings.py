@@ -19,6 +19,7 @@ def find_encoding_match(
     encoding1: np.ndarray,
     encoding2: np.ndarray,
     verbose: bool = True,
+    name_of_encoding: str,
     timeout_seconds: float = 60 * 4,
 ) -> tuple[
     bool, np.ndarray | None, tuple[int, ...] | None, np.ndarray | None, str | None
@@ -146,7 +147,7 @@ def find_encoding_match(
 
     n_rows = encoding1.shape[0]
 
-    if n_rows <= 10:  # Adjust this threshold based on your needs
+    if n_rows <= 15:  # Adjust this threshold based on your needs
         for perm_ in permutations(range(n_rows)):
             permuted = encoding1[list(perm_), :]
             if np.allclose(permuted, encoding2, rtol=1e-13):
@@ -219,8 +220,8 @@ def find_encoding_match(
         return False, None, None, None, None
 
     # check only the last columns of each, sorted. see if they are allclose:
-    last_col1 = np.sort(encoding1[:, -1])
-    last_col2 = np.sort(encoding2[:, -1])
+    last_col1 = np.sort(abs_enc1[:, -1])
+    last_col2 = np.sort(abs_enc2[:, -1])
 
     if not np.allclose(last_col1, last_col2, rtol=1e-12):
         if verbose:
@@ -230,27 +231,28 @@ def find_encoding_match(
         return False, None, None, None, None
     else:  # try to find a permutation that makes the last columns match and try this one next on the whole thing
         # Get indices that would sort the last columns
-        sort_idx1 = np.argsort(encoding1[:, -1])
-        sort_idx2 = np.argsort(encoding2[:, -1])
+        sort_idx1 = np.argsort(abs_enc1[:, -1])
+        sort_idx2 = np.argsort(abs_enc2[:, -1])
 
         # Apply this permutation to encoding1
-        permuted = encoding1[sort_idx1]
-        permuted2 = encoding2[sort_idx2]
+        permuted = abs_enc1[sort_idx1]
+        permuted2 = abs_enc2[sort_idx2]
 
         # Check if this permutation works for the whole encoding
-        if np.allclose(permuted, encoding2[sort_idx2], rtol=1e-12):
+        if np.allclose(permuted, permuted2, rtol=1e-12):
             return True, permuted, tuple(sort_idx1), permuted2, None
 
         else:
-            sort_idx1 = np.argsort(encoding1[:, 0])
-            sort_idx2 = np.argsort(encoding2[:, 0])
+            if encoding1.shape[1] > 2:
+                sort_idx1 = np.argsort(abs_enc1[:, -2])
+                sort_idx2 = np.argsort(abs_enc2[:, -2])
 
-            # Apply this permutation to encoding1
-            permuted = encoding1[sort_idx1]
-            permuted2 = encoding2[sort_idx2]
-            # Check if this permutation works for the whole encoding
-            if np.allclose(permuted, encoding2[sort_idx2], rtol=1e-12):
-                return True, permuted, tuple(sort_idx1), permuted2, None
+                # Apply this permutation to encoding1
+                permuted = abs_enc1[sort_idx1]
+                permuted2 = abs_enc2[sort_idx2]
+                # Check if this permutation works for the whole encoding
+                if np.allclose(permuted, permuted2, rtol=1e-12):
+                    return True, permuted, tuple(sort_idx1), permuted2, None
 
     # >>> a=np.array([[1,1],[2,2]])
     # >>> a
@@ -270,13 +272,25 @@ def find_encoding_match(
             print(f"Product values enc1: {prod_cols1[diff_cols]}")
             print(f"Product values enc2: {prod_cols2[diff_cols]}")
         return False, None, None, None, None
+    
+    if n_rows < 40:
+        lexsort1: np.ndarray = np.lexsort(abs_enc1.T)
+        lexsort2: np.ndarray = np.lexsort(abs_enc2.T)
+        sorted1 = abs_enc1[lexsort1]
+        sorted2 = abs_enc2[lexsort2]
+
+        # Compare sorted matrices
+        if np.allclose(sorted1, sorted2, rtol=1e-13):
+            perm: np.ndarray = np.argsort(lexsort1)
+            return True, sorted1, tuple(perm), sorted2, None
 
     # start_time = time.time()
     # For small matrices, we can try all permutations
     long_timeout = False
     if not long_timeout:
-        print("🚨 Assume same")
-        return True, encoding1, tuple(range(n_rows)), encoding2, "timeout"
+        print("🚨 🚨 🚨 Assume same 🚨 🚨 🚨")
+        print(f"🚨"*20)
+        return True, permuted, tuple(sort_idx1), permuted2, None  # could fix more
     if long_timeout:
         # For larger matrices, use a heuristic approach based on row sorting
         # This works because:

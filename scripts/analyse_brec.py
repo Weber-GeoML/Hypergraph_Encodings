@@ -92,7 +92,7 @@ def analyze_graph_pair(
 
     # Plot original graphs
     # in graph space
-    plot_figures = True
+    plot_figures = False
     if plot_figures:
         plot_graph_pair(G1, G2, pair_idx, category, is_isomorphic, "plots/graph_pairs")
 
@@ -468,7 +468,7 @@ def is_regular(G: nx.Graph) -> tuple[bool, int]:
     help='Indices of categories to analyze (e.g., "0" or "0,3" or "0-3")',
     default="0",
 )
-def main(encodings: str, categories: str, k: int = 1) -> None:
+def main(encodings: str, categories: str, k: int = 2) -> None:
     """Analyze BREC dataset with specified encodings and categories
 
     Args:
@@ -606,6 +606,7 @@ def main(encodings: str, categories: str, k: int = 1) -> None:
                 print(f"Number of pairs to process: {num_pairs_to_process}")
 
                 for local_pair_idx in range(num_pairs_to_process):
+                    # for local_pair_idx in [10, 11, 16]:
 
                     if len(selected_encodings) == 1:
                         # check if the json_path = f"results/brec/ran/{category}_pair_{total_pair_idx}_statistics.json"
