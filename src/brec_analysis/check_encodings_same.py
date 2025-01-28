@@ -417,6 +417,7 @@ def checks_encodings(
         #     ) = check_encodings_same_up_to_scaling(
         #         hg1_encodings,
         #         hg2_encodings,
+        #         name_of_encoding=name_of_encoding,
         #         verbose=False,
         #     )
         #     if is_same_up_to_scaling and not np.isclose(
@@ -487,7 +488,7 @@ def check_for_matches(encoding1, encoding2, name: str) -> dict:
     perm: tuple[int, ...]
     timeout: str | None
     is_direct_match, permuted, perm, permuted2, timeout = find_encoding_match(
-        encoding1, encoding2, verbose=True, name_of_encoding=name
+        encoding1, encoding2, name_of_encoding=name, verbose=True
     )
 
     # if is_direct_match and timeout is None:
@@ -504,7 +505,7 @@ def check_for_matches(encoding1, encoding2, name: str) -> dict:
     #     print("**-" * 20)
     #     print(f"We are also checking up to scaling for {name}")
     #     is_same_up_to_scaling, scaling_factor, perm, permuted, permuted2 = (
-    #         check_encodings_same_up_to_scaling(encoding1, encoding2, verbose=False)
+    #         check_encodings_same_up_to_scaling(encoding1, encoding2, name_of_encoding=name_of_encoding, verbose=False)
     #     )
     #     if is_same_up_to_scaling and not np.isclose(scaling_factor, 1.0, rtol=1e-10):
     #         # Only print if there's actually a non-trivial scaling

@@ -18,8 +18,8 @@ from scipy.stats import kurtosis, skew
 def find_encoding_match(
     encoding1: np.ndarray,
     encoding2: np.ndarray,
-    verbose: bool = True,
     name_of_encoding: str,
+    verbose: bool = True,
     timeout_seconds: float = 60 * 4,
 ) -> tuple[
     bool, np.ndarray | None, tuple[int, ...] | None, np.ndarray | None, str | None
@@ -272,7 +272,7 @@ def find_encoding_match(
             print(f"Product values enc1: {prod_cols1[diff_cols]}")
             print(f"Product values enc2: {prod_cols2[diff_cols]}")
         return False, None, None, None, None
-    
+
     if n_rows < 40:
         lexsort1: np.ndarray = np.lexsort(abs_enc1.T)
         lexsort2: np.ndarray = np.lexsort(abs_enc2.T)
@@ -289,7 +289,7 @@ def find_encoding_match(
     long_timeout = False
     if not long_timeout:
         print("🚨 🚨 🚨 Assume same 🚨 🚨 🚨")
-        print(f"🚨"*20)
+        print(f"🚨" * 20)
         return True, permuted, tuple(sort_idx1), permuted2, None  # could fix more
     if long_timeout:
         # For larger matrices, use a heuristic approach based on row sorting
@@ -339,7 +339,10 @@ def find_encoding_match(
 
 
 def check_encodings_same_up_to_scaling(
-    encoding1: np.ndarray, encoding2: np.ndarray, verbose: bool = False
+    encoding1: np.ndarray,
+    encoding2: np.ndarray,
+    name_of_encoding: str,
+    verbose: bool = False,
 ) -> tuple[
     bool, float | None, tuple[int, ...] | None, np.ndarray | None, np.ndarray | None
 ]:
@@ -374,7 +377,7 @@ def check_encodings_same_up_to_scaling(
     permuted2: np.ndarray | None
     timeout: str | None
     is_match, permuted, perm, permuted2, timeout = find_encoding_match(
-        encoding1, encoding2, verbose=verbose
+        encoding1, encoding2, name_of_encoding=name_of_encoding, verbose=verbose
     )
     if is_match:
         if timeout is not None:
@@ -387,7 +390,7 @@ def check_encodings_same_up_to_scaling(
 
     # First try direct match with -1 scaling
     is_match, permuted, perm, permuted2, timeout = find_encoding_match(
-        encoding1, -encoding2, verbose=verbose
+        encoding1, -encoding2, name_of_encoding=name_of_encoding, verbose=verbose
     )
     if is_match:
         if timeout is not None:
@@ -419,7 +422,7 @@ def check_encodings_same_up_to_scaling(
 
     # Check if scaled versions match
     is_match, permuted, perm, permuted2, timeout = find_encoding_match(
-        scaled_encoding1, encoding2, verbose=verbose
+        scaled_encoding1, encoding2, name_of_encoding=name_of_encoding, verbose=verbose
     )
 
     if is_match:
@@ -439,7 +442,7 @@ def check_encodings_same_up_to_scaling(
         print("\nTrying with normalized encodings (divided by max abs value)")
 
     is_match, permuted, perm, permuted2, timeout = find_encoding_match(
-        normalized1, normalized2, verbose=verbose
+        normalized1, normalized2, name_of_encoding=name_of_encoding, verbose=verbose
     )
 
     if is_match:
