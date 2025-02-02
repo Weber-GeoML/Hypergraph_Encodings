@@ -65,33 +65,43 @@ def plot_matched_encodings(
     title: str = "",
     graph_type: str = "Graph",
     k: int = 1,
+    abs_values: bool = True,
 ) -> None:
     """
     Plot two encodings and their difference, attempting to match their row orderings if possible.
 
     Args:
+        is_direct_match:
+            whether the encodings are the same
+        is_same_up_to_scaling:
+            whether the encodings are the same up to scaling
+        scaling_factor:
+            the scaling factor
+        permuted:
+            numpy arrays of shape (n, d)
+        perm:
+            the permutation that was applied
         encoding1, encoding2:
             numpy arrays of shape (n, d)
-        ax1, ax2, ax3:
-            matplotlib axes for plotting
         name1, name2:
             names of the graphs
         title:
             title for the plots
         graph_type:
             string indicating "Graph" or "Hypergraph"
-
-    Returns:
-        is_direct_match:
-            whether the encodings are the same
-        permuted:
-            the permuted encoding of encoding1
-        perm:
-            the permutation that was applied
+        k:
+            k in RWPE or LAPE
+        abs_values:
+            whether to take the absolute values of the encodings for the plots
     """
 
     # Create figure and axes
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(30, 30))
+    _, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(30, 30))
+
+    # do abs values here:
+    if abs_values:
+        encoding1 = np.abs(encoding1)
+        encoding2 = np.abs(encoding2)
 
     if is_direct_match:
         vmin = min(np.min(permuted), np.min(encoding2))
