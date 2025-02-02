@@ -6,7 +6,6 @@ Also try up to scaling.
 """
 
 import signal
-import time
 from contextlib import contextmanager
 from itertools import permutations
 
@@ -319,29 +318,18 @@ def find_encoding_match(
             finally:
                 signal.alarm(0)
 
-        remaining_time = timeout_seconds - (time.time() - start_time)
         try:
             with timeout(remaining_time):
-                t0_lexsort = time.time()
-                lexsort1: np.ndarray = np.lexsort(encoding1.T)
-                lexsort2: np.ndarray = np.lexsort(encoding2.T)
-                t1_lexsort = time.time()
-                print(f"Lex sort time: {t1_lexsort - t0_lexsort:.2f} seconds")
+                lexsort1 = np.lexsort(encoding1.T)
+                lexsort2 = np.lexsort(encoding2.T)
                 sorted1 = encoding1[lexsort1]
                 sorted2 = encoding2[lexsort2]
-                t3_lexsort = time.time()
-                print(
-                    f"Lex sort time (selection): {t3_lexsort - t1_lexsort:.2f} seconds"
-                )
 
                 # Compare sorted matrices
                 if np.allclose(sorted1, sorted2, rtol=1e-13):
                     perm: np.ndarray = np.argsort(lexsort1)
                     return True, sorted1, tuple(perm), sorted2, None
         except TimeoutError:
-            print(
-                f"🚨 Timeout during lexsort after {time.time() - start_time:.2f} seconds"
-            )
             return True, None, None, None, "timeout"
 
     return False, None, None, None, None
@@ -465,9 +453,7 @@ def check_encodings_same_up_to_scaling(
 
     # If we get here, the encodings are truly different
     if verbose:
-        print(
-            "\n❌ Encodings are different even after trying scaling and normalization"
-        )
+        print("\n❌ Encodings are different even after trying scaling and normalization")
         print("Statistics for diagnosis:")
         print(
             f"Encoding 1 - min: {np.min(encoding1):.4e}, max: {np.max(encoding1):.4e}, mean: {np.mean(encoding1):.4e}"

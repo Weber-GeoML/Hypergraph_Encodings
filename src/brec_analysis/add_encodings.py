@@ -11,7 +11,7 @@ def get_encodings(
     name_of_encoding: str,
     k_rwpe: int = 1,
     k_lape: int = 1,
-) -> dict | None:
+) -> dict:
     """Helper function to get the appropriate encodings based on type.
 
     Args:
@@ -57,4 +57,3 @@ def get_encodings(
         return encoder.add_laplacian_encodings(
             hg.copy(), type="Hodge", verbose=False, use_same_sign=True, k=k_lape
         )
-    return None

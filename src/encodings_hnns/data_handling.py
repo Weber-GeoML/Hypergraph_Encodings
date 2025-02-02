@@ -72,10 +72,11 @@ class parser(object):
         )
         current = os.path.dirname(os.path.dirname(current))
         # Makes the path
+        self.d: str
         if data == "coauthorship" or data == "cocitation":
-            self.d: str = os.path.join(current, "data", data, dataset)
+            self.d = os.path.join(current, "data", data, dataset)
         else:
-            self.d: str = os.path.join(current, "data", data)
+            self.d = os.path.join(current, "data", data)
         self.data, self.dataset = data, dataset
 
     def parse(self):
@@ -113,7 +114,7 @@ class parser(object):
 
         # loads the labels
         with open(os.path.join(self.d, "labels.pickle"), "rb") as handle:
-            labels: np.array[int] = self._1hot(pickle.load(handle))
+            labels: np.ndarray[int] = self._1hot(pickle.load(handle))
 
         if verbose:
             total_length: int = sum(len(value) for value in hypergraph.values())
@@ -130,7 +131,7 @@ class parser(object):
             "n": features.shape[0],  # one-hot encoded
         }
 
-    def _1hot(self, labels: list) -> np.ndarray[int]:
+    def _1hot(self, labels: list[int]) -> np.ndarray[int, int]:
         """converts each positive integer (representing a unique class) into ints one-hot form
 
         Arguments:

@@ -52,10 +52,9 @@ def get_split(Y, p: float = 0.2) -> tuple[list[int], list[int]]:
 
     """
     nclass: int = len(torch.unique(Y))  # number of different labels
-    Y: list = Y.tolist()
-    N: int = len(Y)  # number of nodes
-    D: list = [[] for _ in range(nclass)]
-    for i, y in enumerate(Y):
+    N: int = len(Y.tolist())  # number of nodes
+    D: list[list[int]] = [[] for _ in range(nclass)]
+    for i, y in enumerate(Y.tolist()):
         # print(f"i is {i} and y is {y}")
         D[y].append(i)
     k: int = int(N * p / nclass)

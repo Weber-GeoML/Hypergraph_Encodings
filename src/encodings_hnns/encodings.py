@@ -147,6 +147,7 @@ class HypergraphEncodings:
             if len(hypergraph["features"]) == 0:
                 print("Will be implemented")
                 raise NotImplementedError
+            assert self.hyperedges is not None
             for node in self.hyperedges.keys():
                 ld_vals = np.matrix(ld_profile[node])
                 if verbose:
@@ -241,6 +242,7 @@ class HypergraphEncodings:
             # for each node, get the min, max, mean, median,
             # and std of the FRC or ORC values of the hyperedges it belongs to
             rc_profile: dict[list[float]] = {}
+            assert self.hyperedges is not None
             for node in self.hyperedges.keys():
                 if type == "FRC":
                     rc_values = [
@@ -513,7 +515,7 @@ class HypergraphEncodings:
         k: int = 20,
         normalized: bool = True,
         dataset_name: str | None = None,
-    ) -> dict:
+    ) -> dict[str, dict | int]:
         """Adds encodings based on RW
 
         Args:
@@ -653,24 +655,6 @@ class HypergraphEncodings:
 if __name__ == "__main__":
 
     print("EXAMPLE UTILIZATION")
-    hg: dict[str, dict | int] = {
-        "hypergraph": {
-            "yellow": [1, 2, 3, 5],
-            "red": [2, 3],
-            "green": [3, 5, 6],
-            "blue": [4, 5],
-        },
-        "features": {
-            1: [[1]],
-            2: [[1]],
-            3: [[1]],
-            4: [[1]],
-            5: [[1]],
-            6: [[1]],
-        },
-        "labels": {},
-        "n": 6,
-    }
 
     hg: dict[str, dict | int] = {
         "hypergraph": {
@@ -687,6 +671,7 @@ if __name__ == "__main__":
     hgcurvaturprofile = HypergraphEncodings()
     hg = hgcurvaturprofile.add_randowm_walks_encodings(hg, verbose=False)
     # k is 20 so the features are shape n by 21
+    assert isinstance(hg["features"], np.ndarray)
     assert hg["features"].shape[0] == hg["n"]
     assert hg["features"].shape[1] == 21, f"The shape is {hg['features'].shape[1]}"
 
