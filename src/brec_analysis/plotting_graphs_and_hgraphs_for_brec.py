@@ -202,7 +202,7 @@ def plot_hypergraph_pair(
         rwidth=0.8,
     )
     plt.title(
-        f"Hypergraph A Node Degree \n Distribution",
+        "Hypergraph A Node Degree \n Distribution",
         fontsize=30,
     )
     plt.xlabel("Node Degree", fontsize=30)
@@ -229,7 +229,7 @@ def plot_hypergraph_pair(
         rwidth=0.8,
     )
     plt.title(
-        f"Hypergraph B Node Degree \n Distributions",
+        "Hypergraph B Node Degree \n Distributions",
         fontsize=30,
     )
     plt.xlabel("Node Degree", fontsize=30)

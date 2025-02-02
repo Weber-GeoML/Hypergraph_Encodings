@@ -9,9 +9,7 @@ from brec_analysis.laplacians_specific_functions import (
     check_isospectrality,
     compute_laplacian,
 )
-from brec_analysis.match_encodings import (
-    find_encoding_match,
-)
+from brec_analysis.match_encodings import find_encoding_match
 from brec_analysis.match_status import MatchStatus
 from brec_analysis.plotting_encodings_for_brec import (
     plot_matched_encodings,

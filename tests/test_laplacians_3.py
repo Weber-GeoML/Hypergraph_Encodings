@@ -93,9 +93,7 @@ def ngbors() -> OrderedDict:
 @pytest.fixture
 def degree_e() -> np.ndarray:
     """Returns the degree (edge) matrix"""
-    d_e: np.ndarray = np.array(
-        [[2, 0, 0, 0], [0, 2, 0, 0], [0, 0, 2, 0], [0, 0, 0, 2]]
-    )
+    d_e: np.ndarray = np.array([[2, 0, 0, 0], [0, 2, 0, 0], [0, 0, 2, 0], [0, 0, 0, 2]])
     return d_e
 
 

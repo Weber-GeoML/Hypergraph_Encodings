@@ -5,13 +5,12 @@ Try to find a permutation of the rows of encoding1 that makes it equal to encodi
 Also try up to scaling.
 """
 
+import signal
+import time
+from contextlib import contextmanager
 from itertools import permutations
 
 import numpy as np
-import time
-from typing import Optional, Tuple
-import signal
-from contextlib import contextmanager
 from scipy.stats import kurtosis, skew
 
 
@@ -42,6 +41,12 @@ def find_encoding_match(
         permuted_encoding2:
             the permuted encoding of encoding2
     """
+    sort_idx1: np.ndarray
+    sort_idx2: np.ndarray
+
+    permuted: np.ndarray
+    permuted2: np.ndarray
+
     if encoding1.shape != encoding2.shape:
         return False, None, None, None, None
 
@@ -54,8 +59,8 @@ def find_encoding_match(
         return True, encoding1, tuple(range(n_rows)), encoding2, None
 
     # Pre-compute expensive operations
-    abs_enc1 = np.abs(encoding1)
-    abs_enc2 = np.abs(encoding2)
+    abs_enc1: np.ndarray = np.abs(encoding1)
+    abs_enc2: np.ndarray = np.abs(encoding2)
 
     # Check the max absolute value of each encodings. If they are different, return False
     if not np.isclose(np.max(abs_enc1), np.max(abs_enc2), rtol=1e-12):
@@ -228,12 +233,6 @@ def find_encoding_match(
     last_col1 = np.sort(abs_enc1[:, -1])
     last_col2 = np.sort(abs_enc2[:, -1])
 
-    sort_idx1: np.ndarray
-    sort_idx2: np.ndarray
-
-    permuted: np.ndarray
-    permuted2: np.ndarray
-
     if not np.allclose(last_col1, last_col2, rtol=1e-12):
         if verbose:
             print("Different because last columns don't match when sorted")
@@ -299,7 +298,7 @@ def find_encoding_match(
     long_timeout = False
     if not long_timeout:
         print("🚨 🚨 🚨 Assume same 🚨 🚨 🚨")
-        print(f"🚨" * 20)
+        print("🚨" * 20)
         return True, permuted, tuple(sort_idx1), permuted2, None  # could fix more
     if long_timeout:
         # For larger matrices, use a heuristic approach based on row sorting

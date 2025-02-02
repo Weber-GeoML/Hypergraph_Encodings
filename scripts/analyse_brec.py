@@ -6,18 +6,16 @@ It is used to compare the encodings of the graphs in the BREC dataset.
 import json
 import multiprocessing as mp
 import os
-import time
 
 import click
 import networkx as nx
-from brec.dataset import BRECDataset
 from torch_geometric.data import Data
 from torch_geometric.utils import to_networkx
 
 from brec_analysis.analyse_brec_categories import (
     analyze_brec_categories,
-    quick_eda_from_github,
     plot_edge_distribution,
+    quick_eda_from_github,
 )
 from brec_analysis.categories_to_check import PART_DICT
 from brec_analysis.compare_encodings_wrapper import compare_encodings_wrapper
