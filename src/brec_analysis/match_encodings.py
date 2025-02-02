@@ -186,10 +186,15 @@ def find_encoding_match(
             print(f"Median values enc2: {median_cols2[diff_cols]}")
         return False, None, None, None, None
 
+    # take the product of every row
+    # product_cols1: np.ndarray = np.prod(abs_enc1, axis=1)
+    # product_cols2: np.ndarray = np.prod(abs_enc2, axis=1)
+    # could do some things here. TODO. eg multiply all values etc..
+
     # Skewness
     # t0 = time.time()
-    skew_cols1 = skew(abs_enc1, axis=0)
-    skew_cols2 = skew(abs_enc2, axis=0)
+    skew_cols1: np.ndarray = skew(abs_enc1, axis=0)
+    skew_cols2: np.ndarray = skew(abs_enc2, axis=0)
     # if verbose:
     #     print(f"Skewness computation time: {time.time() - t0:.4f} seconds")
     # if skew_cols1 is not None/nan and same for skew_cols2
@@ -205,8 +210,8 @@ def find_encoding_match(
 
     # Sum of squares
     # t0 = time.time()
-    sum_sq_cols1 = np.sum(abs_enc1**2, axis=0)
-    sum_sq_cols2 = np.sum(abs_enc2**2, axis=0)
+    sum_sq_cols1: np.ndarray = np.sum(abs_enc1**2, axis=0)
+    sum_sq_cols2: np.ndarray = np.sum(abs_enc2**2, axis=0)
     # if verbose:
     #     print(f"Sum of squares computation time: {time.time() - t0:.4f} seconds")
 
@@ -223,6 +228,12 @@ def find_encoding_match(
     last_col1 = np.sort(abs_enc1[:, -1])
     last_col2 = np.sort(abs_enc2[:, -1])
 
+    sort_idx1: np.ndarray
+    sort_idx2: np.ndarray
+
+    permuted: np.ndarray
+    permuted2: np.ndarray
+
     if not np.allclose(last_col1, last_col2, rtol=1e-12):
         if verbose:
             print("Different because last columns don't match when sorted")
@@ -235,8 +246,8 @@ def find_encoding_match(
         sort_idx2 = np.argsort(abs_enc2[:, -1])
 
         # Apply this permutation to encoding1
-        permuted = abs_enc1[sort_idx1]
-        permuted2 = abs_enc2[sort_idx2]
+        permuted = encoding1[sort_idx1]
+        permuted2 = encoding2[sort_idx2]
 
         # Check if this permutation works for the whole encoding
         if np.allclose(permuted, permuted2, rtol=1e-12):
@@ -248,8 +259,8 @@ def find_encoding_match(
                 sort_idx2 = np.argsort(abs_enc2[:, -2])
 
                 # Apply this permutation to encoding1
-                permuted = abs_enc1[sort_idx1]
-                permuted2 = abs_enc2[sort_idx2]
+                permuted = encoding1[sort_idx1]
+                permuted2 = encoding2[sort_idx2]
                 # Check if this permutation works for the whole encoding
                 if np.allclose(permuted, permuted2, rtol=1e-12):
                     return True, permuted, tuple(sort_idx1), permuted2, None
@@ -273,11 +284,11 @@ def find_encoding_match(
             print(f"Product values enc2: {prod_cols2[diff_cols]}")
         return False, None, None, None, None
 
-    if n_rows < 40:
+    if n_rows < 20:
         lexsort1: np.ndarray = np.lexsort(abs_enc1.T)
         lexsort2: np.ndarray = np.lexsort(abs_enc2.T)
-        sorted1 = abs_enc1[lexsort1]
-        sorted2 = abs_enc2[lexsort2]
+        sorted1 = encoding1[lexsort1]
+        sorted2 = encoding2[lexsort2]
 
         # Compare sorted matrices
         if np.allclose(sorted1, sorted2, rtol=1e-13):
