@@ -228,7 +228,7 @@ def quick_eda_from_github(graphs, verbose: bool = False):
         )
 
     plt.xlabel("Number of Nodes", fontsize=12)
-    plt.ylabel("Frequency", fontsize=12)
+    plt.ylabel("Count", fontsize=12)
     plt.title("Distribution of Node Counts Across BREC Graph Categories", fontsize=14)
     plt.legend()
 
@@ -243,8 +243,8 @@ def quick_eda_from_github(graphs, verbose: bool = False):
             stats_text += f"{category}:\n"
             total_count += len(counts)
             stats_text += f"  Pairs: {len(counts)/2}\n"  # These are the unique graphs
-            stats_text += f"  Count: {len(counts)}\n"
-            stats_text += f"  Total Count: {total_count}\n"
+            # stats_text += f"  Count: {len(counts)}\n"
+            # stats_text += f"  Total Count: {total_count}\n"
     plt.text(
         1.02,
         0.98,
@@ -273,3 +273,105 @@ def quick_eda_from_github(graphs, verbose: bool = False):
         # degree distribution
         print(f"G1 degree distribution: {G1.degree()}")
         print(f"G2 degree distribution: {G2.degree()}")
+
+
+def plot_edge_distribution(graphs, verbose: bool = False):
+    """Plot the distribution of edge counts across BREC graph categories"""
+    print("\nDEBUG - Starting edge distribution analysis")
+
+    # Create lists to store edge counts for each category
+    edge_counts: dict = {category: [] for category in graphs.keys()}
+
+    # Collect edge counts for each category
+    for category, graph_list in graphs.items():
+        print(f"🔍 {category} has {len(graph_list)} graphs")
+        if verbose:
+            print(f"\nDEBUG - Processing {category}:")
+            print(f"Category: {category} has {len(graph_list)} graphs")
+        for G in graph_list:
+            edge_counts[category].append(G.number_of_edges())
+
+        print(f"Final edge count list length: {len(edge_counts[category])}")
+        if len(edge_counts[category]) >= 2:
+            print(
+                f"First two edge counts: {edge_counts[category][0]}, {edge_counts[category][1]}"
+            )
+
+    # First determine global min and max for all categories
+    all_counts = []
+    for counts in edge_counts.values():
+        if counts:
+            all_counts.extend(counts)
+
+    if all_counts:
+        # Calculate global bins
+        global_min = min(all_counts)
+        global_max = max(all_counts)
+        n_bins = 50
+        bins = np.linspace(global_min, global_max, n_bins)
+
+        # Create histogram
+        plt.figure(figsize=(12, 6))
+
+        # Plot histogram for each category with different colors
+        colors = [
+            "skyblue",
+            "lightgreen",
+            "salmon",
+            "lightgray",
+            "wheat",
+            "orange",
+            "purple",
+        ]
+        # Reverse the order of categories for better stacking visualization
+        items = list(edge_counts.items())[::-1]
+        categories = [item[0] for item in items if item[1]]
+        counts_list = [item[1] for item in items if item[1]]
+        colors = colors[: len(categories)][::-1]
+
+        if counts_list:
+            print(f"Plotting stacked histogram with categories: {categories[::-1]}")
+            plt.hist(
+                counts_list,
+                bins=bins,
+                alpha=0.7,
+                label=categories,
+                color=colors,
+                edgecolor="black",
+                stacked=True,
+            )
+
+        plt.xlabel("Number of Edges", fontsize=12)
+        plt.ylabel("Count", fontsize=12)
+        plt.title(
+            "Distribution of Edge Counts Across BREC Graph Categories", fontsize=14
+        )
+        plt.legend()
+
+        # Add grid for better readability
+        plt.grid(True, alpha=0.3)
+
+        # Add text box with statistics for each category
+        stats_text = ""
+        total_count = 0
+        for category, counts in edge_counts.items():
+            if counts:
+                stats_text += f"{category}:\n"
+                total_count += len(counts)
+                stats_text += f"  Pairs: {len(counts)/2}\n"
+                # stats_text += f"  Avg edges: {np.mean(counts):.1f}\n"
+                # stats_text += f"  Min edges: {min(counts)}\n"
+                # stats_text += f"  Max edges: {max(counts)}\n"
+        plt.text(
+            1.02,
+            0.98,
+            stats_text,
+            transform=plt.gca().transAxes,
+            verticalalignment="top",
+            bbox=dict(boxstyle="round", facecolor="white", alpha=0.8),
+        )
+
+        # Save plot
+        plt.tight_layout()
+        plt.savefig("plots/brec_edge_distribution.png", dpi=300, bbox_inches="tight")
+        plt.close()

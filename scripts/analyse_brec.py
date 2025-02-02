@@ -17,6 +17,7 @@ from torch_geometric.utils import to_networkx
 from brec_analysis.analyse_brec_categories import (
     analyze_brec_categories,
     quick_eda_from_github,
+    plot_edge_distribution,
 )
 from brec_analysis.categories_to_check import PART_DICT
 from brec_analysis.compare_encodings_wrapper import compare_encodings_wrapper
@@ -46,7 +47,7 @@ def analyze_graph_pair(
     is_isomorphic: bool,
     already_in_nx: bool = False,
     types_of_encoding: list[tuple[str, str]] = ENCODINGS_TO_CHECK,
-    k: int = 3,
+    k: int = 1,
 ) -> dict:
     """Analyze a pair of graphs: plot them and compare their encodings
 
@@ -92,7 +93,7 @@ def analyze_graph_pair(
 
     # Plot original graphs
     # in graph space
-    plot_figures = False
+    plot_figures = True
     if plot_figures:
         plot_graph_pair(G1, G2, pair_idx, category, is_isomorphic, "plots/graph_pairs")
 
@@ -142,7 +143,7 @@ def analyze_graph_pair(
     hg1_lifted = lift_to_hypergraph(data1, verbose=False, already_in_nx=already_in_nx)
     hg2_lifted = lift_to_hypergraph(data2, verbose=False, already_in_nx=already_in_nx)
 
-    plot_figures = False
+    plot_figures = True
     if plot_figures:
         plot_hypergraph_pair(
             G1,
@@ -460,15 +461,15 @@ def is_regular(G: nx.Graph) -> tuple[bool, int]:
     "--encodings",
     "-e",
     help='Indices of encodings to check (e.g., "0" or "0,3" or "0-3")',
-    default="1",
+    default="0",
 )
 @click.option(
     "--categories",
     "-c",
     help='Indices of categories to analyze (e.g., "0" or "0,3" or "0-3")',
-    default="2",
+    default="0",  # cfi and str
 )
-def main(encodings: str, categories: str, k: int = 3) -> None:
+def main(encodings: str, categories: str, k: int = 2) -> None:
     """Analyze BREC dataset with specified encodings and categories
 
     Args:
@@ -496,6 +497,7 @@ def main(encodings: str, categories: str, k: int = 3) -> None:
     # Get the graphs for analysis
     graphs_read_from_files: dict[str, list[nx.Graph]] = analyze_brec_categories()
     quick_eda_from_github(graphs_read_from_files, verbose=False)
+    plot_edge_distribution(graphs_read_from_files)
     # loop through all graphs_read_from_files, assert the grabs are connected
     for category, graphs in graphs_read_from_files.items():
         for graph in graphs:
@@ -606,6 +608,7 @@ def main(encodings: str, categories: str, k: int = 3) -> None:
                 print(f"Number of pairs to process: {num_pairs_to_process}")
 
                 for local_pair_idx in range(num_pairs_to_process):
+                    # for local_pair_idx in [10, 11, 16]:
 
                     if len(selected_encodings) == 1:
                         # check if the json_path = f"results/brec/ran/{category}_pair_{total_pair_idx}_statistics.json"

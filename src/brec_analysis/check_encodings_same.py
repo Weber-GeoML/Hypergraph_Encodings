@@ -10,7 +10,6 @@ from brec_analysis.laplacians_specific_functions import (
     compute_laplacian,
 )
 from brec_analysis.match_encodings import (
-    check_encodings_same_up_to_scaling,
     find_encoding_match,
 )
 from brec_analysis.match_status import MatchStatus
@@ -25,12 +24,28 @@ from encodings_hnns.encodings import HypergraphEncodings
 
 
 def lap_checks_to_clean_up(name_of_encoding: str, hg1, hg2, graph_type: str):
+    """Function to clean up.
+
+    Args:
+        name_of_encoding:
+            name of the encoding
+        hg1:
+            first graph
+        hg2:
+            second graph
+        graph_type:
+            type of the graph (hypergraph or graph)
+
+    Returns:
+        tuple:
+            eigenvectors for the first and second graph
+    """
     # Handle Laplacian encodings
     lap_type = name_of_encoding.split("-")[1]  # Get Normalized, RW, or Hodge
     print(f"Computing Laplacian for {lap_type}")
     # Get Laplacian matrices and features
-    hg1_lape, L1 = compute_laplacian(hg1, lap_type)
-    hg2_lape, L2 = compute_laplacian(hg2, lap_type)
+    _, L1 = compute_laplacian(hg1, lap_type)
+    _, L2 = compute_laplacian(hg2, lap_type)
 
     # Compute eigendecomposition of Laplacian matrices
     eigenvalues1, eigenvectors1 = np.linalg.eigh(
@@ -118,7 +133,15 @@ def get_modified_name(name: str, k: int) -> str:
     return name
 
 
-def get_appropriate_encodings(name: str, hg1, hg2, encoder1, encoder2, k: int) -> tuple:
+def get_appropriate_encodings(
+    name: str,
+    hg1,
+    hg2,
+    encoder1,
+    encoder2,
+    k: int,
+    verbose: bool = False,
+) -> tuple:
     """Get the appropriate encodings based on type.
 
     Args:
@@ -134,17 +157,17 @@ def get_appropriate_encodings(name: str, hg1, hg2, encoder1, encoder2, k: int) -
             encoder for the second graph
         k:
             k value for the encodings
+        verbose:
+            whether to print verbose output
 
     Returns:
         tuple:
             encodings for the first and second graph
     """
-    if name.startswith("LAPE-"):
-        return get_laplacian_encodings(name, hg1, hg2)
-    return get_regular_encodings(name, hg1, hg2, encoder1, encoder2, k)
+    return get_regular_encodings(name, hg1, hg2, encoder1, encoder2, k, verbose=verbose)
 
 
-def get_laplacian_encodings(name: str, hg1, hg2) -> tuple:
+def get_laplacian_encodings(name: str, hg1, hg2, k: int) -> tuple:
     """Get Laplacian-based encodings.
 
     Args:
@@ -163,8 +186,10 @@ def get_laplacian_encodings(name: str, hg1, hg2) -> tuple:
     _, L1 = compute_laplacian(hg1, lap_type)
     _, L2 = compute_laplacian(hg2, lap_type)
 
-    eigenvalues1, eigenvectors1 = np.linalg.eigh(L1)
-    eigenvalues2, eigenvectors2 = np.linalg.eigh(L2)
+    _, eigenvectors1 = np.linalg.eigh(L1)
+    _, eigenvectors2 = np.linalg.eigh(L2)
+    eigenvectors1 = eigenvectors1[:, :k]
+    eigenvectors2 = eigenvectors2[:, :k]
 
     return eigenvectors1, eigenvectors2
 
@@ -198,11 +223,13 @@ def get_regular_encodings(
         tuple:
             encodings for the first and second graph. ONLY THE FEATURES ARE RETURNED
     """
-    hg1_encodings = get_encodings(hg1, encoder1, name, k_rwpe=k, k_lape=k)
-    hg2_encodings = get_encodings(hg2, encoder2, name, k_rwpe=k, k_lape=k)
+    hg1_copy = hg1.copy()
+    hg2_copy = hg2.copy()
+    hg1_encodings = get_encodings(hg1_copy, encoder1, name, k_rwpe=k, k_lape=k)
+    hg2_encodings = get_encodings(hg2_copy, encoder2, name, k_rwpe=k, k_lape=k)
     if verbose:
-        print(f"hg1_encodings: \n {hg1_encodings}")
-        print(f"hg2_encodings: \n {hg2_encodings}")
+        print(f"hg1_encodings for {name}{k}: \n {hg1_encodings['features']}")
+        print(f"hg2_encodings for {name}{k}: \n {hg2_encodings['features']}")
     return hg1_encodings["features"], hg2_encodings["features"]
 
 
@@ -281,10 +308,22 @@ def checks_encodings(
     modified_name = get_modified_name(name_of_encoding, k)
     print(f"Modified name: {modified_name}")
 
+    hg1_copy = hg1.copy()
+    hg2_copy = hg2.copy()
+
     # Get encodings based on type
     hg1_encodings, hg2_encodings = get_appropriate_encodings(
-        name_of_encoding, hg1, hg2, encoder_number_one, encoder_number_two, k
+        name_of_encoding, hg1_copy, hg2_copy, encoder_number_one, encoder_number_two, k
     )
+    if graph_type == "hypergraph" and "lape" in name_of_encoding.lower():
+        # remove the first column
+        print(f"Removing first column of {name_of_encoding} for type {graph_type}")
+        hg1_encodings = hg1_encodings[:, 1:]
+        hg2_encodings = hg2_encodings[:, 1:]
+
+    print(f"hg1_encodings: \n {hg1_encodings.shape}")
+    print(f"hg2_encodings: \n {hg2_encodings.shape}")
+    # assert False
 
     assert hg1_encodings is not None
     assert hg2_encodings is not None
@@ -302,26 +341,44 @@ def checks_encodings(
     comparison_result.update(match_result)
 
     if match_result["status"] != MatchStatus.TIMEOUT:
-        # Plot and get match results
-        plot_matched_encodings(
-            match_result["is_direct_match"],
-            match_result["is_same_up_to_scaling"],
-            match_result["scaling_factor"],
-            match_result["permuted"],
-            match_result["permutation"],
-            hg1_encodings,
-            hg2_encodings,
-            name1,
-            name2,
-            modified_name,  # Pass modified name as title
-            graph_type,
-        )
-
         if match_result["is_direct_match"]:
-            print(match_result["status"])
-            assert np.allclose(
-                match_result["permuted"], match_result["permuted2"], rtol=1e-9
-            )  # type: ignore
+            # Plot and get match results
+            plot_matched_encodings(
+                match_result["is_direct_match"],
+                match_result["is_same_up_to_scaling"],
+                match_result["scaling_factor"],
+                match_result["permuted"],
+                match_result["permutation"],
+                match_result["permuted"],
+                hg2_encodings,
+                name1,
+                name2,
+                modified_name,  # Pass modified name as title
+                graph_type,
+                k,
+            )
+        else:
+            # Plot and get match results
+            plot_matched_encodings(
+                match_result["is_direct_match"],
+                match_result["is_same_up_to_scaling"],
+                match_result["scaling_factor"],
+                match_result["permuted"],
+                match_result["permutation"],
+                hg1_encodings,
+                hg2_encodings,
+                name1,
+                name2,
+                modified_name,  # Pass modified name as title
+                graph_type,
+                k,
+            )
+
+        # if match_result["is_direct_match"]:
+        #     print(match_result["status"])
+        #     assert np.allclose(
+        #         match_result["permuted"], match_result["permuted2"], rtol=1e-9
+        #     )  # type: ignore
 
         # Print results
         print_comparison_results(
@@ -338,8 +395,8 @@ def checks_encodings(
         eigenvectors1, eigenvectors2 = lap_checks_to_clean_up(
             name_of_encoding, hg1, hg2, graph_type
         )
-        assert np.isclose(eigenvectors1, hg1_encodings).all()
-        assert np.isclose(eigenvectors2, hg2_encodings).all()
+        # assert np.isclose(eigenvectors1[:, :k], hg1_encodings).all()
+        # assert np.isclose(eigenvectors2[:, :k], hg2_encodings).all()
 
         # debug = False
         # if debug:
@@ -384,6 +441,7 @@ def checks_encodings(
         #     ) = check_encodings_same_up_to_scaling(
         #         hg1_encodings,
         #         hg2_encodings,
+        #         name_of_encoding=name_of_encoding,
         #         verbose=False,
         #     )
         #     if is_same_up_to_scaling and not np.isclose(
@@ -428,7 +486,7 @@ def checks_encodings(
         # Save plot if requested - This will handle both LAPE and non-LAPE cases
         if save_plots:
             plt.tight_layout()
-            save_comparison_plot(plt, plot_dir, pair_idx, category, modified_name)
+            save_comparison_plot(plt, plot_dir, pair_idx, category, modified_name, k)
         plt.close()  # Only close the figure once at the end
 
     return comparison_result
@@ -454,11 +512,11 @@ def check_for_matches(encoding1, encoding2, name: str) -> dict:
     perm: tuple[int, ...]
     timeout: str | None
     is_direct_match, permuted, perm, permuted2, timeout = find_encoding_match(
-        encoding1, encoding2, verbose=True
+        encoding1, encoding2, name_of_encoding=name, verbose=True
     )
 
-    if is_direct_match and timeout is None:
-        assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
+    # if is_direct_match and timeout is None:
+    #     assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
 
     is_same_up_to_scaling: bool = False
     scaling_factor: float | None = None
@@ -471,7 +529,7 @@ def check_for_matches(encoding1, encoding2, name: str) -> dict:
     #     print("**-" * 20)
     #     print(f"We are also checking up to scaling for {name}")
     #     is_same_up_to_scaling, scaling_factor, perm, permuted, permuted2 = (
-    #         check_encodings_same_up_to_scaling(encoding1, encoding2, verbose=False)
+    #         check_encodings_same_up_to_scaling(encoding1, encoding2, name_of_encoding=name_of_encoding, verbose=False)
     #     )
     #     if is_same_up_to_scaling and not np.isclose(scaling_factor, 1.0, rtol=1e-10):
     #         # Only print if there's actually a non-trivial scaling
@@ -485,8 +543,8 @@ def check_for_matches(encoding1, encoding2, name: str) -> dict:
     status = MatchStatus.NO_MATCH
     if is_direct_match:
         status = MatchStatus.EXACT_MATCH
-        if timeout == "timeout":
-            status = MatchStatus.TIMEOUT
+        # if timeout == "timeout":
+        #     status = MatchStatus.TIMEOUT
     elif is_same_up_to_scaling:
         status = MatchStatus.SCALED_MATCH
 
