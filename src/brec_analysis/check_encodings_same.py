@@ -24,12 +24,28 @@ from encodings_hnns.encodings import HypergraphEncodings
 
 
 def lap_checks_to_clean_up(name_of_encoding: str, hg1, hg2, graph_type: str):
+    """Function to clean up.
+
+    Args:
+        name_of_encoding:
+            name of the encoding
+        hg1:
+            first graph
+        hg2:
+            second graph
+        graph_type:
+            type of the graph (hypergraph or graph)
+
+    Returns:
+        tuple:
+            eigenvectors for the first and second graph
+    """
     # Handle Laplacian encodings
     lap_type = name_of_encoding.split("-")[1]  # Get Normalized, RW, or Hodge
     print(f"Computing Laplacian for {lap_type}")
     # Get Laplacian matrices and features
-    hg1_lape, L1 = compute_laplacian(hg1, lap_type)
-    hg2_lape, L2 = compute_laplacian(hg2, lap_type)
+    _, L1 = compute_laplacian(hg1, lap_type)
+    _, L2 = compute_laplacian(hg2, lap_type)
 
     # Compute eigendecomposition of Laplacian matrices
     eigenvalues1, eigenvectors1 = np.linalg.eigh(
@@ -117,7 +133,15 @@ def get_modified_name(name: str, k: int) -> str:
     return name
 
 
-def get_appropriate_encodings(name: str, hg1, hg2, encoder1, encoder2, k: int) -> tuple:
+def get_appropriate_encodings(
+    name: str,
+    hg1,
+    hg2,
+    encoder1,
+    encoder2,
+    k: int,
+    verbose: bool = False,
+) -> tuple:
     """Get the appropriate encodings based on type.
 
     Args:
@@ -133,14 +157,14 @@ def get_appropriate_encodings(name: str, hg1, hg2, encoder1, encoder2, k: int) -
             encoder for the second graph
         k:
             k value for the encodings
+        verbose:
+            whether to print verbose output
 
     Returns:
         tuple:
             encodings for the first and second graph
     """
-    # if name.startswith("LAPE-"):
-    #     return get_laplacian_encodings(name, hg1, hg2, k)
-    return get_regular_encodings(name, hg1, hg2, encoder1, encoder2, k)
+    return get_regular_encodings(name, hg1, hg2, encoder1, encoder2, k, verbose=verbose)
 
 
 def get_laplacian_encodings(name: str, hg1, hg2, k: int) -> tuple:
@@ -162,8 +186,8 @@ def get_laplacian_encodings(name: str, hg1, hg2, k: int) -> tuple:
     _, L1 = compute_laplacian(hg1, lap_type)
     _, L2 = compute_laplacian(hg2, lap_type)
 
-    eigenvalues1, eigenvectors1 = np.linalg.eigh(L1)
-    eigenvalues2, eigenvectors2 = np.linalg.eigh(L2)
+    _, eigenvectors1 = np.linalg.eigh(L1)
+    _, eigenvectors2 = np.linalg.eigh(L2)
     eigenvectors1 = eigenvectors1[:, :k]
     eigenvectors2 = eigenvectors2[:, :k]
 
@@ -204,8 +228,8 @@ def get_regular_encodings(
     hg1_encodings = get_encodings(hg1_copy, encoder1, name, k_rwpe=k, k_lape=k)
     hg2_encodings = get_encodings(hg2_copy, encoder2, name, k_rwpe=k, k_lape=k)
     if verbose:
-        print(f"hg1_encodings: \n {hg1_encodings}")
-        print(f"hg2_encodings: \n {hg2_encodings}")
+        print(f"hg1_encodings for {name}{k}: \n {hg1_encodings['features']}")
+        print(f"hg2_encodings for {name}{k}: \n {hg2_encodings['features']}")
     return hg1_encodings["features"], hg2_encodings["features"]
 
 
