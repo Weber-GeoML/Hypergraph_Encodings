@@ -25,7 +25,7 @@ class HypergraphEncodings:
     Computes the structural encoding for each node in a hypergraph.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.hyperedges: None | dict = None
         self.laplacian: None | Laplacians = None
 
@@ -592,7 +592,7 @@ class HypergraphEncodings:
 
             matrix_powers: list = []
 
-            for hop in range(k):
+            for hop in range(1, k + 1):
                 rw_matrix_k = np.linalg.matrix_power(rw_matrix, hop)
                 matrix_powers.append(np.diag(rw_matrix_k))
 
