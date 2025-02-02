@@ -312,7 +312,7 @@ def create_results_table(log_dir):
 
 
 # Use the function
-log_dir = "logs_loops_general_new"  # Update this to your log directory
+log_dir = "logs_loops_general_new"
 results_df, full_results = create_results_table(log_dir)
 if results_df is not None:
     print("\nDataFrame view of results:")

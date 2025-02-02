@@ -147,7 +147,7 @@ def find_encoding_match(
 
     n_rows = encoding1.shape[0]
 
-    if n_rows <= 15:  # Adjust this threshold based on your needs
+    if n_rows <= 15:
         for perm_ in permutations(range(n_rows)):
             permuted = encoding1[list(perm_), :]
             if np.allclose(permuted, encoding2, rtol=1e-13):
@@ -253,17 +253,16 @@ def find_encoding_match(
         if np.allclose(permuted, permuted2, rtol=1e-12):
             return True, permuted, tuple(sort_idx1), permuted2, None
 
-        else:
-            if encoding1.shape[1] > 2:
-                sort_idx1 = np.argsort(abs_enc1[:, -2])
-                sort_idx2 = np.argsort(abs_enc2[:, -2])
+        if encoding1.shape[1] > 2:
+            sort_idx1 = np.argsort(abs_enc1[:, -2])
+            sort_idx2 = np.argsort(abs_enc2[:, -2])
 
-                # Apply this permutation to encoding1
-                permuted = encoding1[sort_idx1]
-                permuted2 = encoding2[sort_idx2]
-                # Check if this permutation works for the whole encoding
-                if np.allclose(permuted, permuted2, rtol=1e-12):
-                    return True, permuted, tuple(sort_idx1), permuted2, None
+            # Apply this permutation to encoding1
+            permuted = encoding1[sort_idx1]
+            permuted2 = encoding2[sort_idx2]
+            # Check if this permutation works for the whole encoding
+            if np.allclose(permuted, permuted2, rtol=1e-12):
+                return True, permuted, tuple(sort_idx1), permuted2, None
 
     # >>> a=np.array([[1,1],[2,2]])
     # >>> a
