@@ -107,7 +107,9 @@ class HypergraphEncodings:
         dataset["features"]
 
         """
-        filename: str = f"computed_encodings/{dataset_name}_degree_encodings_normalized_{normalized}.pkl"
+        filename: str = (
+            f"computed_encodings/{dataset_name}_degree_encodings_normalized_{normalized}.pkl"
+        )
         if os.path.exists(filename):
             with open(filename, "rb") as f:
                 print(f"Loading hypergraph from {filename}")
@@ -211,7 +213,9 @@ class HypergraphEncodings:
             the hypergraph with the frc or orc encodings added to the featuress
 
         """
-        filename: str = f"computed_encodings/{dataset_name}_curvature_encodings_{type}_normalized_{normalized}.pkl"
+        filename: str = (
+            f"computed_encodings/{dataset_name}_curvature_encodings_{type}_normalized_{normalized}.pkl"
+        )
         if os.path.exists(filename):
             with open(filename, "rb") as f:
                 print(f"Loading hypergraph from {filename}")
@@ -243,13 +247,15 @@ class HypergraphEncodings:
             # and std of the FRC or ORC values of the hyperedges it belongs to
             rc_profile: dict[list[float]] = {}
             assert self.hyperedges is not None
-            for node in self.hyperedges.keys():
+            for node in self.hyperedges.keys():  # type: ignore
                 if type == "FRC":
+                    rc: FormanRicci  # type: ignore
                     rc_values = [
                         rc.forman_ricci[hyperedge]
                         for hyperedge in self.hyperedges[node]
                     ]
                 elif type == "ORC":
+                    rc: ORC  # type: ignore
                     rc_values = [
                         rc.edge_curvature[hyperedge]
                         for hyperedge in self.hyperedges[node]
@@ -351,9 +357,13 @@ class HypergraphEncodings:
             the hypergraph with the Laplacian encodings added to the featuress
         """
         if type == "Hodge" or type == "Normalized":
-            filename: str = f"computed_encodings/{dataset_name}_laplacian_encodings_{type}_normalized_{normalized}.pkl"
+            filename: str = (
+                f"computed_encodings/{dataset_name}_laplacian_encodings_{type}_normalized_{normalized}.pkl"
+            )
         elif type == "RW":
-            filename: str = f"computed_encodings/{dataset_name}_laplacian_encodings_{type}_rw_{rw_type}_normalized_{normalized}.pkl"
+            filename: str = (
+                f"computed_encodings/{dataset_name}_laplacian_encodings_{type}_rw_{rw_type}_normalized_{normalized}.pkl"
+            )
         if os.path.exists(filename):
             with open(filename, "rb") as f:
                 print(f"Loading hypergraph from {filename}")
@@ -463,6 +473,7 @@ class HypergraphEncodings:
                 print("Will be implemented")
                 raise NotImplementedError
             i = 0
+            assert self.hyperedges is not None
             for node in self.hyperedges.keys():
                 first_try: bool = False  # this was when we used the whole eigenvectors
                 new_method: bool = True
@@ -484,7 +495,8 @@ class HypergraphEncodings:
                         stacked_features = np.hstack(
                             ([hypergraph["features"][node]], laplacian_vals)
                         )
-                    except:
+                    except Exception as e:
+                        print(f"Error: {e}")
                         stacked_features = np.hstack(
                             (hypergraph["features"][node], laplacian_vals)
                         )
@@ -541,7 +553,9 @@ class HypergraphEncodings:
         # Write checks for this!
 
         """
-        filename: str = f"computed_encodings/{dataset_name}_rw_encodings_{rw_type}_k_{k}_normalized_{normalized}.pkl"
+        filename: str = (
+            f"computed_encodings/{dataset_name}_rw_encodings_{rw_type}_k_{k}_normalized_{normalized}.pkl"
+        )
         if os.path.exists(filename):
             with open(filename, "rb") as f:
                 print(f"Loading hypergraph from {filename}")
@@ -561,6 +575,7 @@ class HypergraphEncodings:
             if verbose:
                 print(f"We are doing a {rw_type} rw")
             laplacian.compute_random_walk_laplacian(type=rw_type, verbose=verbose)
+            assert self.hyperedges is not None
             num_nodes: int = len(self.hyperedges.keys())
             all_nodes: list = sorted(
                 set(
@@ -573,8 +588,10 @@ class HypergraphEncodings:
                 len(all_nodes) == num_nodes
             ), f"We have {len(all_nodes)} vs {num_nodes}"
             try:
+                assert laplacian.rw_laplacian is not None
                 rw_matrix: np.ndarray = -laplacian.rw_laplacian + np.eye(num_nodes)
-            except:
+            except Exception as e:
+                print(f"Error: {e}")
                 print(self.hyperedges.keys())
                 assert False
 
@@ -582,14 +599,14 @@ class HypergraphEncodings:
                 print(f"The random walk matrix is \n {rw_matrix}")
                 print(rw_matrix)
 
-            matrix_powers: list = []
+            matrix_powers_list: list = []
 
             for hop in range(1, k + 1):
                 rw_matrix_k = np.linalg.matrix_power(rw_matrix, hop)
-                matrix_powers.append(np.diag(rw_matrix_k))
+                matrix_powers_list.append(np.diag(rw_matrix_k))
 
             # Converts the list of matrix powers to a numpy array
-            matrix_powers = np.array(matrix_powers)
+            matrix_powers: np.ndarray = np.array(matrix_powers)
 
             assert matrix_powers.shape[0] == k
 
