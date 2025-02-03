@@ -190,7 +190,7 @@ class HypergraphEncodings:
         self,
         hypergraph: dict,
         verbose: bool = False,
-        type: str = "FRC",
+        curvature_type: str = "FRC",
         normalized: bool = True,
         dataset_name: str | None = None,
     ) -> dict:
@@ -201,7 +201,7 @@ class HypergraphEncodings:
                 hypergraph dict containing hypergraph, features, label, n
             verbose:
                 to print more
-            type:
+            curvature_type:
                 the type of encoding we add.
                 Currently can be ORC or FRC
             normalized:
@@ -214,7 +214,7 @@ class HypergraphEncodings:
 
         """
         filename: str = (
-            f"computed_encodings/{dataset_name}_curvature_encodings_{type}_normalized_{normalized}.pkl"
+            f"computed_encodings/{dataset_name}_curvature_encodings_{curvature_type}_normalized_{normalized}.pkl"
         )
         if os.path.exists(filename):
             with open(filename, "rb") as f:
@@ -226,10 +226,10 @@ class HypergraphEncodings:
             ), f"BEFORE: The shape is {hypergraph['features'].shape[0]} but n is {hypergraph['n']}"
 
             rc: FormanRicci | ORC
-            if type == "FRC":
+            if curvature_type == "FRC":
                 rc = FormanRicci(hypergraph)
                 rc.compute_forman_ricci()
-            elif type == "ORC":
+            elif curvature_type == "ORC":
                 rc = ORC(hypergraph)
                 # following calls the julia code and runs the subroutines
                 rc.compute_orc()
@@ -248,13 +248,13 @@ class HypergraphEncodings:
             rc_profile: dict[list[float]] = {}
             assert self.hyperedges is not None
             for node in self.hyperedges.keys():  # type: ignore
-                if type == "FRC":
+                if curvature_type == "FRC":
                     rc: FormanRicci  # type: ignore
                     rc_values = [
                         rc.forman_ricci[hyperedge]
                         for hyperedge in self.hyperedges[node]
                     ]
-                elif type == "ORC":
+                elif curvature_type == "ORC":
                     rc: ORC  # type: ignore
                     rc_values = [
                         rc.edge_curvature[hyperedge]
@@ -325,7 +325,7 @@ class HypergraphEncodings:
         self,
         hypergraph: dict,
         verbose: bool = False,
-        type: str = "Hodge",
+        laplacian_type: str = "Hodge",
         rw_type: str = "EN",
         normalized: bool = True,
         dataset_name: str | None = None,
@@ -339,7 +339,7 @@ class HypergraphEncodings:
                 hypergraph dict containing hypergraph, features, label, n
             verbose:
                 to print more
-            type:
+            laplacian_type:
                 the type of Laplacian we use for the encodings
                 Hodge, RW, Normalized
             rw_type:
@@ -356,13 +356,13 @@ class HypergraphEncodings:
         Returns:
             the hypergraph with the Laplacian encodings added to the featuress
         """
-        if type == "Hodge" or type == "Normalized":
+        if laplacian_type == "Hodge" or laplacian_type == "Normalized":
             filename: str = (
-                f"computed_encodings/{dataset_name}_laplacian_encodings_{type}_normalized_{normalized}.pkl"
+                f"computed_encodings/{dataset_name}_laplacian_encodings_{laplacian_type}_normalized_{normalized}.pkl"
             )
-        elif type == "RW":
+        elif laplacian_type == "RW":
             filename: str = (
-                f"computed_encodings/{dataset_name}_laplacian_encodings_{type}_rw_{rw_type}_normalized_{normalized}.pkl"
+                f"computed_encodings/{dataset_name}_laplacian_encodings_{laplacian_type}_rw_{rw_type}_normalized_{normalized}.pkl"
             )
         if os.path.exists(filename):
             with open(filename, "rb") as f:
@@ -384,7 +384,7 @@ class HypergraphEncodings:
 
             eigenvalues: np.ndarray
             eigenvectors: np.ndarray
-            if type == "Hodge":
+            if laplacian_type == "Hodge":
                 self.laplacian.compute_hodge_laplacian()
                 # We would use up for edge feature
                 # as the up matrix is number of edge by number of egde
@@ -398,7 +398,7 @@ class HypergraphEncodings:
                 eigenvalues, eigenvectors = np.linalg.eigh(
                     self.laplacian.hodge_laplacian_down
                 )
-            elif type == "Normalized":
+            elif laplacian_type == "Normalized":
                 self.laplacian.compute_normalized_laplacian()
                 if verbose:
                     print(
@@ -407,7 +407,7 @@ class HypergraphEncodings:
                 eigenvalues, eigenvectors = np.linalg.eigh(
                     self.laplacian.normalized_laplacian
                 )
-            elif type == "RW":
+            elif laplacian_type == "RW":
                 self.laplacian.compute_random_walk_laplacian(
                     type=rw_type, verbose=verbose
                 )
@@ -574,7 +574,7 @@ class HypergraphEncodings:
             # gives probability of going from i to j
             if verbose:
                 print(f"We are doing a {rw_type} rw")
-            laplacian.compute_random_walk_laplacian(type=rw_type, verbose=verbose)
+            laplacian.compute_random_walk_laplacian(rw_type=rw_type, verbose=verbose)
             assert self.hyperedges is not None
             num_nodes: int = len(self.hyperedges.keys())
             all_nodes: list = sorted(

@@ -5,8 +5,6 @@ Try to find a permutation of the rows of encoding1 that makes it equal to encodi
 Also try up to scaling.
 """
 
-import signal
-from contextlib import contextmanager
 from itertools import permutations
 
 import numpy as np

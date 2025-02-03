@@ -634,7 +634,7 @@ def test_compute_node_degree(toy_hypergraph, degree_v) -> None:
     """
     laplacian: Laplacians = Laplacians(toy_hypergraph)
     laplacian.compute_node_degrees()
-    assert_array_equal(laplacian.Dv, degree_v)
+    assert_array_equal(laplacian.degree_vertices, degree_v)
 
 
 def test_compute_node_degree_2(toy_hypergraph_2, degree_v_2) -> None:
@@ -649,7 +649,7 @@ def test_compute_node_degree_2(toy_hypergraph_2, degree_v_2) -> None:
     """
     laplacian: Laplacians = Laplacians(toy_hypergraph_2)
     laplacian.compute_node_degrees()
-    assert_array_equal(laplacian.Dv, degree_v_2)
+    assert_array_equal(laplacian.degree_vertices, degree_v_2)
 
 
 def test_compute_node_degree_3(toy_hypergraph_3, degree_v_3) -> None:
@@ -664,7 +664,7 @@ def test_compute_node_degree_3(toy_hypergraph_3, degree_v_3) -> None:
     """
     laplacian: Laplacians = Laplacians(toy_hypergraph_3)
     laplacian.compute_node_degrees()
-    assert_array_equal(laplacian.Dv, degree_v_3)
+    assert_array_equal(laplacian.degree_vertices, degree_v_3)
 
 
 def test_compute_ldp(toy_hypergraph, node_ldp) -> None:
@@ -724,7 +724,7 @@ def test_compute_edge_degree(toy_hypergraph, degree_e) -> None:
     """
     laplacian: Laplacians = Laplacians(toy_hypergraph)
     laplacian.compute_edge_degrees()
-    assert_array_equal(laplacian.De, degree_e)
+    assert_array_equal(laplacian.degree_edges, degree_e)
 
 
 def test_compute_edge_degree_2(toy_hypergraph_2, degree_e_2) -> None:
@@ -739,7 +739,7 @@ def test_compute_edge_degree_2(toy_hypergraph_2, degree_e_2) -> None:
     """
     laplacian: Laplacians = Laplacians(toy_hypergraph_2)
     laplacian.compute_edge_degrees()
-    assert_array_equal(laplacian.De, degree_e_2)
+    assert_array_equal(laplacian.degree_edges, degree_e_2)
 
 
 def test_compute_edge_degree_3(toy_hypergraph_3, degree_e_3) -> None:
@@ -754,7 +754,7 @@ def test_compute_edge_degree_3(toy_hypergraph_3, degree_e_3) -> None:
     """
     laplacian: Laplacians = Laplacians(toy_hypergraph_3)
     laplacian.compute_edge_degrees()
-    assert_array_equal(laplacian.De, degree_e_3)
+    assert_array_equal(laplacian.degree_edges, degree_e_3)
 
 
 def test_compute_normalized_laplacian(toy_hypergraph, normalized_laplacian) -> None:
@@ -783,7 +783,7 @@ def test_compute_random_walk_laplacian_EE(toy_hypergraph, rw_laplacian) -> None:
 
     """
     laplacian: Laplacians = Laplacians(toy_hypergraph)
-    laplacian.compute_random_walk_laplacian(type="EE")
+    laplacian.compute_random_walk_laplacian(rw_type="EE")
     assert_allclose(laplacian.rw_laplacian, rw_laplacian, atol=1e-8)
 
 
@@ -895,7 +895,7 @@ def test_compute_random_walk_laplacian_EN(toy_hypergraph, rw_laplacian_EN) -> No
 
     """
     laplacian: Laplacians = Laplacians(toy_hypergraph)
-    laplacian.compute_random_walk_laplacian(type="EN")
+    laplacian.compute_random_walk_laplacian(rw_type="EN")
     assert_allclose(laplacian.rw_laplacian, rw_laplacian_EN, atol=1e-8)
 
 
@@ -913,7 +913,7 @@ def test_compute_random_walk_laplacian_EN_2(
 
     """
     laplacian: Laplacians = Laplacians(toy_hypergraph_2)
-    laplacian.compute_random_walk_laplacian(type="EN")
+    laplacian.compute_random_walk_laplacian(rw_type="EN")
     assert_allclose(laplacian.rw_laplacian, rw_laplacian_EN_2, atol=1e-8)
 
 
@@ -931,7 +931,7 @@ def test_compute_random_walk_laplacian_EN_3(
 
     """
     laplacian: Laplacians = Laplacians(toy_hypergraph_3)
-    laplacian.compute_random_walk_laplacian(type="EN")
+    laplacian.compute_random_walk_laplacian(rw_type="EN")
     assert_allclose(laplacian.rw_laplacian, rw_laplacian_EN_3, atol=1e-8)
 
 
@@ -947,7 +947,7 @@ def test_compute_random_walk_laplacian_WE(toy_hypergraph, rw_laplacian_WE) -> No
 
     """
     laplacian: Laplacians = Laplacians(toy_hypergraph)
-    laplacian.compute_random_walk_laplacian(type="WE")
+    laplacian.compute_random_walk_laplacian(rw_type="WE")
     assert_allclose(laplacian.rw_laplacian, rw_laplacian_WE, atol=1e-8)
 
 
@@ -965,7 +965,7 @@ def test_compute_random_walk_laplacian_WE_2(
 
     """
     laplacian: Laplacians = Laplacians(toy_hypergraph_2)
-    laplacian.compute_random_walk_laplacian(type="WE")
+    laplacian.compute_random_walk_laplacian(rw_type="WE")
     assert_allclose(laplacian.rw_laplacian, rw_laplacian_WE_2, atol=1e-8)
 
 
@@ -983,7 +983,7 @@ def test_compute_random_walk_laplacian_WE_3(
 
     """
     laplacian: Laplacians = Laplacians(toy_hypergraph_3)
-    laplacian.compute_random_walk_laplacian(type="WE")
+    laplacian.compute_random_walk_laplacian(rw_type="WE")
     assert_allclose(laplacian.rw_laplacian, rw_laplacian_WE_3, atol=1e-8)
 
 
@@ -1002,5 +1002,5 @@ def test_compute_hypergraph_adjacency(toy_hypergraph, hypergraph_adjacency) -> N
     laplacian.compute_hodge_laplacian()
     assert_array_equal(
         laplacian.hypergraph_adjacency,
-        laplacian.hodge_laplacian_down - laplacian.Dv,
+        laplacian.hodge_laplacian_down - laplacian.degree_vertices,
     )

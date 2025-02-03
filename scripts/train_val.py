@@ -257,9 +257,9 @@ for seed in range(1, 9):
         test_acc: float = 0
         Z: torch.Tensor | None = None
         bad_counter: int = 0
-        test_accs_for_best_val: list[
-            float
-        ] = []  # List to store test accuracy for the best validation accuracy
+        test_accs_for_best_val: list[float] = (
+            []
+        )  # List to store test accuracy for the best validation accuracy
         train_accs: list[float] = []
         val_accs: list[float] = []
         test_accs: list[float] = []

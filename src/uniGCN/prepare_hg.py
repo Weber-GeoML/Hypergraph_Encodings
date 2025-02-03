@@ -4,8 +4,8 @@ from typing import Union
 import numpy as np
 import scipy.sparse as sp
 import torch
-import torch.optim as optim
 import torch_sparse
+from torch import optim
 from torch_scatter import scatter
 
 from uniGCN.UniGCN import UniGNN
@@ -41,15 +41,19 @@ def initialise_for_hypergraph_classification(
         tuple containing:
         - model: The neural network model
         - optimizer: The optimizer
-        - degVs:
-        - degEs:
-        - degE2s:
+        - degvs:
+        - deges:
+        - dege2s:
     """
 
-    Y: list[int] = []
-    degVs: dict = {}
-    degEs: dict = {}
-    degE2s: dict = {}
+    y: torch.Tensor
+    degvs: dict = {}
+    deges: dict = {}
+    dege2s: dict = {}
+
+    degv: torch.Tensor
+    dege: torch.Tensor
+    dege2: torch.Tensor
 
     # Validate input hypergraphs
     required_keys = {"hypergraph", "features", "labels", "n"}
@@ -64,6 +68,7 @@ def initialise_for_hypergraph_classification(
             )
 
     # Verify all hypergraphs have same feature dimension
+    assert hg["features"] is not None
     feature_dims = [hg["features"].shape[1] for hg in list_hg]
     if len(set(feature_dims)) > 1:
         raise ValueError(
@@ -71,14 +76,13 @@ def initialise_for_hypergraph_classification(
         )
 
     for idx, hg in enumerate(list_hg):
-        X: torch.Tensor
-        Y: torch.Tensor
+        node_features: torch.Tensor
         G: dict
-        X = hg["features"]
+        node_features = hg["features"]
         G = hg["hypergraph"]
-        Y.append(hg["labels"])
+        y.append(hg["labels"])
         # dis
-        N, M = X.shape[0], len(G)
+        N, M = node_features.shape[0], len(G)
         indptr: list[int]
         indices: list[int]
         data: list[int]
@@ -123,13 +127,13 @@ def initialise_for_hypergraph_classification(
         # H = sp.csc_matrix((data, indices, indptr), shape=(N, M), dtype=int).tocsr()
         H = sp.csc_matrix(
             (data, indices, indptr), shape=(N, M), dtype=int
-        ).tocsr()  # V x E
+        ).tocsr()  # vertices x E
         if verbose:
             print(f"H is \n {H}")
-        degV: torch.Tensor = (
+        degv = (
             torch.from_numpy(H.sum(1)).view(-1, 1).float()
         )  # the degree of each vertices
-        degE2: torch.Tensor = (
+        dege2 = (
             torch.from_numpy(H.sum(0)).view(-1, 1).float()
         )  # the degree of each edge
         # Say:
@@ -142,8 +146,8 @@ def initialise_for_hypergraph_classification(
         # Row indices: tensor([0, 1, 1, 2])  # Rows of non-zero elements
         # Column indices: tensor([1, 0, 2, 1])  # Columns of non-zero elements
         # Values: tensor([1, 2, 3, 4])  # Non-zero values at corresponding (row, col)
-        (row, col), value = torch_sparse.from_scipy(H)
-        V, E = row, col
+        (row, col), _ = torch_sparse.from_scipy(H)
+        vertices, E = row, col
         # eg: vertex 0 is in edge 1,
         # vertex 1 is in edge 0
         # vertex 1 is in edge 2
@@ -153,36 +157,34 @@ def initialise_for_hypergraph_classification(
             "mean",
             "sum",
         ), "use `mean` or `sum` for first-stage aggregation"
-        degE = scatter(degV[V], E, dim=0, reduce=args.first_aggregate)
+        dege = scatter(degv[vertices], E, dim=0, reduce=args.first_aggregate)
         # this is what goes into the UniGCN/UniGCNII formula
         # for d_i and d_e
         # x_i= 1/√d_i sum 1/√d_e Wh_e,
-        degE: torch.Tensor = degE.pow(-0.5)
-        degV: torch.Tensor = degV.pow(-0.5)
-        degV[
-            degV.isinf()
-        ] = 1  # when not added self-loop, some nodes might not be connected with any edge
+        dege = dege.pow(-0.5)
+        degv = degv.pow(-0.5)
+        degv[degv.isinf()] = (
+            1  # when not added self-loop, some nodes might not be connected with any edge
+        )
 
-        degVs[idx] = degV.to(device)
-        degEs[idx] = degE.to(device)
-        degE2s[idx] = degE2.pow(-1.0).to(device)
+        degvs[idx] = degv.to(device)
+        deges[idx] = dege.to(device)
+        dege2s[idx] = dege2.pow(-1.0).to(device)
 
     # Move all tensors to same device
-    Y_tensor = torch.tensor(Y, device=device)
-    for idx in degVs:
-        degVs[idx] = degVs[idx].to(device)
-        degEs[idx] = degEs[idx].to(device)
-        degE2s[idx] = degE2s[idx].to(device)
+    for idx in degvs:
+        degvs[idx] = degvs[idx].to(device)
+        deges[idx] = deges[idx].to(device)
+        dege2s[idx] = dege2s[idx].to(device)
 
     # nfeat: the dimension of the features
     # nclass: the number of classes in the labels
     nfeat: int
     nclass: int
-    nfeat: int = X.shape[1]
-    Y_tensor = torch.tensor(Y)
-    Y_arrays = [hg["labels"] for hg in list_hg]
-    Y_concat = np.concatenate(Y_arrays)
-    nclass = len(np.unique(Y_concat))
+    nfeat = node_features.shape[1]
+    y_arrays = [hg["labels"] for hg in list_hg]
+    y_concat = np.concatenate(y_arrays)
+    nclass = len(np.unique(y_concat))
     nlayer: int = args.nlayer
     nhid: int = args.nhid
     nhead: int = args.nhead
@@ -210,4 +212,4 @@ def initialise_for_hypergraph_classification(
     print(f"Number of hypergraphs: {len(list_hg)}")
     print(f"Feature dimension: {nfeat}")
     print(f"Number of classes: {nclass}")
-    return model, optimiser, degVs, degEs, degE2s
+    return model, optimiser, degvs, deges, dege2s
