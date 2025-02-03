@@ -18,7 +18,6 @@ def find_encoding_match(
     encoding2: np.ndarray,
     name_of_encoding: str,
     verbose: bool = True,
-    timeout_seconds: float = 60 * 4,
 ) -> tuple[
     bool, np.ndarray | None, tuple[int, ...] | None, np.ndarray | None, str | None
 ]:
@@ -45,6 +44,7 @@ def find_encoding_match(
 
     permuted: np.ndarray
     permuted2: np.ndarray
+    perm: np.ndarray
 
     if encoding1.shape != encoding2.shape:
         return False, None, None, None, None
@@ -289,7 +289,7 @@ def find_encoding_match(
 
         # Compare sorted matrices
         if np.allclose(sorted1, sorted2, rtol=1e-13):
-            perm: np.ndarray = np.argsort(lexsort1)
+            perm = np.argsort(lexsort1)
             return True, sorted1, tuple(perm), sorted2, None
 
     # start_time = time.time()
@@ -306,29 +306,16 @@ def find_encoding_match(
         # 2. Lexicographical sorting will arrange rows in a canonical order
         # 3. After sorting, isomorphic graphs will have identical encodings
 
-        @contextmanager
-        def timeout(seconds):
-            def signal_handler(signum, frame):
-                raise TimeoutError("Timed out!")
-
-            signal.signal(signal.SIGALRM, signal_handler)
-            signal.alarm(int(seconds))
-            try:
-                yield
-            finally:
-                signal.alarm(0)
-
         try:
-            with timeout(remaining_time):
-                lexsort1 = np.lexsort(encoding1.T)
-                lexsort2 = np.lexsort(encoding2.T)
-                sorted1 = encoding1[lexsort1]
-                sorted2 = encoding2[lexsort2]
+            lexsort1 = np.lexsort(encoding1.T)
+            lexsort2 = np.lexsort(encoding2.T)
+            sorted1 = encoding1[lexsort1]
+            sorted2 = encoding2[lexsort2]
 
-                # Compare sorted matrices
-                if np.allclose(sorted1, sorted2, rtol=1e-13):
-                    perm: np.ndarray = np.argsort(lexsort1)
-                    return True, sorted1, tuple(perm), sorted2, None
+            # Compare sorted matrices
+            if np.allclose(sorted1, sorted2, rtol=1e-13):
+                perm = np.argsort(lexsort1)
+                return True, sorted1, tuple(perm), sorted2, None
         except TimeoutError:
             return True, None, None, None, "timeout"
 
@@ -453,7 +440,9 @@ def check_encodings_same_up_to_scaling(
 
     # If we get here, the encodings are truly different
     if verbose:
-        print("\n❌ Encodings are different even after trying scaling and normalization")
+        print(
+            "\n❌ Encodings are different even after trying scaling and normalization"
+        )
         print("Statistics for diagnosis:")
         print(
             f"Encoding 1 - min: {np.min(encoding1):.4e}, max: {np.max(encoding1):.4e}, mean: {np.mean(encoding1):.4e}"
