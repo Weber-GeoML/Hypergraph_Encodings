@@ -26,7 +26,7 @@ def analyze_brec_categories(verbose: bool = False) -> dict:
         "dr": "dr.npy",  # distance regular
     }
 
-    data_path = "BREC_Data"
+    data_path = "data/BREC_Data"
     print(f"\nLoading data from: {data_path}")
     print("\nBREC Dataset Structure:")
     total_pairs = 0

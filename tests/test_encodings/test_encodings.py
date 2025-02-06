@@ -10,11 +10,12 @@ Can use the toy hypergraph from our draft"""
 
 # TODO: test this way more, not just for ldp
 
+from typing import Any
+
 import numpy as np
 import pytest
+from numpy import matrix
 from numpy.testing import assert_array_equal
-from numpy import matrix, ndarray
-from typing import Any
 
 from encodings_hnns.encodings import HypergraphEncodings
 
