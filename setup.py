@@ -10,21 +10,20 @@ setup(
         "numpy",
         "pandas",
         "matplotlib",
-        "torch",
         "scipy",
-        "torch-geometric",
-        "torch-scatter",
-        "torch-sparse",
-        "path",
-        "fastjsonschema",
         "shapely",
         "tabulate",
-        "matplotlib",
         "path",
         "brec",
         "imageio",
         "imageio-ffmpeg",
         "POT",  # Python Optimal Transport library
+        # PyTorch ecosystem
+        "torch",  # pytorch
+        "torch-geometric",  # pyg
+        "torch-scatter",
+        "torch-sparse",
+        "pytorch-lightning",  # Optional but often used with PyG
     ],
     extras_require={
         "dev": [
@@ -43,11 +42,6 @@ setup(
             "coverage",
             "pytest-cov",
             "pytest-random-order",
-            "torch",
-            "torch-geometric",
-            "torch-scatter",
-            "torch-sparse",
-            "numpy",
         ],
     },
 )

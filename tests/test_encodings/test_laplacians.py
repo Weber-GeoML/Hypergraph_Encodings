@@ -210,21 +210,19 @@ def degree_v_3() -> np.ndarray:
 
 @pytest.fixture
 def ngbors() -> OrderedDict[int, set[int]]:
-    nhbors = OrderedDict(
-        [
-            (1, {1, 2, 3}),
-            (2, {1, 2, 3}),
-            (3, {1, 2, 3, 5, 6}),
-            (4, {4, 5}),
-            (5, {3, 4, 5, 6}),
-            (6, {3, 5, 6}),
-        ]
-    )
+    nhbors = OrderedDict([
+        (1, {1, 2, 3}),
+        (2, {1, 2, 3}),
+        (3, {1, 2, 3, 5, 6}),
+        (4, {4, 5}),
+        (5, {3, 4, 5, 6}),
+        (6, {3, 5, 6}),
+    ])
     return nhbors
 
 
 @pytest.fixture
-def ngbors_2() -> np.ndarray:
+def ngbors_2() -> OrderedDict[int, set[int]]:
     nhbors = OrderedDict(
         [
             (4, {4, 5, 7}),
