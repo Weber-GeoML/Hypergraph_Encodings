@@ -14,6 +14,9 @@
   <a href="https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/mypy.yml">
     <img src="https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/mypy.yml/badge.svg" alt="Type Check"/>
   </a>
+  <a href="https://www.python.org/downloads/release/python-3110/">
+    <img src="https://img.shields.io/badge/python-3.11-blue.svg" alt="Python 3.11"/>
+  </a>
 </div>
 
 
