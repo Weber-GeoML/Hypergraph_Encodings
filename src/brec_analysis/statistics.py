@@ -26,14 +26,10 @@ def calculate_statistics(
 
                 if consider_scaling:
                     # Count as different only if NO_MATCH
-                    different = sum(
-                        1 for r in results if r == MatchStatus.NO_MATCH
-                    )
+                    different = sum(1 for r in results if r == MatchStatus.NO_MATCH)
                 else:
                     # Count as different if not EXACT_MATCH
-                    different = sum(
-                        1 for r in results if r != MatchStatus.EXACT_MATCH
-                    )
+                    different = sum(1 for r in results if r != MatchStatus.EXACT_MATCH)
 
                 total = len(results)
                 if total > 0:  # Avoid division by zero
@@ -77,9 +73,7 @@ def generate_latex_table(
 
     with open(latex_file, "w") as f:
         f.write("\\begin{table*}[h!]\n\\centering\n\\tiny\n")
-        f.write(
-            "\\begin{tabular}{|l|" + "c|" * len(categories) + "}\n\\hline\n"
-        )
+        f.write("\\begin{tabular}{|l|" + "c|" * len(categories) + "}\n\\hline\n")
 
         # Header
         f.write(

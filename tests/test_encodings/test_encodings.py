@@ -13,12 +13,14 @@ Can use the toy hypergraph from our draft"""
 import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
+from numpy import matrix, ndarray
+from typing import Any
 
 from encodings_hnns.encodings import HypergraphEncodings
 
 
 @pytest.fixture
-def toy_hypergraph() -> dict[str, dict]:
+def toy_hypergraph() -> dict[str, dict[str, Any] | int]:
     """Build toy hypergraph
 
     Returns:
@@ -26,7 +28,7 @@ def toy_hypergraph() -> dict[str, dict]:
             hypergraph from draft
     """
     # We don't care about features or labels
-    hg: dict[str, dict] = {
+    hg: dict[str, dict[str, Any] | int] = {
         "hypergraph": {
             "yellow": [1, 2, 3],
             "red": [2, 3],
@@ -41,7 +43,7 @@ def toy_hypergraph() -> dict[str, dict]:
 
 
 @pytest.fixture
-def toy_hypergraph_with_features() -> dict[str, dict]:
+def toy_hypergraph_with_features() -> dict[str, dict[str, Any] | int]:
     """Build toy hypergraph with features
 
     Returns:
@@ -50,14 +52,14 @@ def toy_hypergraph_with_features() -> dict[str, dict]:
     """
     # We don't care about features or labels
     # CHANGE THE VERTICES: SUBSTRACTED -1
-    hg: dict[str, dict] = {
+    hg: dict[str, dict[str, Any] | int] = {
         "hypergraph": {
             "yellow": [0, 1, 2],
             "red": [1, 2],
             "green": [2, 4, 5],
             "blue": [3, 4],
         },
-        "features": np.matrix([[1], [1], [1], [1], [1], [1]]),
+        "features": matrix([[1], [1], [1], [1], [1], [1]]),
         "labels": {},
         "n": 6,
     }
@@ -65,7 +67,7 @@ def toy_hypergraph_with_features() -> dict[str, dict]:
 
 
 @pytest.fixture
-def toy_hypergraph_with_encodings_ldp() -> dict[str, dict]:
+def toy_hypergraph_with_encodings_ldp() -> dict[str, dict[str, Any] | int]:
     """Build toy hypergraph with features + encodings
 
     Returns:
@@ -73,7 +75,7 @@ def toy_hypergraph_with_encodings_ldp() -> dict[str, dict]:
             hypergraph from draft
     """
     # We don't care about features or labels
-    hg: dict[str, dict] = {
+    hg: dict[str, dict[str, Any] | int] = {
         "hypergraph": {
             "yellow": [1, 2, 3],
             "red": [2, 3],
@@ -81,7 +83,7 @@ def toy_hypergraph_with_encodings_ldp() -> dict[str, dict]:
             "blue": [4, 5],
         },
         # features added from LDP
-        "features": np.matrix(
+        "features": matrix(
             [
                 [1, 1, 2, 3, 2.5, 2.5, 0.5],
                 [1, 2, 1, 3, 2, 2, 1],
@@ -98,7 +100,7 @@ def toy_hypergraph_with_encodings_ldp() -> dict[str, dict]:
 
 
 @pytest.fixture
-def toy_hypergraph_2() -> dict[str, dict]:
+def toy_hypergraph_2() -> dict[str, dict[str, Any] | int]:
     """Build toy hypergraph number 2
 
     Returns:
@@ -106,7 +108,7 @@ def toy_hypergraph_2() -> dict[str, dict]:
             hypergraph
     """
     # We don't care about features or labels
-    hg: dict[str, dict] = {
+    hg: dict[str, dict[str, Any] | int] = {
         "hypergraph": {
             "yellow": [4, 5, 7],
             "red": [5, 7],
@@ -122,7 +124,7 @@ def toy_hypergraph_2() -> dict[str, dict]:
 # This is a fixture to see if our code is robust
 # even if one does not follow the aforementioned guideline
 @pytest.fixture
-def toy_hypergraph_3() -> dict[str, dict]:
+def toy_hypergraph_3() -> dict[str, dict[str, Any] | int]:
     """Build toy hypergraph number 3
 
     Returns:
@@ -130,7 +132,7 @@ def toy_hypergraph_3() -> dict[str, dict]:
             hypergraph
     """
     # We don't care about features or labels
-    hg: dict[str, dict] = {
+    hg: dict[str, dict[str, Any] | int] = {
         "hypergraph": {
             "yellow": [7, 5, 4],
             "red": [7, 5],
@@ -143,7 +145,7 @@ def toy_hypergraph_3() -> dict[str, dict]:
 
 
 @pytest.fixture
-def hyperedges() -> dict[str, dict]:
+def hyperedges() -> dict[str, dict[str, Any] | int]:
     """Build toy hypergraph's hyperedges
 
     Returns:
@@ -152,7 +154,7 @@ def hyperedges() -> dict[str, dict]:
             hedges the node belongs to
     """
     # We don't care about features or labels
-    he: dict[str, dict] = {
+    he: dict[str, dict[str, Any] | int] = {
         1: ["yellow"],
         2: ["yellow", "red"],
         3: ["yellow", "red", "green"],
@@ -164,7 +166,7 @@ def hyperedges() -> dict[str, dict]:
 
 
 @pytest.fixture
-def hyperedges_2() -> dict[str, dict]:
+def hyperedges_2() -> dict[str, dict[str, Any] | int]:
     """Build toy hypergraph 2's hyperedges
 
     Returns:
@@ -173,7 +175,7 @@ def hyperedges_2() -> dict[str, dict]:
             hedges the node belongs to
     """
     # We don't care about features or labels
-    he: dict[str, dict] = {
+    he: dict[str, dict[str, Any] | int] = {
         4: ["yellow"],
         5: ["yellow", "red"],
         7: ["yellow", "red"],
@@ -182,7 +184,7 @@ def hyperedges_2() -> dict[str, dict]:
 
 
 @pytest.fixture
-def hyperedges_3() -> dict[str, dict]:
+def hyperedges_3() -> dict[str, dict[str, Any] | int]:
     """Build toy hypergraph 3's hyperedges
 
     Returns:
@@ -191,7 +193,7 @@ def hyperedges_3() -> dict[str, dict]:
             hedges the node belongs to
     """
     # We don't care about features or labels
-    he: dict[str, dict] = {
+    he: dict[str, dict[str, Any] | int] = {
         4: ["yellow"],
         5: ["yellow", "red"],
         7: ["yellow", "red"],

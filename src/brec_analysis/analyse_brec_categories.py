@@ -64,9 +64,7 @@ def analyze_brec_categories(verbose: bool = False) -> dict:
                                         print(
                                             f"Skipping disconnected graph in pair {i} of {category}"
                                         )
-                                    raise nx.NetworkXError(
-                                        "Graph is not connected"
-                                    )
+                                    raise nx.NetworkXError("Graph is not connected")
                                 pair_graphs.append(G)
                         else:  # regular and cfi
                             for g6_bytes in pair:
@@ -86,9 +84,7 @@ def analyze_brec_categories(verbose: bool = False) -> dict:
                                         print(
                                             f"Skipping disconnected graph in pair {i} of {category}"
                                         )
-                                    raise nx.NetworkXError(
-                                        "Graph is not connected"
-                                    )
+                                    raise nx.NetworkXError("Graph is not connected")
                                 pair_graphs.append(G)
 
                         # If we get here, both graphs in the pair are connected
@@ -96,19 +92,13 @@ def analyze_brec_categories(verbose: bool = False) -> dict:
 
                     except nx.NetworkXError:
                         if verbose:
-                            print(
-                                f"Skipping pair {i} due to disconnected graph"
-                            )
+                            print(f"Skipping pair {i} due to disconnected graph")
                         continue
 
-                print(
-                    f"Total connected graphs loaded for {category}: {len(nx_graphs)}"
-                )
+                print(f"Total connected graphs loaded for {category}: {len(nx_graphs)}")
             else:
                 # Handle basic format (alternating graphs)
-                assert (
-                    len(data) % 2 == 0
-                ), "Expected even number of pairs for basic"
+                assert len(data) % 2 == 0, "Expected even number of pairs for basic"
                 for i, g6_str in enumerate(data):
                     try:
                         if isinstance(g6_str, bytes):
@@ -118,9 +108,7 @@ def analyze_brec_categories(verbose: bool = False) -> dict:
 
                         if not nx.is_connected(G):
                             if verbose:
-                                print(
-                                    f"Skipping disconnected graph {i} in {category}"
-                                )
+                                print(f"Skipping disconnected graph {i} in {category}")
                             continue
 
                         nx_graphs.append(G)
@@ -133,9 +121,7 @@ def analyze_brec_categories(verbose: bool = False) -> dict:
             total_pairs += num_pairs
             total_graphs += len(nx_graphs)
             print(f"{category}: {num_pairs} pairs ({len(nx_graphs)} graphs)")
-            print(
-                f"Total cumulative: {total_pairs} pairs ({total_graphs} graphs)"
-            )
+            print(f"Total cumulative: {total_pairs} pairs ({total_graphs} graphs)")
 
             graphs_by_category[category] = nx_graphs
 
@@ -223,15 +209,9 @@ def quick_eda_from_github(graphs, verbose: bool = False):
     ]
     # Reverse the order of categories for better stacking visualization
     items = list(node_counts.items())[::-1]  # Reverse order
-    categories = [
-        item[0] for item in items if item[1]
-    ]  # Only categories with counts
-    counts_list = [
-        item[1] for item in items if item[1]
-    ]  # Only non-empty counts
-    colors = colors[: len(categories)][
-        ::-1
-    ]  # Match colors to reversed categories
+    categories = [item[0] for item in items if item[1]]  # Only categories with counts
+    counts_list = [item[1] for item in items if item[1]]  # Only non-empty counts
+    colors = colors[: len(categories)][::-1]  # Match colors to reversed categories
 
     if counts_list:  # Only plot if we have data
         print(
@@ -249,9 +229,7 @@ def quick_eda_from_github(graphs, verbose: bool = False):
 
     plt.xlabel("Number of Nodes", fontsize=12)
     plt.ylabel("Count", fontsize=12)
-    plt.title(
-        "Distribution of Node Counts Across BREC Graph Categories", fontsize=14
-    )
+    plt.title("Distribution of Node Counts Across BREC Graph Categories", fontsize=14)
     plt.legend()
 
     # Add grid for better readability
@@ -264,9 +242,7 @@ def quick_eda_from_github(graphs, verbose: bool = False):
         if counts:  # Only add stats if category has graphs
             stats_text += f"{category}:\n"
             total_count += len(counts)
-            stats_text += (
-                f"  Pairs: {len(counts)/2}\n"  # These are the unique graphs
-            )
+            stats_text += f"  Pairs: {len(counts)/2}\n"  # These are the unique graphs
             # stats_text += f"  Count: {len(counts)}\n"
             # stats_text += f"  Total Count: {total_count}\n"
     plt.text(
@@ -280,9 +256,7 @@ def quick_eda_from_github(graphs, verbose: bool = False):
 
     # Save plot
     plt.tight_layout()
-    plt.savefig(
-        "plots/brec_node_distribution.png", dpi=300, bbox_inches="tight"
-    )
+    plt.savefig("plots/brec_node_distribution.png", dpi=300, bbox_inches="tight")
     plt.close()
 
     # Print original analysis
@@ -356,9 +330,7 @@ def plot_edge_distribution(graphs, verbose: bool = False):
         colors = colors[: len(categories)][::-1]
 
         if counts_list:
-            print(
-                f"Plotting stacked histogram with categories: {categories[::-1]}"
-            )
+            print(f"Plotting stacked histogram with categories: {categories[::-1]}")
             plt.hist(
                 counts_list,
                 bins=bins,
@@ -402,7 +374,5 @@ def plot_edge_distribution(graphs, verbose: bool = False):
 
         # Save plot
         plt.tight_layout()
-        plt.savefig(
-            "plots/brec_edge_distribution.png", dpi=300, bbox_inches="tight"
-        )
+        plt.savefig("plots/brec_edge_distribution.png", dpi=300, bbox_inches="tight")
         plt.close()

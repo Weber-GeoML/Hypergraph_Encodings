@@ -67,12 +67,8 @@ def find_encoding_match(
     if not np.isclose(np.max(abs_enc1), np.max(abs_enc2), rtol=1e-12):
         if verbose:
             print("Different because:")
-            print(
-                f"Max absolute value of encoding1: {np.max(np.abs(encoding1))}"
-            )
-            print(
-                f"Max absolute value of encoding2: {np.max(np.abs(encoding2))}"
-            )
+            print(f"Max absolute value of encoding1: {np.max(np.abs(encoding1))}")
+            print(f"Max absolute value of encoding2: {np.max(np.abs(encoding2))}")
             print("\n")
         return False, None, None, None, None
 
@@ -80,12 +76,8 @@ def find_encoding_match(
     if not np.isclose(np.min(abs_enc1), np.min(abs_enc2), rtol=1e-12):
         if verbose:
             print("Different because:")
-            print(
-                f"Min absolute value of encoding1: {np.min(np.abs(encoding1))}"
-            )
-            print(
-                f"Min absolute value of encoding2: {np.min(np.abs(encoding2))}"
-            )
+            print(f"Min absolute value of encoding1: {np.min(np.abs(encoding1))}")
+            print(f"Min absolute value of encoding2: {np.min(np.abs(encoding2))}")
             print("\n")
         return False, None, None, None, None
 
@@ -93,12 +85,8 @@ def find_encoding_match(
     if not np.isclose(np.mean(abs_enc1), np.mean(abs_enc2), rtol=1e-12):
         if verbose:
             print("Different because:")
-            print(
-                f"Mean absolute value of encoding1: {np.mean(np.abs(encoding1))}"
-            )
-            print(
-                f"Mean absolute value of encoding2: {np.mean(np.abs(encoding2))}"
-            )
+            print(f"Mean absolute value of encoding1: {np.mean(np.abs(encoding1))}")
+            print(f"Mean absolute value of encoding2: {np.mean(np.abs(encoding2))}")
             print("\n")
         return False, None, None, None, None
 
@@ -175,21 +163,15 @@ def find_encoding_match(
     # t0 = time.time()
     kurtosis_cols1 = kurtosis(abs_enc1, axis=0)
     kurtosis_cols2 = kurtosis(abs_enc2, axis=0)
-    if not (
-        np.any(np.isnan(kurtosis_cols1)) or np.any(np.isnan(kurtosis_cols2))
-    ):
+    if not (np.any(np.isnan(kurtosis_cols1)) or np.any(np.isnan(kurtosis_cols2))):
         # if verbose:
         #     print(f"Kurtosis computation time: {time.time() - t0:.4f} seconds")
 
         # check kurtosis
         if not np.allclose(kurtosis_cols1, kurtosis_cols2, rtol=1e-12):
             if verbose:
-                diff_cols = ~np.isclose(
-                    kurtosis_cols1, kurtosis_cols2, rtol=1e-12
-                )
-                print(
-                    f"Different kurtosis at columns: {np.where(diff_cols)[0]}"
-                )
+                diff_cols = ~np.isclose(kurtosis_cols1, kurtosis_cols2, rtol=1e-12)
+                print(f"Different kurtosis at columns: {np.where(diff_cols)[0]}")
                 print(f"Kurtosis values enc1: {kurtosis_cols1[diff_cols]}")
                 print(f"Kurtosis values enc2: {kurtosis_cols2[diff_cols]}")
             return False, None, None, None, None
@@ -243,9 +225,7 @@ def find_encoding_match(
     if not np.allclose(sum_sq_cols1, sum_sq_cols2, rtol=1e-12):
         if verbose:
             diff_cols = ~np.isclose(sum_sq_cols1, sum_sq_cols2, rtol=1e-12)
-            print(
-                f"Different sum of squares at columns: {np.where(diff_cols)[0]}"
-            )
+            print(f"Different sum of squares at columns: {np.where(diff_cols)[0]}")
             print(f"Sum of squares values enc1: {sum_sq_cols1[diff_cols]}")
             print(f"Sum of squares values enc2: {sum_sq_cols2[diff_cols]}")
         return False, None, None, None, None

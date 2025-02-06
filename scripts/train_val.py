@@ -196,12 +196,8 @@ out_dir = path.Path("_".join(out_dir_components))
 if out_dir.exists():
     shutil.rmtree(out_dir)
 out_dir.makedirs_p()
-baselogger = get_logger(
-    "base logger", f"{out_dir}/logging.log", not args.nostdout
-)
-resultlogger = get_logger(
-    "result logger", f"{out_dir}/result.log", not args.nostdout
-)
+baselogger = get_logger("base logger", f"{out_dir}/logging.log", not args.nostdout)
+resultlogger = get_logger("result logger", f"{out_dir}/result.log", not args.nostdout)
 baselogger.info(args)
 
 resultlogger.info(args)

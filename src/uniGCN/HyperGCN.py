@@ -19,7 +19,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class HyperGCN(nn.Module):
-    def __init__(self, args, nfeat, nhid, nclass: int, nlayer: int, V, E, X)->None:
+    def __init__(self, args, nfeat, nhid, nclass: int, nlayer: int, V, E, X) -> None:
         """Initialize the HyperGCN model.
 
         Args:
@@ -59,7 +59,7 @@ class HyperGCN(nn.Module):
         self.do, self.l = args.dropout, args.nlayer
         self.structure, self.m = structure, args.mediators
 
-    def forward(self, H: torch.Tensor)->torch.Tensor:
+    def forward(self, H: torch.Tensor) -> torch.Tensor:
         """An l-layer GCN.
 
         Args:
@@ -81,7 +81,7 @@ class HyperGCN(nn.Module):
 
 class HyperGraphConvolution(Module):
     """Simple GCN layer.
-    
+
     Similar to https://arxiv.org/abs/1609.02907.
     """
 
@@ -103,9 +103,7 @@ class HyperGraphConvolution(Module):
         self.reset_parameters()
 
     def reset_parameters(self):
-        """Reset the parameters of the layer.
-        
-        """
+        """Reset the parameters of the layer."""
         std = 1.0 / math.sqrt(self.W.size(1))
         self.W.data.uniform_(-std, std)
         self.bias.data.uniform_(-std, std)
@@ -137,14 +135,7 @@ class HyperGraphConvolution(Module):
         return AHW + b
 
     def __repr__(self):
-        return (
-            self.__class__.__name__
-            + " ("
-            + str(self.a)
-            + " -> "
-            + str(self.b)
-            + ")"
-        )
+        return self.__class__.__name__ + " (" + str(self.a) + " -> " + str(self.b) + ")"
 
 
 class SparseMM(torch.autograd.Function):
@@ -169,13 +160,15 @@ class SparseMM(torch.autograd.Function):
         return torch.mm(M1, M2)
 
     @staticmethod
-    def backward(ctx: torch.autograd.function.FunctionContext, g: torch.Tensor)->tuple[torch.Tensor, torch.Tensor]:
+    def backward(
+        ctx: torch.autograd.function.FunctionContext, g: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Backward pass of the SparseMM layer.
 
         Args:
             g:
                 The gradient.
-        
+
         Returns:
             The gradient of the first matrix.
             The gradient of the second matrix.
@@ -315,7 +308,7 @@ def adjacency(edges, weights, n):
     return A
 
 
-def symnormalise(M: sp.csr_matrix)->sp.csr_matrix:
+def symnormalise(M: sp.csr_matrix) -> sp.csr_matrix:
     """Symmetrically normalise sparse matrix.
 
     Args:
@@ -336,7 +329,7 @@ def symnormalise(M: sp.csr_matrix)->sp.csr_matrix:
     return (DHI.dot(M)).dot(DHI)
 
 
-def ssm2tst(M: sp.csr_matrix)->torch.sparse.FloatTensor:
+def ssm2tst(M: sp.csr_matrix) -> torch.sparse.FloatTensor:
     """Converts a scipy sparse matrix (ssm) to a torch sparse tensor (tst).
 
     Args:

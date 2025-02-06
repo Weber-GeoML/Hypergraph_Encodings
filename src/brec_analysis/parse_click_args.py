@@ -12,9 +12,7 @@ def parse_encoding(encodings: str) -> list[tuple[str, str]] | None:
             # Handle range format (e.g., "0-3")
             start, end = map(int, encodings.split("-"))
             encoding_indices = list(range(start, end + 1))
-            print(
-                f"start: {start}, end: {end}, encoding_indices: {encoding_indices}"
-            )
+            print(f"start: {start}, end: {end}, encoding_indices: {encoding_indices}")
         else:
             # Handle comma-separated format (e.g., "0,2,3")
             encoding_indices = [int(i) for i in encodings.split(",")]

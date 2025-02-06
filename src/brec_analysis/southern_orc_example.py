@@ -26,9 +26,7 @@ def southern_orc_example(rook, shrikhande) -> None:
         for measure_name, prob_fn in prob_measures.items():
             print(f"\n{measure_name} probability measure:")
 
-            rook_orc = ollivier_ricci_curvature(
-                rook, alpha=alpha, prob_fn=prob_fn
-            )
+            rook_orc = ollivier_ricci_curvature(rook, alpha=alpha, prob_fn=prob_fn)
             shrikhande_orc = ollivier_ricci_curvature(
                 shrikhande, alpha=alpha, prob_fn=prob_fn
             )
@@ -46,6 +44,4 @@ def southern_orc_example(rook, shrikhande) -> None:
             # Check if distributions are different
             stat, pval = ks_2samp(rook_orc, shrikhande_orc)
             print(f"\nKS test p-value: {pval:.4f}")
-            print(
-                f"Distributions are {'different' if pval < 0.05 else 'similar'}"
-            )
+            print(f"Distributions are {'different' if pval < 0.05 else 'similar'}")

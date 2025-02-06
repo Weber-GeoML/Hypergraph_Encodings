@@ -44,12 +44,8 @@ def find_isomorphism_mapping(G1, G2):
             print(f"Feasible: {feasible}")
             if not feasible:
                 print("Neighbors comparison:")
-                print(
-                    f"G1 node {G1_node} neighbors: {list(G1.neighbors(G1_node))}"
-                )
-                print(
-                    f"G2 node {G2_node} neighbors: {list(G2.neighbors(G2_node))}"
-                )
+                print(f"G1 node {G1_node} neighbors: {list(G1.neighbors(G1_node))}")
+                print(f"G2 node {G2_node} neighbors: {list(G2.neighbors(G2_node))}")
             return feasible
 
     try:

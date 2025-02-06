@@ -3,6 +3,7 @@
 Can use the toy hypergraph from our draft"""
 
 from collections import OrderedDict
+from typing import Any
 
 import numpy as np
 import pytest
@@ -12,7 +13,7 @@ from encodings_hnns.laplacians import Laplacians
 
 
 @pytest.fixture
-def toy_hypergraph() -> dict[str, dict | int]:
+def toy_hypergraph() -> dict[str, dict[str, Any] | int]:
     """Build toy hypergraph
 
     Returns:
@@ -20,7 +21,7 @@ def toy_hypergraph() -> dict[str, dict | int]:
             hypergraph from draft
     """
     # We don't care about features or labels
-    hg: dict[str, dict | int] = {
+    hg: dict[str, dict[str, Any] | int] = {
         "hypergraph": {
             "yellow": [1, 2, 3],
             "red": [2, 3],
@@ -208,17 +209,15 @@ def degree_v_3() -> np.ndarray:
 
 
 @pytest.fixture
-def ngbors() -> np.ndarray:
-    nhbors = OrderedDict(
-        [
-            (1, {1, 2, 3}),
-            (2, {1, 2, 3}),
-            (3, {1, 2, 3, 5, 6}),
-            (4, {4, 5}),
-            (5, {3, 4, 5, 6}),
-            (6, {3, 5, 6}),
-        ]
-    )
+def ngbors() -> OrderedDict[int, set[int]]:
+    nhbors = OrderedDict([
+        (1, {1, 2, 3}),
+        (2, {1, 2, 3}),
+        (3, {1, 2, 3, 5, 6}),
+        (4, {4, 5}),
+        (5, {3, 4, 5, 6}),
+        (6, {3, 5, 6}),
+    ])
     return nhbors
 
 
@@ -288,9 +287,7 @@ def ngbors_not_inclusive_3() -> OrderedDict:
 @pytest.fixture
 def degree_e() -> np.ndarray:
     """Returns the degree (edge) matrix"""
-    d_e: np.ndarray = np.array(
-        [[3, 0, 0, 0], [0, 2, 0, 0], [0, 0, 3, 0], [0, 0, 0, 2]]
-    )
+    d_e: np.ndarray = np.array([[3, 0, 0, 0], [0, 2, 0, 0], [0, 0, 3, 0], [0, 0, 0, 2]])
     return d_e
 
 
@@ -759,9 +756,7 @@ def test_compute_edge_degree_3(toy_hypergraph_3, degree_e_3) -> None:
     assert_array_equal(laplacian.degree_edges, degree_e_3)
 
 
-def test_compute_normalized_laplacian(
-    toy_hypergraph, normalized_laplacian
-) -> None:
+def test_compute_normalized_laplacian(toy_hypergraph, normalized_laplacian) -> None:
     """Test for compute_normalized_laplacian
 
     Args:
@@ -773,9 +768,7 @@ def test_compute_normalized_laplacian(
     """
     laplacian: Laplacians = Laplacians(toy_hypergraph)
     laplacian.compute_normalized_laplacian()
-    assert_allclose(
-        laplacian.normalized_laplacian, normalized_laplacian, atol=1e-8
-    )
+    assert_allclose(laplacian.normalized_laplacian, normalized_laplacian, atol=1e-8)
 
 
 def test_compute_random_walk_laplacian_EE(toy_hypergraph, rw_laplacian) -> None:
@@ -889,9 +882,7 @@ def test_compute_node_neighbors_not_inclusive_3(
     assert laplacian.node_neighbors == ngbors_not_inclusive_3
 
 
-def test_compute_random_walk_laplacian_EN(
-    toy_hypergraph, rw_laplacian_EN
-) -> None:
+def test_compute_random_walk_laplacian_EN(toy_hypergraph, rw_laplacian_EN) -> None:
     """Test for compute_random_walk_laplacian (EN)
 
     Args:
@@ -943,9 +934,7 @@ def test_compute_random_walk_laplacian_EN_3(
     assert_allclose(laplacian.rw_laplacian, rw_laplacian_EN_3, atol=1e-8)
 
 
-def test_compute_random_walk_laplacian_WE(
-    toy_hypergraph, rw_laplacian_WE
-) -> None:
+def test_compute_random_walk_laplacian_WE(toy_hypergraph, rw_laplacian_WE) -> None:
     """Test for compute_random_walk_laplacian (WE)
 
     Args:
@@ -997,9 +986,7 @@ def test_compute_random_walk_laplacian_WE_3(
     assert_allclose(laplacian.rw_laplacian, rw_laplacian_WE_3, atol=1e-8)
 
 
-def test_compute_hypergraph_adjacency(
-    toy_hypergraph, hypergraph_adjacency
-) -> None:
+def test_compute_hypergraph_adjacency(toy_hypergraph, hypergraph_adjacency) -> None:
     """Test for compute_hypergraph_adjacency
 
     Args:
