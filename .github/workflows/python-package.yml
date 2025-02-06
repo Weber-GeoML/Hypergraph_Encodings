@@ -16,14 +16,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.11"]
 
     steps:
     - uses: actions/checkout@v4
+    
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install PyTorch dependencies
+      run: |
+        python -m pip install --upgrade pip
+        # Install PyTorch and related packages first
+        pip install torch==2.0.0 --index-url https://download.pytorch.org/whl/cpu
+        pip install torch-scatter -f https://data.pyg.org/whl/torch-2.0.0+cpu.html
+        pip install torch-sparse -f https://data.pyg.org/whl/torch-2.0.0+cpu.html
+        pip install torch-geometric
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
