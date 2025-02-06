@@ -54,7 +54,6 @@ package-dir = {"" = "src"}
 packages = ["encodings_hnns"]
 package-data = {"*" = ["py.typed"]}
 
-# Equivalent to dependency_links in setup.py
-[tool.setuptools.urls]
-torch = "https://download.pytorch.org/whl/torch_stable.html"
-pyg = "https://data.pyg.org/whl/torch-2.0.0.html" 
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["encodings_hnns*"] 
