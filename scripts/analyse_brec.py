@@ -301,8 +301,8 @@ def rook_and_shrikhande_special_case() -> None:
     print("\nAnalyzing Rook and Shrikhande graphs...")
 
     # Load the graphs
-    rook = nx.read_graph6("rook_graph.g6")
-    shrikhande = nx.read_graph6("shrikhande.g6")
+    rook = nx.read_graph6("data/Rook_Shrikhande/rook_graph.g6")
+    shrikhande = nx.read_graph6("data/Rook_Shrikhande/shrikhande.g6")
 
     rook_data = nx_to_pyg(rook)
     shrikhande_data = nx_to_pyg(shrikhande)
