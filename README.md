@@ -1,9 +1,14 @@
-[![Pylint](https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/pylint.yml/badge.svg)](https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/pylint.yml)
-
-
-[![pytest](https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/pytest.yml/badge.svg)](https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/pytest.yml)
-
-[![Python package](https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/python-package.yml/badge.svg)](https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/python-package.yml)
+<div align="center">
+  <a href="https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/pylint.yml">
+    <img src="https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/pylint.yml/badge.svg" alt="Pylint"/>
+  </a>
+  <a href="https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/pytest.yml">
+    <img src="https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/pytest.yml/badge.svg" alt="pytest"/>
+  </a>
+  <a href="https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/python-package.yml">
+    <img src="https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/python-package.yml/badge.svg" alt="Python package"/>
+  </a>
+</div>
 
 
 <p align="center">
@@ -151,12 +156,6 @@ To run the script with multiple parameters, there is the bash script:
 run_all_general.sh
 ```
 
-and there is a similar bash script for hypergraph classification.
-
-```
-run_all_hg_classification.sh
-```
-
 We can aggregate the results using the script:
 
 ```
@@ -188,20 +187,9 @@ pytest tests/test_curvature.py
 
 ## Julia
 
-A bit hacky for now.
-
 You might need to give permission to the file. Eg
 
 ```
 chmod +x /Users/pellegrinraphael/Desktop/Repos_GNN/Hypergraph_Encodings/src/orchid/orchid_interface.jl
 ```
 
-
-
-
-TODO:
-using Pkg
-Pkg.add("Documenter")
-julia -e 'using Documenter; Documenter.generate("docs")'
-
-To generate html docs.
