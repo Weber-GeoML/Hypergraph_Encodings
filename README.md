@@ -8,6 +8,12 @@
   <a href="https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/python-package.yml">
     <img src="https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/python-package.yml/badge.svg" alt="Python package"/>
   </a>
+  <a href="https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/ruff.yml">
+    <img src="https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/ruff.yml/badge.svg" alt="Ruff"/>
+  </a>
+  <a href="https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/mypy.yml">
+    <img src="https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/mypy.yml/badge.svg" alt="Type Check"/>
+  </a>
 </div>
 
 
