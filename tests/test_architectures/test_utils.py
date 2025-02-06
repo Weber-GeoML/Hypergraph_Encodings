@@ -1,6 +1,8 @@
-import torch
-import pytest
 import math
+
+import pytest
+import torch
+
 from uniGCN.UniGCN import glorot, normalize_l2
 
 

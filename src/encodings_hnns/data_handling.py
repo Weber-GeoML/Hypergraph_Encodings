@@ -1,3 +1,8 @@
+"""Parses and loads data.
+
+This module contains functions for parsing and loading data.
+"""
+
 import inspect
 import os
 import pickle
@@ -13,7 +18,7 @@ warnings.simplefilter("ignore")
 
 # Used in train_val.py
 def load(args) -> tuple[dict[dict, np.matrix, np.ndarray, int], list, list]:
-    """Parses the dataset
+    """Parses the dataset.
 
     Args:
         args:
@@ -58,7 +63,7 @@ class parser(object):
     """Parses data"""
 
     def __init__(self, data: str, dataset: str) -> None:
-        """Initialises the data directory
+        """Initialises the data directory.
 
         Arguments:
             data:
@@ -72,14 +77,15 @@ class parser(object):
         )
         current = os.path.dirname(os.path.dirname(current))
         # Makes the path
+        self.d: str
         if data == "coauthorship" or data == "cocitation":
-            self.d: str = os.path.join(current, "data", data, dataset)
+            self.d = os.path.join(current, "data", data, dataset)
         else:
-            self.d: str = os.path.join(current, "data", data)
+            self.d = os.path.join(current, "data", data)
         self.data, self.dataset = data, dataset
 
     def parse(self):
-        """Returns a dataset specific function to parse
+        """Returns a dataset specific function to parse.
 
         Returns:
             TODO
@@ -90,7 +96,7 @@ class parser(object):
         return function()
 
     def _load_data(self, verbose: bool = True) -> dict:
-        """Loads the coauthorship hypergraph, features, and labels
+        """Loads the coauthorship hypergraph, features, and labels.
 
         assumes the following files to be present in the dataset directory:
         hypergraph.pickle: coauthorship hypergraph
@@ -113,7 +119,7 @@ class parser(object):
 
         # loads the labels
         with open(os.path.join(self.d, "labels.pickle"), "rb") as handle:
-            labels: np.array[int] = self._1hot(pickle.load(handle))
+            labels: np.ndarray[int] = self._1hot(pickle.load(handle))
 
         if verbose:
             total_length: int = sum(len(value) for value in hypergraph.values())
@@ -130,8 +136,8 @@ class parser(object):
             "n": features.shape[0],  # one-hot encoded
         }
 
-    def _1hot(self, labels: list) -> np.ndarray[int]:
-        """converts each positive integer (representing a unique class) into ints one-hot form
+    def _1hot(self, labels: list[int]) -> np.ndarray[int, int]:
+        """converts each positive integer (representing a unique class) into ints one-hot form.
 
         Arguments:
             labels:

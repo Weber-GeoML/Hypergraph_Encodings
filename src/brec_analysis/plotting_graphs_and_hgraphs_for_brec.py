@@ -6,6 +6,7 @@ import hypernetx as hnx
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
+from matplotlib.figure import Figure
 
 from brec_analysis.utils_for_brec import create_comparison_table
 
@@ -48,7 +49,10 @@ def plot_hypergraph_pair(
     # Plot first graph
     plt.subplot(241)
     pos1 = nx.circular_layout(G1)
-    plt.title(f"Graph A\n{len(G1.nodes())} nodes, {len(G1.edges())} edges", fontsize=30)
+    plt.title(
+        f"Graph A\n{len(G1.nodes())} nodes, {len(G1.edges())} edges",
+        fontsize=30,
+    )
     nx.draw(
         G1,
         pos1,
@@ -62,7 +66,10 @@ def plot_hypergraph_pair(
     # Plot second graph
     plt.subplot(242)
     pos2 = nx.circular_layout(G2)
-    plt.title(f"Graph B\n{len(G2.nodes())} nodes, {len(G2.edges())} edges", fontsize=30)
+    plt.title(
+        f"Graph B\n{len(G2.nodes())} nodes, {len(G2.edges())} edges",
+        fontsize=30,
+    )
     nx.draw(
         G2,
         pos2,
@@ -202,7 +209,7 @@ def plot_hypergraph_pair(
         rwidth=0.8,
     )
     plt.title(
-        f"Hypergraph A Node Degree \n Distribution",
+        "Hypergraph A Node Degree \n Distribution",
         fontsize=30,
     )
     plt.xlabel("Node Degree", fontsize=30)
@@ -229,7 +236,7 @@ def plot_hypergraph_pair(
         rwidth=0.8,
     )
     plt.title(
-        f"Hypergraph B Node Degree \n Distributions",
+        "Hypergraph B Node Degree \n Distributions",
         fontsize=30,
     )
     plt.xlabel("Node Degree", fontsize=30)
@@ -313,12 +320,11 @@ def plot_graph_pair(
             The directory to save the plots.
     """
     # Create figure with 3x2 subplot grid (added row for adjacency matrices)
-    fig = plt.figure(figsize=(16, 32))
+    fig: Figure = plt.figure(figsize=(16, 32))
 
     # Set isomorphism status
 
     # Plot first graph
-    ax1 = plt.subplot(3, 2, 1)
     pos1 = nx.circular_layout(graph1)
     plt.title(
         f"Graph A\n{len(graph1.nodes())} nodes, {len(graph1.edges())} edges",
@@ -335,7 +341,6 @@ def plot_graph_pair(
     )
 
     # Plot second graph
-    ax2 = plt.subplot(3, 2, 2)
     pos2 = nx.circular_layout(graph2)
     plt.title(
         f"Graph B\n{len(graph2.nodes())} nodes, {len(graph2.edges())} edges",
@@ -382,7 +387,8 @@ def plot_graph_pair(
     )
 
     plt.title(
-        f"Node Degree Distribution\n({len(graph1.nodes())} total nodes)", fontsize=25
+        f"Node Degree Distribution\n({len(graph1.nodes())} total nodes)",
+        fontsize=25,
     )
     plt.xlabel("Degree", fontsize=25)
     plt.ylabel("Count", fontsize=25)
@@ -604,7 +610,7 @@ def plot_graph_pair(
     plt.close()
 
     # Return to main figure and finish
-    plt.figure(fig.number)
+    plt.figure(fig.number)  # type: ignore
     plt.tight_layout()
     plt.savefig(
         f"{output_dir}/pair_{pair_idx}_{category.lower()}.png",

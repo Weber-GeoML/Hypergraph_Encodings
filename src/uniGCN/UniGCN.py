@@ -53,7 +53,6 @@ def normalize_l2(X):
 
 # v1: X -> XW -> AXW -> norm
 class UniSAGEConv(nn.Module):
-
     def __init__(
         self,
         args,
@@ -123,7 +122,6 @@ class UniSAGEConv(nn.Module):
 
 # v1: X -> XW -> AXW -> norm
 class UniGINConv(nn.Module):
-
     def __init__(
         self,
         args,
@@ -190,7 +188,6 @@ class UniGINConv(nn.Module):
 
 # v1: X -> XW -> AXW -> norm
 class UniGCNConv(nn.Module):
-
     def __init__(
         self,
         args,
@@ -269,10 +266,10 @@ class UniGCNConv(nn.Module):
                 see above
             hypergraph_classification:
                 wether we do node-level, within hg classification,
-                or hg-level-classification (new, in which case need to pass degEs, degVs, degE2s)
-            degEs:
+                or hg-level-classification (new, in which case need to pass deges, degvs, dege2s)
+            deges:
                 the degree of edges
-            degVs:
+            degvs:
                 the degree of vertices
 
         Returns:
@@ -378,7 +375,6 @@ class UniGCNConv(nn.Module):
 
 # v2: X -> AX -> norm -> AXW
 class UniGCNConv2(nn.Module):
-
     def __init__(
         self,
         args,
@@ -439,7 +435,6 @@ class UniGCNConv2(nn.Module):
 
 
 class UniGATConv(nn.Module):
-
     def __init__(
         self,
         args,
@@ -721,7 +716,7 @@ class UniGNN(nn.Module):
         Args:
             list_hypergraphs:
                 the list of dicts (that contains hg, features, labels etc)
-            What would be smarter would be to add degEs and degVs to
+            What would be smarter would be to add deges and degvs to
             the dictionaries directly. Only need to compute it onnce, no need to pass it around:
             TODO later.
 

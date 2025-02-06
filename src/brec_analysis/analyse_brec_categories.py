@@ -344,7 +344,8 @@ def plot_edge_distribution(graphs, verbose: bool = False):
         plt.xlabel("Number of Edges", fontsize=12)
         plt.ylabel("Count", fontsize=12)
         plt.title(
-            "Distribution of Edge Counts Across BREC Graph Categories", fontsize=14
+            "Distribution of Edge Counts Across BREC Graph Categories",
+            fontsize=14,
         )
         plt.legend()
 

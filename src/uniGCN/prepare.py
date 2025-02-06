@@ -110,7 +110,7 @@ def fetch_data(
                 print("Adding the Laplacian encodings")
                 dataset = hgencodings.add_laplacian_encodings(
                     dataset,
-                    type=laplacian_type,
+                    laplacian_type=laplacian_type,
                     normalized=True,
                     dataset_name=dataset_name,
                 )
@@ -118,7 +118,7 @@ def fetch_data(
                 print("Adding the LCP encodings")
                 dataset = hgencodings.add_curvature_encodings(
                     dataset,
-                    type=curvature_type,
+                    curvature_type=curvature_type,
                     normalized=True,
                     dataset_name=dataset_name,
                 )
@@ -146,7 +146,7 @@ def fetch_data(
         X = torch.FloatTensor(np.array(X.todense()))
 
     # normalize the features
-    elif normalize_features == True:
+    elif normalize_features:
         if normalize_encodings or not add_encodings:
             # added by RP!
             if add_encodings:
@@ -165,7 +165,7 @@ def fetch_data(
                     print("Adding the Laplacian encodings")
                     dataset = hgencodings.add_laplacian_encodings(
                         dataset,
-                        type=laplacian_type,
+                        laplacian_type=laplacian_type,
                         normalized=True,
                         dataset_name=dataset_name,
                     )
@@ -173,7 +173,7 @@ def fetch_data(
                     print("Adding the LCP encodings")
                     dataset = hgencodings.add_curvature_encodings(
                         dataset,
-                        type=curvature_type,
+                        curvature_type=curvature_type,
                         normalized=True,
                         dataset_name=dataset_name,
                     )
@@ -229,7 +229,7 @@ def fetch_data(
                     print("Adding the Laplacian encodings")
                     dataset = hgencodings.add_laplacian_encodings(
                         dataset,
-                        type=laplacian_type,
+                        laplacian_type=laplacian_type,
                         normalized=normalize_encodings,
                         dataset_name=dataset_name,
                     )
@@ -237,7 +237,7 @@ def fetch_data(
                     print("Adding the LCP encodings")
                     dataset = hgencodings.add_curvature_encodings(
                         dataset,
-                        type=curvature_type,
+                        curvature_type=curvature_type,
                         normalized=normalize_encodings,
                         dataset_name=dataset_name,
                     )
@@ -382,12 +382,12 @@ def initialise(
     H = sp.csc_matrix((data, indices, indptr), shape=(N, M), dtype=int).tocsr()  # V x E
     print(f"H is \n {H}")  # this is just the incidence matrix
 
-    # Calculate the degree of each vertex (degV) by summing the values
+    # Calculate the degree of each vertex (degree_vertices) by summing the values
     # in each row of the matrix H.
     # This gives the number of edges connected to each vertex.
     # The result is converted from NumPy to a PyTorch tensor, reshaped into a
     # column vector (N x 1), and cast to float.
-    degV: torch.Tensor = (
+    degree_vertices: torch.Tensor = (
         torch.from_numpy(H.sum(1)).view(-1, 1).float()
     )  # the degree of each vertices
 
@@ -424,27 +424,27 @@ def initialise(
         "mean",
         "sum",
     ), "use `mean` or `sum` for first-stage aggregation"
-    # So, degV[V] selects values from degV at positions indicated by V.
+    # So, degree_vertices[V] selects values from degree_vertices at positions indicated by V.
     # This operation retrieves the degree values corresponding to specific vertices.
-    # degE represents aggregated degree values of edges after combining the corresponding vertices'
+    # degree_edges represents aggregated degree values of edges after combining the corresponding vertices'
     # degree values.
     # this matches this from the paper:
     #
     # where we define de = (1/|e|) sum di as the average degree
     # of a hyperedge. In that case we use mean, without (1/|e|) we would use sum.
-    degE = scatter(degV[V], E, dim=0, reduce=args.first_aggregate)
+    degree_edges = scatter(degree_vertices[V], E, dim=0, reduce=args.first_aggregate)
     # this is what goes into the UniGCN/UniGCNII formula
     # for d_i and d_e
     # x_i= 1/√d_i sum 1/√d_e Wh_e,
-    degE: torch.Tensor = degE.pow(-0.5)
-    degV: torch.Tensor = degV.pow(-0.5)
-    degV[degV.isinf()] = (
+    degree_edges: torch.Tensor = degree_edges.pow(-0.5)
+    degree_vertices: torch.Tensor = degree_vertices.pow(-0.5)
+    degree_vertices[degree_vertices.isinf()] = (
         1  # when not added self-loop, some nodes might not be connected with any edge
     )
 
     V, E = V.to(device), E.to(device)
-    args.degV = degV.to(device)
-    args.degE = degE.to(device)
+    args.degree_vertices = degree_vertices.to(device)
+    args.degree_edges = degree_edges.to(device)
     args.degE2 = degE2.pow(-1.0).to(device)
 
     # nfeat: the dimension of the features

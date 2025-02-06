@@ -145,7 +145,7 @@ class encodings_saver(object):
                 dataset_copy = dataset.copy()
                 dataset_copy = hgencodings.add_laplacian_encodings(
                     dataset_copy,
-                    type=laplacian_type,
+                    laplacian_type=laplacian_type,
                     normalized=True,
                     dataset_name=None,
                     verbose=verbose,

@@ -93,9 +93,7 @@ def ngbors() -> OrderedDict:
 @pytest.fixture
 def degree_e() -> np.ndarray:
     """Returns the degree (edge) matrix"""
-    d_e: np.ndarray = np.array(
-        [[2, 0, 0, 0], [0, 2, 0, 0], [0, 0, 2, 0], [0, 0, 0, 2]]
-    )
+    d_e: np.ndarray = np.array([[2, 0, 0, 0], [0, 2, 0, 0], [0, 0, 2, 0], [0, 0, 0, 2]])
     return d_e
 
 
@@ -232,7 +230,7 @@ def test_compute_node_degree(toy_graph, degree_v) -> None:
     """
     laplacian: Laplacians = Laplacians(toy_graph)
     laplacian.compute_node_degrees()
-    assert_array_equal(laplacian.Dv, degree_v)
+    assert_array_equal(laplacian.degree_vertices, degree_v)
 
 
 def test_compute_node_degree_bis(toy_graph, degree_v_inverse) -> None:
@@ -247,7 +245,7 @@ def test_compute_node_degree_bis(toy_graph, degree_v_inverse) -> None:
     """
     laplacian: Laplacians = Laplacians(toy_graph)
     laplacian.compute_node_degrees()
-    assert_array_equal(np.linalg.inv(laplacian.Dv), degree_v_inverse)
+    assert_array_equal(np.linalg.inv(laplacian.degree_vertices), degree_v_inverse)
 
 
 def test_compute_edge_degree(toy_graph, degree_e) -> None:
@@ -262,7 +260,7 @@ def test_compute_edge_degree(toy_graph, degree_e) -> None:
     """
     laplacian: Laplacians = Laplacians(toy_graph)
     laplacian.compute_edge_degrees()
-    assert_array_equal(laplacian.De, degree_e)
+    assert_array_equal(laplacian.degree_edges, degree_e)
 
 
 def test_compute_normalized_laplacian(toy_graph, normalized_laplacian) -> None:
@@ -280,7 +278,7 @@ def test_compute_normalized_laplacian(toy_graph, normalized_laplacian) -> None:
 
     assert_allclose(
         laplacian.normalized_laplacian, normalized_laplacian, atol=1e-8
-    ), f"The normalized laplacian is {laplacian.normalized_laplacian} and the expected is {normalized_laplacian}. The inverse of D_v is {np.linalg.inv(laplacian.Dv)}"
+    ), f"The normalized laplacian is {laplacian.normalized_laplacian} and the expected is {normalized_laplacian}. The inverse of D_v is {np.linalg.inv(laplacian.degree_vertices)}"
 
 
 def test_compute_random_walk_laplacian_EE(toy_graph, rw_laplacian) -> None:
@@ -294,7 +292,7 @@ def test_compute_random_walk_laplacian_EE(toy_graph, rw_laplacian) -> None:
 
     """
     laplacian: Laplacians = Laplacians(toy_graph)
-    laplacian.compute_random_walk_laplacian(type="EE")
+    laplacian.compute_random_walk_laplacian(rw_type="EE")
     assert_allclose(laplacian.rw_laplacian, rw_laplacian, atol=1e-8)
 
 
@@ -325,7 +323,7 @@ def test_compute_random_walk_laplacian_EN(toy_graph, rw_laplacian_EN) -> None:
 
     """
     laplacian: Laplacians = Laplacians(toy_graph)
-    laplacian.compute_random_walk_laplacian(type="EN")
+    laplacian.compute_random_walk_laplacian(rw_type="EN")
     assert_allclose(laplacian.rw_laplacian, rw_laplacian_EN, atol=1e-8)
 
 
@@ -341,5 +339,5 @@ def test_compute_random_walk_laplacian_WE(toy_graph, rw_laplacian_WE) -> None:
 
     """
     laplacian: Laplacians = Laplacians(toy_graph)
-    laplacian.compute_random_walk_laplacian(type="WE")
+    laplacian.compute_random_walk_laplacian(rw_type="WE")
     assert_allclose(laplacian.rw_laplacian, rw_laplacian_WE, atol=1e-8)

@@ -218,29 +218,29 @@ def lift_and_plot_graphs():
     laplacian_shrikhande = Laplacians(shrikhande_hyper)
     laplacian_shrikhande.compute_edge_degrees()
     laplacian_shrikhande.compute_node_degrees()
-    De_shrikhande = laplacian_shrikhande.De
-    Dv_shrikhande = laplacian_shrikhande.Dv
+    De_shrikhande = laplacian_shrikhande.degree_edges
+    degree_vertices_shrikhande = laplacian_shrikhande.degree_vertices
 
     # For Rooke graph
     laplacian_rooke = Laplacians(rooke_hyper)
-    assert laplacian_rooke.Dv is None
-    assert laplacian_rooke.De is None
+    assert laplacian_rooke.degree_vertices is None
+    assert laplacian_rooke.degree_edges is None
     laplacian_rooke.compute_edge_degrees()
     laplacian_rooke.compute_node_degrees()
-    De_rooke = laplacian_rooke.De
-    Dv_rooke = laplacian_rooke.Dv
+    De_rooke = laplacian_rooke.degree_edges
+    degree_vertices_rooke = laplacian_rooke.degree_vertices
 
     print("\nShrikhande hypergraph matrices:")
     print("De (edge degrees):")
     print(De_shrikhande)
-    print("\nDv (vertex degrees):")
-    print(Dv_shrikhande)
+    print("\ndegree_vertices (vertex degrees):")
+    print(degree_vertices_shrikhande)
 
     print("\nRooke hypergraph matrices:")
     print("De (edge degrees):")
     print(De_rooke)
-    print("\nDv (vertex degrees):")
-    print(Dv_rooke)
+    print("\ndegree_vertices (vertex degrees):")
+    print(degree_vertices_rooke)
 
     # Plot Shrikhande graph and its hypergraph
     plt.figure(figsize=(20, 7))

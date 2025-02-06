@@ -8,10 +8,6 @@ Also try up to scaling.
 from itertools import permutations
 
 import numpy as np
-import time
-from typing import Optional, Tuple
-import signal
-from contextlib import contextmanager
 from scipy.stats import kurtosis, skew
 
 
@@ -20,9 +16,12 @@ def find_encoding_match(
     encoding2: np.ndarray,
     name_of_encoding: str,
     verbose: bool = True,
-    timeout_seconds: float = 60 * 4,
 ) -> tuple[
-    bool, np.ndarray | None, tuple[int, ...] | None, np.ndarray | None, str | None
+    bool,
+    np.ndarray | None,
+    tuple[int, ...] | None,
+    np.ndarray | None,
+    str | None,
 ]:
     """
     Check if two encodings are equivalent under row permutations.
@@ -42,6 +41,13 @@ def find_encoding_match(
         permuted_encoding2:
             the permuted encoding of encoding2
     """
+    sort_idx1: np.ndarray
+    sort_idx2: np.ndarray
+
+    permuted: np.ndarray
+    permuted2: np.ndarray
+    perm: np.ndarray
+
     if encoding1.shape != encoding2.shape:
         return False, None, None, None, None
 
@@ -54,8 +60,8 @@ def find_encoding_match(
         return True, encoding1, tuple(range(n_rows)), encoding2, None
 
     # Pre-compute expensive operations
-    abs_enc1 = np.abs(encoding1)
-    abs_enc2 = np.abs(encoding2)
+    abs_enc1: np.ndarray = np.abs(encoding1)
+    abs_enc2: np.ndarray = np.abs(encoding2)
 
     # Check the max absolute value of each encodings. If they are different, return False
     if not np.isclose(np.max(abs_enc1), np.max(abs_enc2), rtol=1e-12):
@@ -228,12 +234,6 @@ def find_encoding_match(
     last_col1 = np.sort(abs_enc1[:, -1])
     last_col2 = np.sort(abs_enc2[:, -1])
 
-    sort_idx1: np.ndarray
-    sort_idx2: np.ndarray
-
-    permuted: np.ndarray
-    permuted2: np.ndarray
-
     if not np.allclose(last_col1, last_col2, rtol=1e-12):
         if verbose:
             print("Different because last columns don't match when sorted")
@@ -291,7 +291,7 @@ def find_encoding_match(
 
         # Compare sorted matrices
         if np.allclose(sorted1, sorted2, rtol=1e-13):
-            perm: np.ndarray = np.argsort(lexsort1)
+            perm = np.argsort(lexsort1)
             return True, sorted1, tuple(perm), sorted2, None
 
     # start_time = time.time()
@@ -299,8 +299,14 @@ def find_encoding_match(
     long_timeout = False
     if not long_timeout:
         print("🚨 🚨 🚨 Assume same 🚨 🚨 🚨")
-        print(f"🚨" * 20)
-        return True, permuted, tuple(sort_idx1), permuted2, None  # could fix more
+        print("🚨" * 20)
+        return (
+            True,
+            permuted,
+            tuple(sort_idx1),
+            permuted2,
+            None,
+        )  # could fix more
     if long_timeout:
         # For larger matrices, use a heuristic approach based on row sorting
         # This works because:
@@ -308,41 +314,17 @@ def find_encoding_match(
         # 2. Lexicographical sorting will arrange rows in a canonical order
         # 3. After sorting, isomorphic graphs will have identical encodings
 
-        @contextmanager
-        def timeout(seconds):
-            def signal_handler(signum, frame):
-                raise TimeoutError("Timed out!")
-
-            signal.signal(signal.SIGALRM, signal_handler)
-            signal.alarm(int(seconds))
-            try:
-                yield
-            finally:
-                signal.alarm(0)
-
-        remaining_time = timeout_seconds - (time.time() - start_time)
         try:
-            with timeout(remaining_time):
-                t0_lexsort = time.time()
-                lexsort1: np.ndarray = np.lexsort(encoding1.T)
-                lexsort2: np.ndarray = np.lexsort(encoding2.T)
-                t1_lexsort = time.time()
-                print(f"Lex sort time: {t1_lexsort - t0_lexsort:.2f} seconds")
-                sorted1 = encoding1[lexsort1]
-                sorted2 = encoding2[lexsort2]
-                t3_lexsort = time.time()
-                print(
-                    f"Lex sort time (selection): {t3_lexsort - t1_lexsort:.2f} seconds"
-                )
+            lexsort1 = np.lexsort(encoding1.T)
+            lexsort2 = np.lexsort(encoding2.T)
+            sorted1 = encoding1[lexsort1]
+            sorted2 = encoding2[lexsort2]
 
-                # Compare sorted matrices
-                if np.allclose(sorted1, sorted2, rtol=1e-13):
-                    perm: np.ndarray = np.argsort(lexsort1)
-                    return True, sorted1, tuple(perm), sorted2, None
+            # Compare sorted matrices
+            if np.allclose(sorted1, sorted2, rtol=1e-13):
+                perm = np.argsort(lexsort1)
+                return True, sorted1, tuple(perm), sorted2, None
         except TimeoutError:
-            print(
-                f"🚨 Timeout during lexsort after {time.time() - start_time:.2f} seconds"
-            )
             return True, None, None, None, "timeout"
 
     return False, None, None, None, None
@@ -354,7 +336,11 @@ def check_encodings_same_up_to_scaling(
     name_of_encoding: str,
     verbose: bool = False,
 ) -> tuple[
-    bool, float | None, tuple[int, ...] | None, np.ndarray | None, np.ndarray | None
+    bool,
+    float | None,
+    tuple[int, ...] | None,
+    np.ndarray | None,
+    np.ndarray | None,
 ]:
     """
     Check if two encodings are equivalent under row permutations and scaling.
@@ -400,7 +386,10 @@ def check_encodings_same_up_to_scaling(
 
     # First try direct match with -1 scaling
     is_match, permuted, perm, permuted2, timeout = find_encoding_match(
-        encoding1, -encoding2, name_of_encoding=name_of_encoding, verbose=verbose
+        encoding1,
+        -encoding2,
+        name_of_encoding=name_of_encoding,
+        verbose=verbose,
     )
     if is_match:
         if timeout is not None:
@@ -432,7 +421,10 @@ def check_encodings_same_up_to_scaling(
 
     # Check if scaled versions match
     is_match, permuted, perm, permuted2, timeout = find_encoding_match(
-        scaled_encoding1, encoding2, name_of_encoding=name_of_encoding, verbose=verbose
+        scaled_encoding1,
+        encoding2,
+        name_of_encoding=name_of_encoding,
+        verbose=verbose,
     )
 
     if is_match:
@@ -452,7 +444,10 @@ def check_encodings_same_up_to_scaling(
         print("\nTrying with normalized encodings (divided by max abs value)")
 
     is_match, permuted, perm, permuted2, timeout = find_encoding_match(
-        normalized1, normalized2, name_of_encoding=name_of_encoding, verbose=verbose
+        normalized1,
+        normalized2,
+        name_of_encoding=name_of_encoding,
+        verbose=verbose,
     )
 
     if is_match:

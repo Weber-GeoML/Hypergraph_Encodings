@@ -31,7 +31,7 @@ def get_encodings(
     """
     if name_of_encoding == "LDP":
         return encoder.add_degree_encodings(hg.copy(), verbose=False)
-    elif name_of_encoding == "RWPE":
+    if name_of_encoding == "RWPE":
         # Add k to the name for random walks
         name_of_encoding = f"RWPE-k{k_rwpe}"
         # print(f"Adding random walk encodings with k={k_rwpe} for {name_of_encoding}")
@@ -39,22 +39,34 @@ def get_encodings(
         return encoder.add_randowm_walks_encodings(
             hg.copy(), rw_type="WE", verbose=False, k=k_rwpe
         )
-    elif name_of_encoding == "LCP-ORC":
-        return encoder.add_curvature_encodings(hg.copy(), verbose=False, type="ORC")
-    elif name_of_encoding == "LCP-FRC":
-        return encoder.add_curvature_encodings(hg.copy(), verbose=False, type="FRC")
-    elif name_of_encoding == "LAPE-Normalized":
-        return encoder.add_laplacian_encodings(
-            hg.copy(), type="Normalized", verbose=False, use_same_sign=True, k=k_lape
+    if name_of_encoding == "LCP-ORC":
+        return encoder.add_curvature_encodings(
+            hg.copy(), verbose=False, curvature_type="ORC"
         )
-    elif name_of_encoding == "LAPE-RW":
+    if name_of_encoding == "LCP-FRC":
+        return encoder.add_curvature_encodings(
+            hg.copy(), verbose=False, curvature_type="FRC"
+        )
+    if name_of_encoding == "LAPE-Normalized":
+        return encoder.add_laplacian_encodings(
+            hg.copy(),
+            laplacian_type="Normalized",
+            verbose=False,
+            use_same_sign=True,
+            k=k_lape,
+        )
+    if name_of_encoding == "LAPE-RW":
         # Add k to the name for random walk Laplacian
         name_of_encoding = f"LAPE-RW-k{k_lape}"
         return encoder.add_laplacian_encodings(
-            hg.copy(), type="RW", verbose=False, k=k_lape
+            hg.copy(), laplacian_type="RW", verbose=False, k=k_lape
         )
-    elif name_of_encoding == "LAPE-Hodge":
+    if name_of_encoding == "LAPE-Hodge":
         return encoder.add_laplacian_encodings(
-            hg.copy(), type="Hodge", verbose=False, use_same_sign=True, k=k_lape
+            hg.copy(),
+            laplacian_type="Hodge",
+            verbose=False,
+            use_same_sign=True,
+            k=k_lape,
         )
     return None

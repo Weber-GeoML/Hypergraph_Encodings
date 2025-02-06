@@ -15,7 +15,11 @@ def southern_orc_example(rook, shrikhande) -> None:
 
     # Compute ORCs with different probability measures and alpha values
     alpha_values = [0.0, 0.5]
-    prob_measures = {"Default": None, "Random Walk": prob_rw, "Two Hop": prob_two_hop}
+    prob_measures = {
+        "Default": None,
+        "Random Walk": prob_rw,
+        "Two Hop": prob_two_hop,
+    }
 
     for alpha in alpha_values:
         print(f"\nResults with alpha = {alpha}:")

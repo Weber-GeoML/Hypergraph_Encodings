@@ -16,7 +16,6 @@ import numpy as np
 import path
 import torch
 import torch.nn.functional as F
-from torch.optim import optimizer
 
 # load data
 from encodings_hnns.data_handling import load
@@ -27,7 +26,12 @@ from uniGCN.logger import get_logger
 from uniGCN.prepare import accuracy, fetch_data, initialise
 
 # Initialize results dictionary before the training loops
-all_results = {"train_accs": {}, "val_accs": {}, "test_accs": {}, "params": {}}
+all_results: dict[str, dict[str, list[float] | dict[str, float]]] = {
+    "train_accs": {},
+    "val_accs": {},
+    "test_accs": {},
+    "params": {},
+}
 
 # Print command line arguments
 print("\nCommand Line Arguments:")
@@ -214,6 +218,10 @@ for seed in range(1, 9):
 
     #### configure output directory
 
+    val_idx: list[int]
+    test_idx: list[int]
+    train_idx: torch.Tensor
+
     for run in range(1, args.n_runs + 1):
         run_dir = out_dir / f"{seed}_{run}"
         run_dir.makedirs_p()
@@ -221,13 +229,11 @@ for seed in range(1, 9):
         # load data
         args.split = run
         _, train_idx, test_idx = load(args)
-        val_idx: list[int]
-        test_idx: list[int]
         val_idx, test_idx = get_split(Y[test_idx], 0.2)
         # I believe train is fixed across all runs.
-        train_idx: torch.Tensor = torch.LongTensor(train_idx).to(device)
-        val_idx: torch.Tensor = torch.LongTensor(val_idx).to(device)
-        test_idx: torch.Tensor = torch.LongTensor(test_idx).to(device)
+        train_idx = torch.LongTensor(train_idx).to(device)
+        val_idx = torch.LongTensor(val_idx).to(device)
+        test_idx = torch.LongTensor(test_idx).to(device)
 
         # model
         model, optimizer = initialise(X, Y, G, args)
@@ -250,12 +256,12 @@ for seed in range(1, 9):
         test_acc: float = 0
         Z: torch.Tensor | None = None
         bad_counter: int = 0
-        test_accs_for_best_val = (
+        test_accs_for_best_val: list[float] = (
             []
         )  # List to store test accuracy for the best validation accuracy
-        train_accs = []
-        val_accs = []
-        test_accs = []
+        train_accs: list[float] = []
+        val_accs: list[float] = []
+        test_accs: list[float] = []
         for epoch in range(args.epochs):
             # train
             tic_epoch = time.time()
@@ -286,9 +292,9 @@ for seed in range(1, 9):
 
             # log acc
             if best_val_acc < val_acc:
-                best_val_acc: float = val_acc
-                best_test_acc: float = test_acc
-                bad_counter: int = 0
+                best_val_acc = val_acc
+                best_test_acc = test_acc
+                bad_counter = 0
                 test_accs_for_best_val.append(
                     test_acc
                 )  # Save the test accuracy when validation accuracy improves
