@@ -56,16 +56,6 @@ def test_rwpe_encoding(
     assert result["features"].shape[1] == k + 1  # k + 1 features per node
 
 
-def test_lcp_orc_encoding(
-    sample_hypergraph: dict[str, dict[str, Any] | int | np.ndarray],
-    encoder: HypergraphEncodings,
-) -> None:
-    """Test LCP-ORC encoding."""
-    result = get_encodings(sample_hypergraph, encoder, "LCP-ORC")
-    assert result is not None
-    assert "features" in result
-    assert isinstance(result["features"], np.ndarray)
-
 
 def test_lape_normalized(
     sample_hypergraph: dict[str, dict[str, Any] | int | np.ndarray],

@@ -43,10 +43,20 @@ dev = [
     "pylint",
 ]
 test = [
-    "pytest",
-    "coverage",
-    "pytest-cov",
-    "pytest-random-order",
+    # Testing frameworks
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-random-order>=1.1.0",
+    "coverage>=7.0.0",
+    # Test dependencies
+    "numpy>=1.24.0",
+    "scipy>=1.10.0",
+    "pandas>=2.0.0",
+    "brec>=1.0.0",
+    "torch>=2.0.0",
+    "torch-geometric>=2.3.0",
+    "torch-scatter>=2.1.1",
+    "torch-sparse>=0.6.17",
 ]
 
 [tool.setuptools]
