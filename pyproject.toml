@@ -1,0 +1,60 @@
+[build-system]
+requires = [
+    "setuptools>=42",
+    "wheel",
+    "torch>=2.0.0",  # Required for building torch-scatter
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "encodings_hnns"
+version = "1.0.0"
+requires-python = ">=3.10"
+dependencies = [
+    # Base requirements
+    "numpy",
+    "pandas",
+    "matplotlib",
+    "scipy",
+    "shapely",
+    "tabulate",
+    "path",
+    "brec",
+    "imageio",
+    "imageio-ffmpeg",
+    "POT",  # Python Optimal Transport library
+    # PyTorch ecosystem
+    "torch>=2.0.0",
+    "torch-geometric>=2.3.0",
+    "torch-scatter>=2.1.1",
+    "torch-sparse>=0.6.17",
+]
+
+[project.optional-dependencies]
+dev = [
+    "mypy",
+    "pandas-stubs",
+    "type-python-dateutil",
+    "pydocstyle",
+    "black",
+    "isort",
+    "docformatter",
+    "ruff",
+    "pylint",
+]
+test = [
+    "pytest",
+    "coverage",
+    "pytest-cov",
+    "pytest-random-order",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["encodings_hnns"]
+package-data = {"*" = ["py.typed"]}
+
+# Equivalent to dependency_links in setup.py
+[tool.setuptools.urls]
+torch = "https://download.pytorch.org/whl/torch_stable.html"
+pyg = "https://data.pyg.org/whl/torch-2.0.0.html" 
