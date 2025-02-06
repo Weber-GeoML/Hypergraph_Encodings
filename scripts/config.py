@@ -160,7 +160,9 @@ def parse():
         default="relu",
         help="activation layer between UniConvs",
     )
-    p.add_argument("--nlayer", type=int, default=2, help="number of hidden layers")
+    p.add_argument(
+        "--nlayer", type=int, default=2, help="number of hidden layers"
+    )
     p.add_argument(
         "--nhid",
         type=int,
@@ -188,7 +190,9 @@ def parse():
     )
     p.add_argument("--lr", type=float, default=0.01, help="learning rate")
     p.add_argument("--wd", type=float, default=5e-4, help="weight decay")
-    p.add_argument("--epochs", type=int, default=200, help="number of epochs to train")
+    p.add_argument(
+        "--epochs", type=int, default=200, help="number of epochs to train"
+    )
     p.add_argument(
         "--n-runs",
         type=int,
@@ -214,5 +218,7 @@ def parse():
         default=1,
         help="choose which train/test split to use",
     )
-    p.add_argument("--out-dir", type=str, default="runs/test", help="output dir")
+    p.add_argument(
+        "--out-dir", type=str, default="runs/test", help="output dir"
+    )
     return p.parse_args()

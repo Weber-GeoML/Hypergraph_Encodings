@@ -146,7 +146,7 @@ def fetch_data(
         X = torch.FloatTensor(np.array(X.todense()))
 
     # normalize the features
-    elif normalize_features == True:
+    elif normalize_features:
         if normalize_encodings or not add_encodings:
             # added by RP!
             if add_encodings:
@@ -344,9 +344,13 @@ def initialise(
     for e, vs in G.items():
         indices += vs  # the corresponding row indice, as nodes are rows
         # this keep tracks of the non-zero elements in the final matrix H
-        data += [1] * len(vs)  # extend data by adding as many '1's as there are vs
+        data += [1] * len(
+            vs
+        )  # extend data by adding as many '1's as there are vs
         # the matrix H only contain 1s!
-        indptr.append(len(indices))  # keep track of the number of vertices in each edge
+        indptr.append(
+            len(indices)
+        )  # keep track of the number of vertices in each edge
         # this is just used to tell use where column begin and start in data
 
     # csc_matrix((data, indices, indptr), [shape=(M, N)])
@@ -379,7 +383,9 @@ def initialise(
     # indptr = [0, 2, 4, 6]
     # N, M = 4, 3  # Shape of the matrix (4 rows, 3 columns)
     # H = sp.csc_matrix((data, indices, indptr), shape=(N, M), dtype=int).tocsr()
-    H = sp.csc_matrix((data, indices, indptr), shape=(N, M), dtype=int).tocsr()  # V x E
+    H = sp.csc_matrix(
+        (data, indices, indptr), shape=(N, M), dtype=int
+    ).tocsr()  # V x E
     print(f"H is \n {H}")  # this is just the incidence matrix
 
     # Calculate the degree of each vertex (degree_vertices) by summing the values
@@ -432,7 +438,9 @@ def initialise(
     #
     # where we define de = (1/|e|) sum di as the average degree
     # of a hyperedge. In that case we use mean, without (1/|e|) we would use sum.
-    degree_edges = scatter(degree_vertices[V], E, dim=0, reduce=args.first_aggregate)
+    degree_edges = scatter(
+        degree_vertices[V], E, dim=0, reduce=args.first_aggregate
+    )
     # this is what goes into the UniGCN/UniGCNII formula
     # for d_i and d_e
     # x_i= 1/√d_i sum 1/√d_e Wh_e,

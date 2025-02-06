@@ -19,8 +19,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class HyperGCN(nn.Module):
-    def __init__(self, args, nfeat, nhid, nclass: int, nlayer: int, V, E, X):
-        """TODO
+    def __init__(self, args, nfeat, nhid, nclass: int, nlayer: int, V, E, X)->None:
+        """Initialize the HyperGCN model.
 
         Args:
             d:
@@ -31,15 +31,15 @@ class HyperGCN(nn.Module):
                 number of classes
         """
         super(HyperGCN, self).__init__()
-        d, l, c = nfeat, nlayer, nclass
+        d, layer_l, c = nfeat, nlayer, nclass
         cuda = False
         args.mediators = True
 
         h = [d]
-        for i in range(l - 1):
-            power = l - i + 2
+        for i in range(layer_l - 1):
+            power = layer_l - i + 2
             if args.dataset == "citeseer":
-                power = l - i + 4
+                power = layer_l - i + 4
             h.append(2**power)
         h.append(c)
 
@@ -53,37 +53,47 @@ class HyperGCN(nn.Module):
         self.layers = nn.ModuleList(
             [
                 HyperGraphConvolution(h[i], h[i + 1], reapproximate, cuda)
-                for i in range(l)
+                for i in range(layer_l)
             ]
         )
         self.do, self.l = args.dropout, args.nlayer
         self.structure, self.m = structure, args.mediators
 
-    def forward(self, H):
-        """
-        an l-layer GCN
+    def forward(self, H: torch.Tensor)->torch.Tensor:
+        """An l-layer GCN.
 
         Args:
             H:
                 TODO
+
+        Returns:
+            The output features.
         """
-        do, l, m = self.do, self.l, self.m
+        do, layer_l, m = self.do, self.l, self.m
 
         for i, hidden in enumerate(self.layers):
             H = F.relu(hidden(self.structure, H, m))
-            if i < l - 1:
-                V = H
+            if i < layer_l - 1:
                 H = F.dropout(H, do, training=self.training)
 
         return F.log_softmax(H, dim=1)
 
 
 class HyperGraphConvolution(Module):
-    """
-    Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
+    """Simple GCN layer.
+    
+    Similar to https://arxiv.org/abs/1609.02907.
     """
 
     def __init__(self, a, b, reapproximate=True, cuda=False):
+        """Initialize the HyperGraphConvolution layer.
+
+        Args:
+            a:
+                TODO
+            b:
+                TODO
+        """
         super(HyperGraphConvolution, self).__init__()
         self.a, self.b = a, b
         self.reapproximate, self.cuda = reapproximate, cuda
@@ -93,12 +103,15 @@ class HyperGraphConvolution(Module):
         self.reset_parameters()
 
     def reset_parameters(self):
+        """Reset the parameters of the layer.
+        
+        """
         std = 1.0 / math.sqrt(self.W.size(1))
         self.W.data.uniform_(-std, std)
         self.bias.data.uniform_(-std, std)
 
     def forward(self, structure, H, m: int = True):
-        """TODO
+        """Forward pass of the layer.
 
         Args:
             structure:
@@ -124,7 +137,14 @@ class HyperGraphConvolution(Module):
         return AHW + b
 
     def __repr__(self):
-        return self.__class__.__name__ + " (" + str(self.a) + " -> " + str(self.b) + ")"
+        return (
+            self.__class__.__name__
+            + " ("
+            + str(self.a)
+            + " -> "
+            + str(self.b)
+            + ")"
+        )
 
 
 class SparseMM(torch.autograd.Function):
@@ -137,11 +157,29 @@ class SparseMM(torch.autograd.Function):
 
     @staticmethod
     def forward(ctx, M1, M2):
+        """Forward pass of the SparseMM layer.
+
+        Args:
+            ctx:
+                TODO
+            M1:
+                TODO
+        """
         ctx.save_for_backward(M1, M2)
         return torch.mm(M1, M2)
 
     @staticmethod
-    def backward(ctx, g):
+    def backward(ctx: torch.autograd.function.FunctionContext, g: torch.Tensor)->tuple[torch.Tensor, torch.Tensor]:
+        """Backward pass of the SparseMM layer.
+
+        Args:
+            g:
+                The gradient.
+        
+        Returns:
+            The gradient of the first matrix.
+            The gradient of the second matrix.
+        """
         M1, M2 = ctx.saved_tensors
         g1 = g2 = None
 
@@ -277,16 +315,16 @@ def adjacency(edges, weights, n):
     return A
 
 
-def symnormalise(M):
-    """
-    symmetrically normalise sparse matrix
+def symnormalise(M: sp.csr_matrix)->sp.csr_matrix:
+    """Symmetrically normalise sparse matrix.
 
-    arguments:
-    M: scipy sparse matrix
+    Args:
+        M:
+            scipy sparse matrix
 
-    returns:
-    D^{-1/2} M D^{-1/2}
-    where D is the diagonal node-degree matrix
+    Returns:
+        D^{-1/2} M D^{-1/2}
+        where D is the diagonal node-degree matrix
     """
 
     d = np.array(M.sum(1))
@@ -298,15 +336,15 @@ def symnormalise(M):
     return (DHI.dot(M)).dot(DHI)
 
 
-def ssm2tst(M):
-    """
-    converts a scipy sparse matrix (ssm) to a torch sparse tensor (tst)
+def ssm2tst(M: sp.csr_matrix)->torch.sparse.FloatTensor:
+    """Converts a scipy sparse matrix (ssm) to a torch sparse tensor (tst).
 
-    arguments:
-    M: scipy sparse matrix
+    Args:
+        M:
+            scipy sparse matrix
 
-    returns:
-    a torch sparse tensor of M
+    Returns:
+        a torch sparse tensor of M
     """
 
     M = M.tocoo().astype(np.float32)

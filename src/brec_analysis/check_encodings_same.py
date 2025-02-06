@@ -87,7 +87,9 @@ def lap_checks_to_clean_up(name_of_encoding: str, hg1, hg2, graph_type: str):
             properties["Graph B"][prop],
             rtol=1e-10,
         ):
-            print(f"The two graphs have different {prop} for {name_of_encoding}")
+            print(
+                f"The two graphs have different {prop} for {name_of_encoding}"
+            )
             same_properties = False
 
     # Compare norms
@@ -98,7 +100,9 @@ def lap_checks_to_clean_up(name_of_encoding: str, hg1, hg2, graph_type: str):
         rtol=1e-12,
     )
     if not same_norms:
-        print(f"The two graphs have different eigenvector norms for {name_of_encoding}")
+        print(
+            f"The two graphs have different eigenvector norms for {name_of_encoding}"
+        )
         same_properties = False
 
     # Print comparison of norms
@@ -106,7 +110,9 @@ def lap_checks_to_clean_up(name_of_encoding: str, hg1, hg2, graph_type: str):
     if verbose:
         print("\nComparison of eigenvector norms:")
         for name in ["Graph A", "Graph B"]:
-            print(f"{name} Laplacian eigenvector norms: {properties[name]['norms']}")
+            print(
+                f"{name} Laplacian eigenvector norms: {properties[name]['norms']}"
+            )
 
     # Check isospectrality
     are_isospectral = check_isospectrality(eigenvalues1, eigenvalues2)
@@ -162,7 +168,9 @@ def get_appropriate_encodings(
         tuple:
             encodings for the first and second graph
     """
-    return get_regular_encodings(name, hg1, hg2, encoder1, encoder2, k, verbose=verbose)
+    return get_regular_encodings(
+        name, hg1, hg2, encoder1, encoder2, k, verbose=verbose
+    )
 
 
 def get_laplacian_encodings(name: str, hg1, hg2, k: int) -> tuple:
@@ -313,11 +321,18 @@ def checks_encodings(
 
     # Get encodings based on type
     hg1_encodings, hg2_encodings = get_appropriate_encodings(
-        name_of_encoding, hg1_copy, hg2_copy, encoder_number_one, encoder_number_two, k
+        name_of_encoding,
+        hg1_copy,
+        hg2_copy,
+        encoder_number_one,
+        encoder_number_two,
+        k,
     )
     if graph_type == "hypergraph" and "lape" in name_of_encoding.lower():
         # remove the first column
-        print(f"Removing first column of {name_of_encoding} for type {graph_type}")
+        print(
+            f"Removing first column of {name_of_encoding} for type {graph_type}"
+        )
         hg1_encodings = hg1_encodings[:, 1:]
         hg2_encodings = hg2_encodings[:, 1:]
 
@@ -335,7 +350,9 @@ def checks_encodings(
         print(f"Encoding name: {name_of_encoding}")
 
     print(f"Encoding name: {name_of_encoding}")
-    match_result = check_for_matches(hg1_encodings, hg2_encodings, name_of_encoding)
+    match_result = check_for_matches(
+        hg1_encodings, hg2_encodings, name_of_encoding
+    )
     if match_result["status"] == MatchStatus.TIMEOUT:
         print("🚨 Timeout")
     comparison_result.update(match_result)
@@ -490,7 +507,9 @@ def checks_encodings(
             else:
                 pair_idx_str = str(pair_idx)
             assert category is not None
-            save_comparison_plot(plt, plot_dir, pair_idx_str, category, modified_name, k)
+            save_comparison_plot(
+                plt, plot_dir, pair_idx_str, category, modified_name, k
+            )
             plt.close()  # Only close the figure once at the end
 
     return comparison_result
@@ -514,7 +533,9 @@ def check_for_matches(encoding1, encoding2, name: str) -> dict:
     permuted: np.ndarray | None = None
     permuted2: np.ndarray | None = None
     perm: tuple[int, ...] | None = None
-    result = find_encoding_match(encoding1, encoding2, name_of_encoding=name, verbose=True)
+    result = find_encoding_match(
+        encoding1, encoding2, name_of_encoding=name, verbose=True
+    )
     assert result is not None
     is_direct_match, permuted, perm, permuted2, _ = result
     assert permuted is not None

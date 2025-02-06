@@ -17,7 +17,11 @@ def find_encoding_match(
     name_of_encoding: str,
     verbose: bool = True,
 ) -> tuple[
-    bool, np.ndarray | None, tuple[int, ...] | None, np.ndarray | None, str | None
+    bool,
+    np.ndarray | None,
+    tuple[int, ...] | None,
+    np.ndarray | None,
+    str | None,
 ]:
     """
     Check if two encodings are equivalent under row permutations.
@@ -63,8 +67,12 @@ def find_encoding_match(
     if not np.isclose(np.max(abs_enc1), np.max(abs_enc2), rtol=1e-12):
         if verbose:
             print("Different because:")
-            print(f"Max absolute value of encoding1: {np.max(np.abs(encoding1))}")
-            print(f"Max absolute value of encoding2: {np.max(np.abs(encoding2))}")
+            print(
+                f"Max absolute value of encoding1: {np.max(np.abs(encoding1))}"
+            )
+            print(
+                f"Max absolute value of encoding2: {np.max(np.abs(encoding2))}"
+            )
             print("\n")
         return False, None, None, None, None
 
@@ -72,8 +80,12 @@ def find_encoding_match(
     if not np.isclose(np.min(abs_enc1), np.min(abs_enc2), rtol=1e-12):
         if verbose:
             print("Different because:")
-            print(f"Min absolute value of encoding1: {np.min(np.abs(encoding1))}")
-            print(f"Min absolute value of encoding2: {np.min(np.abs(encoding2))}")
+            print(
+                f"Min absolute value of encoding1: {np.min(np.abs(encoding1))}"
+            )
+            print(
+                f"Min absolute value of encoding2: {np.min(np.abs(encoding2))}"
+            )
             print("\n")
         return False, None, None, None, None
 
@@ -81,8 +93,12 @@ def find_encoding_match(
     if not np.isclose(np.mean(abs_enc1), np.mean(abs_enc2), rtol=1e-12):
         if verbose:
             print("Different because:")
-            print(f"Mean absolute value of encoding1: {np.mean(np.abs(encoding1))}")
-            print(f"Mean absolute value of encoding2: {np.mean(np.abs(encoding2))}")
+            print(
+                f"Mean absolute value of encoding1: {np.mean(np.abs(encoding1))}"
+            )
+            print(
+                f"Mean absolute value of encoding2: {np.mean(np.abs(encoding2))}"
+            )
             print("\n")
         return False, None, None, None, None
 
@@ -159,15 +175,21 @@ def find_encoding_match(
     # t0 = time.time()
     kurtosis_cols1 = kurtosis(abs_enc1, axis=0)
     kurtosis_cols2 = kurtosis(abs_enc2, axis=0)
-    if not (np.any(np.isnan(kurtosis_cols1)) or np.any(np.isnan(kurtosis_cols2))):
+    if not (
+        np.any(np.isnan(kurtosis_cols1)) or np.any(np.isnan(kurtosis_cols2))
+    ):
         # if verbose:
         #     print(f"Kurtosis computation time: {time.time() - t0:.4f} seconds")
 
         # check kurtosis
         if not np.allclose(kurtosis_cols1, kurtosis_cols2, rtol=1e-12):
             if verbose:
-                diff_cols = ~np.isclose(kurtosis_cols1, kurtosis_cols2, rtol=1e-12)
-                print(f"Different kurtosis at columns: {np.where(diff_cols)[0]}")
+                diff_cols = ~np.isclose(
+                    kurtosis_cols1, kurtosis_cols2, rtol=1e-12
+                )
+                print(
+                    f"Different kurtosis at columns: {np.where(diff_cols)[0]}"
+                )
                 print(f"Kurtosis values enc1: {kurtosis_cols1[diff_cols]}")
                 print(f"Kurtosis values enc2: {kurtosis_cols2[diff_cols]}")
             return False, None, None, None, None
@@ -221,7 +243,9 @@ def find_encoding_match(
     if not np.allclose(sum_sq_cols1, sum_sq_cols2, rtol=1e-12):
         if verbose:
             diff_cols = ~np.isclose(sum_sq_cols1, sum_sq_cols2, rtol=1e-12)
-            print(f"Different sum of squares at columns: {np.where(diff_cols)[0]}")
+            print(
+                f"Different sum of squares at columns: {np.where(diff_cols)[0]}"
+            )
             print(f"Sum of squares values enc1: {sum_sq_cols1[diff_cols]}")
             print(f"Sum of squares values enc2: {sum_sq_cols2[diff_cols]}")
         return False, None, None, None, None
@@ -296,7 +320,13 @@ def find_encoding_match(
     if not long_timeout:
         print("🚨 🚨 🚨 Assume same 🚨 🚨 🚨")
         print("🚨" * 20)
-        return True, permuted, tuple(sort_idx1), permuted2, None  # could fix more
+        return (
+            True,
+            permuted,
+            tuple(sort_idx1),
+            permuted2,
+            None,
+        )  # could fix more
     if long_timeout:
         # For larger matrices, use a heuristic approach based on row sorting
         # This works because:
@@ -326,7 +356,11 @@ def check_encodings_same_up_to_scaling(
     name_of_encoding: str,
     verbose: bool = False,
 ) -> tuple[
-    bool, float | None, tuple[int, ...] | None, np.ndarray | None, np.ndarray | None
+    bool,
+    float | None,
+    tuple[int, ...] | None,
+    np.ndarray | None,
+    np.ndarray | None,
 ]:
     """
     Check if two encodings are equivalent under row permutations and scaling.
@@ -372,7 +406,10 @@ def check_encodings_same_up_to_scaling(
 
     # First try direct match with -1 scaling
     is_match, permuted, perm, permuted2, timeout = find_encoding_match(
-        encoding1, -encoding2, name_of_encoding=name_of_encoding, verbose=verbose
+        encoding1,
+        -encoding2,
+        name_of_encoding=name_of_encoding,
+        verbose=verbose,
     )
     if is_match:
         if timeout is not None:
@@ -404,7 +441,10 @@ def check_encodings_same_up_to_scaling(
 
     # Check if scaled versions match
     is_match, permuted, perm, permuted2, timeout = find_encoding_match(
-        scaled_encoding1, encoding2, name_of_encoding=name_of_encoding, verbose=verbose
+        scaled_encoding1,
+        encoding2,
+        name_of_encoding=name_of_encoding,
+        verbose=verbose,
     )
 
     if is_match:
@@ -424,7 +464,10 @@ def check_encodings_same_up_to_scaling(
         print("\nTrying with normalized encodings (divided by max abs value)")
 
     is_match, permuted, perm, permuted2, timeout = find_encoding_match(
-        normalized1, normalized2, name_of_encoding=name_of_encoding, verbose=verbose
+        normalized1,
+        normalized2,
+        name_of_encoding=name_of_encoding,
+        verbose=verbose,
     )
 
     if is_match:

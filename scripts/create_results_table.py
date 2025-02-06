@@ -57,9 +57,9 @@ def parse_log_file(file_path):
                     config_dict["transformer_version"] = parts[current_idx]
                     current_idx += 1
                 if len(parts) > current_idx and "depth" in parts[current_idx]:
-                    config_dict["transformer_depth"] = parts[current_idx].replace(
-                        "depth", ""
-                    )
+                    config_dict["transformer_depth"] = parts[
+                        current_idx
+                    ].replace("depth", "")
                     current_idx += 1
 
             # Add nlayer info if present
@@ -149,7 +149,9 @@ def create_results_table(log_dir):
                 dataset_key = dataset
 
             # Parse results and config
-            acc, std, config_args = parse_log_file(os.path.join(log_dir, filename))
+            acc, std, config_args = parse_log_file(
+                os.path.join(log_dir, filename)
+            )
             if acc is not None:
                 key = (model, encoding)
                 if key not in results:
@@ -177,7 +179,9 @@ def create_results_table(log_dir):
             print(f"Error processing file {filename}: {str(e)}")
             failed_files.append(filename)  # Add to failed files list
 
-    print(f"Successfully processed {processed_files} out of {len(log_files)} files")
+    print(
+        f"Successfully processed {processed_files} out of {len(log_files)} files"
+    )
     if failed_files:
         print("Failed files:")
         for failed_file in failed_files:
@@ -193,16 +197,16 @@ def create_results_table(log_dir):
     for (model, encoding), data in sorted(results.items()):
         row = []
         # Get transformer info from config if available
-        run_key = next(iter(data.keys()))  # Get any dataset key to access config
+        run_key = next(
+            iter(data.keys())
+        )  # Get any dataset key to access config
         config = full_results["config_args"].get(
             f"{model}_{data_type}_{run_key}_{encoding}", {}
         )
 
         # Build model name with transformer info if present
         if config.get("do_transformer", False):
-            transformer_info = (
-                f" (T_{config['transformer_version']}d_{config['transformer_depth']})"
-            )
+            transformer_info = f" (T_{config['transformer_version']}d_{config['transformer_depth']})"
         else:
             transformer_info = ""
 
@@ -226,7 +230,9 @@ def create_results_table(log_dir):
     df = pd.DataFrame(rows, columns=["Model"] + datasets)
 
     # Split tables by model
-    models = df["Model"].apply(lambda x: x.split()[0]).unique()  # Get base model names
+    models = (
+        df["Model"].apply(lambda x: x.split()[0]).unique()
+    )  # Get base model names
     results_dir = os.path.join(log_dir, "results")
     os.makedirs(results_dir, exist_ok=True)
 

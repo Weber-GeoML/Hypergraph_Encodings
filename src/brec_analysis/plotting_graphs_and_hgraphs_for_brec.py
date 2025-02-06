@@ -49,7 +49,10 @@ def plot_hypergraph_pair(
     # Plot first graph
     plt.subplot(241)
     pos1 = nx.circular_layout(G1)
-    plt.title(f"Graph A\n{len(G1.nodes())} nodes, {len(G1.edges())} edges", fontsize=30)
+    plt.title(
+        f"Graph A\n{len(G1.nodes())} nodes, {len(G1.edges())} edges",
+        fontsize=30,
+    )
     nx.draw(
         G1,
         pos1,
@@ -63,7 +66,10 @@ def plot_hypergraph_pair(
     # Plot second graph
     plt.subplot(242)
     pos2 = nx.circular_layout(G2)
-    plt.title(f"Graph B\n{len(G2.nodes())} nodes, {len(G2.edges())} edges", fontsize=30)
+    plt.title(
+        f"Graph B\n{len(G2.nodes())} nodes, {len(G2.edges())} edges",
+        fontsize=30,
+    )
     nx.draw(
         G2,
         pos2,
@@ -88,7 +94,9 @@ def plot_hypergraph_pair(
         with_edge_labels=False,
         convex=False,
     )
-    plt.title(f"Hypergraph A\n({len(hg1['hypergraph'])} hyperedges)", fontsize=30)
+    plt.title(
+        f"Hypergraph A\n({len(hg1['hypergraph'])} hyperedges)", fontsize=30
+    )
 
     # Plot second hypergraph
     plt.subplot(244)
@@ -102,7 +110,9 @@ def plot_hypergraph_pair(
         with_edge_labels=False,
         convex=False,
     )
-    plt.title(f"Hypergraph B\n({len(hg2['hypergraph'])} hyperedges)", fontsize=30)
+    plt.title(
+        f"Hypergraph B\n({len(hg2['hypergraph'])} hyperedges)", fontsize=30
+    )
 
     # # Row 3: Bipartite representations
     # # Plot first bipartite
@@ -319,7 +329,6 @@ def plot_graph_pair(
     # Set isomorphism status
 
     # Plot first graph
-    ax1 = plt.subplot(3, 2, 1)
     pos1 = nx.circular_layout(graph1)
     plt.title(
         f"Graph A\n{len(graph1.nodes())} nodes, {len(graph1.edges())} edges",
@@ -336,7 +345,6 @@ def plot_graph_pair(
     )
 
     # Plot second graph
-    ax2 = plt.subplot(3, 2, 2)
     pos2 = nx.circular_layout(graph2)
     plt.title(
         f"Graph B\n{len(graph2.nodes())} nodes, {len(graph2.edges())} edges",
@@ -383,7 +391,8 @@ def plot_graph_pair(
     )
 
     plt.title(
-        f"Node Degree Distribution\n({len(graph1.nodes())} total nodes)", fontsize=25
+        f"Node Degree Distribution\n({len(graph1.nodes())} total nodes)",
+        fontsize=25,
     )
     plt.xlabel("Degree", fontsize=25)
     plt.ylabel("Count", fontsize=25)
@@ -462,7 +471,9 @@ def plot_graph_pair(
             "Number of components": nx.number_connected_components(G),
             "Is planar": nx.is_planar(G),
             # Centrality measures (averaged over nodes)
-            "Avg betweenness": np.mean(list(nx.betweenness_centrality(G).values())),
+            "Avg betweenness": np.mean(
+                list(nx.betweenness_centrality(G).values())
+            ),
             "Avg closeness": np.mean(list(nx.closeness_centrality(G).values())),
             # "Avg eigenvector": np.mean(
             #     list(nx.eigenvector_centrality_numpy(G).values())

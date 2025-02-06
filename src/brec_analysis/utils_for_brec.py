@@ -35,7 +35,9 @@ def nx_to_pyg(G: nx.Graph) -> Data:
     edge_index = torch.tensor(
         [[e[0] for e in G.edges()], [e[1] for e in G.edges()]], dtype=torch.long
     )
-    x = torch.empty((G.number_of_nodes(), 0), dtype=torch.float)  # Empty features
+    x = torch.empty(
+        (G.number_of_nodes(), 0), dtype=torch.float
+    )  # Empty features
     y = torch.zeros(G.number_of_nodes(), dtype=torch.long)
     return Data(x=x, y=y, edge_index=edge_index, num_nodes=G.number_of_nodes())
 
@@ -61,7 +63,9 @@ def convert_nx_to_hypergraph_dict(G: nx.Graph) -> dict:
     }
 
 
-def create_comparison_table(stats1: dict, stats2: dict) -> tuple[list[str], list[str]]:
+def create_comparison_table(
+    stats1: dict, stats2: dict
+) -> tuple[list[str], list[str]]:
     """Create comparison table with differences highlighted in red.
 
     Args:

@@ -93,7 +93,9 @@ def analyze_graph_pair(
     # in graph space
     plot_figures = True
     if plot_figures:
-        plot_graph_pair(G1, G2, pair_idx, category, is_isomorphic, "plots/graph_pairs")
+        plot_graph_pair(
+            G1, G2, pair_idx, category, is_isomorphic, "plots/graph_pairs"
+        )
 
     # Convert to hypergraph dictionaries
     # THESE ARE STILL GRAPHS!!!
@@ -138,8 +140,12 @@ def analyze_graph_pair(
     print("*-" * 25)
 
     # Lift to hypergraphs and compare
-    hg1_lifted = lift_to_hypergraph(data1, verbose=False, already_in_nx=already_in_nx)
-    hg2_lifted = lift_to_hypergraph(data2, verbose=False, already_in_nx=already_in_nx)
+    hg1_lifted = lift_to_hypergraph(
+        data1, verbose=False, already_in_nx=already_in_nx
+    )
+    hg2_lifted = lift_to_hypergraph(
+        data2, verbose=False, already_in_nx=already_in_nx
+    )
 
     plot_figures = True
     if plot_figures:
@@ -166,7 +172,9 @@ def analyze_graph_pair(
         types_of_encoding=types_of_encoding,
         k=k,
     )
-    final_results["hypergraph_level"]["encodings"] = hypergraph_results["encodings"]
+    final_results["hypergraph_level"]["encodings"] = hypergraph_results[
+        "encodings"
+    ]
 
     return final_results
 
@@ -219,7 +227,9 @@ def write_results(f, filepath_json, results: dict, json_results: dict) -> dict:
         # t_level_start = time.time()
         level_key = "graph" if level == "graph_level" else "hypergraph"
 
-        for encoding_type, encoding_results in results[level]["encodings"].items():
+        for encoding_type, encoding_results in results[level][
+            "encodings"
+        ].items():
             # t_encoding_start = time.time()
 
             status = encoding_results["status"]
@@ -234,7 +244,9 @@ def write_results(f, filepath_json, results: dict, json_results: dict) -> dict:
             # Time JSON structure updates
             # t_json_start = time.time()
             # Update complex JSON structure
-            encoding_key = f"{level.split('_')[0].capitalize()} ({encoding_type})"
+            encoding_key = (
+                f"{level.split('_')[0].capitalize()} ({encoding_type})"
+            )
             if encoding_key not in json_results[category]:
                 json_results[category][encoding_key] = {
                     "different": 0,
@@ -493,13 +505,17 @@ def main(encodings: str, categories: str, k: int = 2) -> None:
     # print(f"Total number of graphs in BREC dataset: {len(dataset_pip)}")
 
     # Get the graphs for analysis
-    graphs_read_from_files: dict[str, list[nx.Graph]] = analyze_brec_categories()
+    graphs_read_from_files: dict[str, list[nx.Graph]] = (
+        analyze_brec_categories()
+    )
     quick_eda_from_github(graphs_read_from_files, verbose=False)
     plot_edge_distribution(graphs_read_from_files)
     # loop through all graphs_read_from_files, assert the grabs are connected
     for category, graphs in graphs_read_from_files.items():
         for graph in graphs:
-            assert nx.is_connected(graph), f"Graph in {category} is not connected"
+            assert nx.is_connected(
+                graph
+            ), f"Graph in {category} is not connected"
             # assert the number of connected components is 1
             components = list(nx.connected_components(graph))
             assert (
@@ -537,9 +553,7 @@ def main(encodings: str, categories: str, k: int = 2) -> None:
 
     # Create results files
     results_file = f"results/brec/all_comparisons_encodings_{encodings}_categories_{categories}.txt"
-    json_file = (
-        f"results/brec/statistics_encodings_{encodings}_categories_{categories}.json"
-    )
+    json_file = f"results/brec/statistics_encodings_{encodings}_categories_{categories}.json"
 
     print(f"results_file: {results_file}")
     print(f"json_file: {json_file}")
@@ -649,7 +663,11 @@ def main(encodings: str, categories: str, k: int = 2) -> None:
                     )
                     status_graph = first_encoding_graph["status"]
                     first_encoding_hypergraph = next(
-                        iter(pair_results["hypergraph_level"]["encodings"].values())
+                        iter(
+                            pair_results["hypergraph_level"][
+                                "encodings"
+                            ].values()
+                        )
                     )
                     status_hypergraph = first_encoding_hypergraph["status"]
                     print(f"status_graph: {status_graph}")
@@ -662,14 +680,18 @@ def main(encodings: str, categories: str, k: int = 2) -> None:
                             json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{total_pair_idx}_statistics.json"
                             # updates the json_results with the pair_results
                             # and saves the singleton file
-                            write_results(f, json_path, pair_results, json_results)
+                            write_results(
+                                f, json_path, pair_results, json_results
+                            )
                     else:
                         print("🚨 Timeout")
                         if len(selected_encodings) == 1:
                             json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{total_pair_idx}_statistics_TIMEOUT.json"
                             # updates the json_results with the pair_results
                             # and saves the singleton file
-                            write_results(f, json_path, pair_results, json_results)
+                            write_results(
+                                f, json_path, pair_results, json_results
+                            )
 
                     total_pair_idx += 1  # Increment the global counter
 

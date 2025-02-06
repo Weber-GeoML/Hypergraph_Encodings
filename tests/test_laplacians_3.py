@@ -93,7 +93,9 @@ def ngbors() -> OrderedDict:
 @pytest.fixture
 def degree_e() -> np.ndarray:
     """Returns the degree (edge) matrix"""
-    d_e: np.ndarray = np.array([[2, 0, 0, 0], [0, 2, 0, 0], [0, 0, 2, 0], [0, 0, 0, 2]])
+    d_e: np.ndarray = np.array(
+        [[2, 0, 0, 0], [0, 2, 0, 0], [0, 0, 2, 0], [0, 0, 0, 2]]
+    )
     return d_e
 
 
@@ -245,7 +247,9 @@ def test_compute_node_degree_bis(toy_graph, degree_v_inverse) -> None:
     """
     laplacian: Laplacians = Laplacians(toy_graph)
     laplacian.compute_node_degrees()
-    assert_array_equal(np.linalg.inv(laplacian.degree_vertices), degree_v_inverse)
+    assert_array_equal(
+        np.linalg.inv(laplacian.degree_vertices), degree_v_inverse
+    )
 
 
 def test_compute_edge_degree(toy_graph, degree_e) -> None:

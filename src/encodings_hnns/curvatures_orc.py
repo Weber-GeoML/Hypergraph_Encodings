@@ -192,7 +192,9 @@ class ORC:
         # Execute the command using subprocess with redirected output
         try:
             with open(os.devnull, "w") as devnull:
-                subprocess.run(command, check=True, stdout=devnull, stderr=devnull)
+                subprocess.run(
+                    command, check=True, stdout=devnull, stderr=devnull
+                )
         except subprocess.CalledProcessError as e:
             print(f"Error executing Julia command: {e}")
             return
@@ -216,7 +218,9 @@ class ORC:
                 print(
                     f"The node curvatures are \n {stats['node_curvature_neighborhood']}"
                 )
-            self.node_curvature_neighborhood = stats["node_curvature_neighborhood"]
+            self.node_curvature_neighborhood = stats[
+                "node_curvature_neighborhood"
+            ]
             if verbose:
                 print(f"The edge curvatures are \n {stats['edge_curvature']}")
             self.edge_curvature = {
