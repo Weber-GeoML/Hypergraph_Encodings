@@ -34,7 +34,7 @@ dependencies = [
 dev = [
     "mypy",
     "pandas-stubs",
-    "type-python-dateutil",
+    "types-python-dateutil",
     "pydocstyle",
     "black",
     "isort",

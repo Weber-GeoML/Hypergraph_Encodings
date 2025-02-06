@@ -1,4 +1,4 @@
-name: Type Check
+name: Mypy
 
 on: [push]
 
@@ -21,4 +21,4 @@ jobs:
         pip install -e ".[dev]"  # Install package with dev dependencies
     - name: Type checking with mypy
       run: |
-        mypy src/ tests/ 
+        mypy src/ tests/ scripts/ 
