@@ -51,9 +51,9 @@ test = [
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-packages = ["encodings_hnns"]
+packages = {find = {where = ["src"], include = ["encodings_hnns*"]}}
 package-data = {"*" = ["py.typed"]}
 
-[tool.setuptools.packages.find]
-where = ["src"]
-include = ["encodings_hnns*"] 
+[tool.ruff]
+line-length = 88
+target-version = "py310" 
