@@ -28,7 +28,7 @@ def compute_laplacian(hg, lap_type: str):
         L = encoder.laplacian.hodge_laplacian_down
 
     hg_lape = encoder.add_laplacian_encodings(
-        hg.copy(), type=lap_type, verbose=False, use_same_sign=True
+        hg.copy(), laplacian_type=lap_type, verbose=False, use_same_sign=True
     )
     del encoder
     return hg_lape, L

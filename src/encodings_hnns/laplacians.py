@@ -1,5 +1,4 @@
-"""
-laplacians.py
+"""laplacians.py.
 
 This module contains functions for computing the Laplacians
 (Hodge, random walks, etc).
@@ -58,7 +57,7 @@ class Laplacians:
         self.hypergraph_adjacency: None | np.ndarray = None
 
     def compute_boundary(self, verbose: bool = False) -> None:
-        """Computes the boundary matrix
+        """Computes the boundary matrix.
 
         Args:
             verbose:
@@ -89,18 +88,22 @@ class Laplacians:
         self.boundary_matrix = matrix.T
 
     def compute_hypergraph_adjacency(self) -> None:
-        """Computes the hypergraph adjacency matrix"""
+        """Computes the hypergraph adjacency matrix."""
         if self.boundary_matrix is None:
             self.compute_boundary()
         if self.degree_vertices is None:
             self.compute_node_degrees()
+        
+        assert self.boundary_matrix is not None  
+        assert self.degree_vertices is not None
+        
         self.hypergraph_adjacency = (
             np.matmul(self.boundary_matrix, self.boundary_matrix.T)
             - self.degree_vertices
         )
 
     def compute_hodge_laplacian(self) -> None:
-        """Computes the hodge-Laplacian of hypergraphs
+        """Computes the hodge-Laplacian of hypergraphs.
 
         There is the up Laplacian and the down Laplacian
         """
@@ -115,18 +118,21 @@ class Laplacians:
         )
 
     def compute_normalized_laplacian(self) -> None:
-        """Computes the normalized laplacian"""
+        """Computes the normalized laplacian."""
         if self.boundary_matrix is None:
             # computes the boundary matrixs
             self.compute_boundary()
         if self.node_degrees == {}:
             # computes the node degrees
             self.compute_node_degrees()
-        if self.edge_degrees == {}:
+        if not self.edge_degrees:
             # compute the edge degrees
             # that is number of nodes in each hyperedge
             self.compute_edge_degrees()
-        # Assumes that the nodes are sorted in increasing number
+            
+        assert self.boundary_matrix is not None  
+        assert self.degree_edges is not None
+        assert self.degree_vertices is not None
 
         # intermediate is dv - B_1*D_e^{-1}*B_1^T
         assert self.boundary_matrix is not None
@@ -219,7 +225,7 @@ class Laplacians:
             for i, node_i in enumerate(all_nodes):
                 i_neighbors_counts: dict = {}
                 count_weights: int = 0
-                for hyperedge_name, hedge in self.hypergraph["hypergraph"].items():
+                for _, hedge in self.hypergraph["hypergraph"].items():
                     if node_i in hedge:
                         count_weights += len(hedge) - 1
                         for node_j in hedge:
@@ -303,7 +309,7 @@ class Laplacians:
         # Sort the node degrees by keys
         self.node_degrees = OrderedDict(sorted(self.node_degrees.items()))
 
-        self.degree_vertices: np.ndarray = np.diag(list(self.node_degrees.values()))
+        self.degree_vertices = np.diag(list(self.node_degrees.values()))
 
     def compute_node_neighbors(self, include_node: bool = False) -> None:
         """Compute the neighbors of each node in the hypergraph.
@@ -339,13 +345,13 @@ class Laplacians:
 
     def compute_edge_degrees(self) -> None:
         """Compute the degree of each hyperedge in the hypergraph."""
-        assert self.edge_degrees == {}, "Edge degrees already computed."
+        assert not self.edge_degrees, "Edge degrees already computed."
 
         for hyperedge_name, hedge in self.hypergraph["hypergraph"].items():
             if hyperedge_name not in self.edge_degrees:
                 self.edge_degrees[hyperedge_name] = len(hedge)
 
-        self.degree_edges: np.ndarray = np.diag(list(self.edge_degrees.values()))
+        self.degree_edges = np.diag(list(self.edge_degrees.values()))
 
     # def select nghbor_at_random( node):
     # edge_belong_to = []

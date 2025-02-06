@@ -14,8 +14,8 @@ print(sys.path)
 
 class FormanRicci:
     def __init__(self, hypergraph: dict) -> None:
-        """
-        Initialize the Forman-Ricci curvature object.
+        """Initialize the Forman-Ricci curvature object.
+
         A hypergraph is a dictionary with the following keys:
         - hypergraph : a dictionary with the hyperedges as values
         - features : a dictionary with the features of the nodes as values
@@ -32,8 +32,9 @@ class FormanRicci:
         self.forman_ricci: dict = {}
 
     def compute_forman_ricci(self) -> None:
-        """
-        Compute the Forman-Ricci curvature of a hyperedge e according to the formula
+        """Compute the Forman-Ricci curvature of a hyperedge.
+
+        The formula is:
         F(e) = 2|e| - D
         where |e| is the number of nodes in the hyperedge and D is the sum of the degrees.
         """
@@ -56,9 +57,7 @@ class FormanRicci:
             self.forman_ricci[name] = 2 * hyperedge_degree - hyperedge_sum_degrees
 
     def compute_node_degrees(self) -> None:
-        """
-        Compute the degree of each node in the hypergraph.
-        """
+        """Compute the degree of each node in the hypergraph."""
         assert self.node_degrees == {}, "Node degrees already computed."
 
         for hyperedge in self.hypergraph["hypergraph"].values():

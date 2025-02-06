@@ -266,10 +266,10 @@ class UniGCNConv(nn.Module):
                 see above
             hypergraph_classification:
                 wether we do node-level, within hg classification,
-                or hg-level-classification (new, in which case need to pass degEs, degVs, degE2s)
-            degEs:
+                or hg-level-classification (new, in which case need to pass deges, degvs, dege2s)
+            deges:
                 the degree of edges
-            degVs:
+            degvs:
                 the degree of vertices
 
         Returns:
@@ -716,7 +716,7 @@ class UniGNN(nn.Module):
         Args:
             list_hypergraphs:
                 the list of dicts (that contains hg, features, labels etc)
-            What would be smarter would be to add degEs and degVs to
+            What would be smarter would be to add deges and degvs to
             the dictionaries directly. Only need to compute it onnce, no need to pass it around:
             TODO later.
 

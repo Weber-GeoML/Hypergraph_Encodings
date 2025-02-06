@@ -1,3 +1,8 @@
+"""Parses and loads data.
+
+This module contains functions for parsing and loading data.
+"""
+
 import inspect
 import os
 import pickle
@@ -13,7 +18,7 @@ warnings.simplefilter("ignore")
 
 # Used in train_val.py
 def load(args) -> tuple[dict[dict, np.matrix, np.ndarray, int], list, list]:
-    """Parses the dataset
+    """Parses the dataset.
 
     Args:
         args:
@@ -58,7 +63,7 @@ class parser(object):
     """Parses data"""
 
     def __init__(self, data: str, dataset: str) -> None:
-        """Initialises the data directory
+        """Initialises the data directory.
 
         Arguments:
             data:
@@ -80,7 +85,7 @@ class parser(object):
         self.data, self.dataset = data, dataset
 
     def parse(self):
-        """Returns a dataset specific function to parse
+        """Returns a dataset specific function to parse.
 
         Returns:
             TODO
@@ -91,7 +96,7 @@ class parser(object):
         return function()
 
     def _load_data(self, verbose: bool = True) -> dict:
-        """Loads the coauthorship hypergraph, features, and labels
+        """Loads the coauthorship hypergraph, features, and labels.
 
         assumes the following files to be present in the dataset directory:
         hypergraph.pickle: coauthorship hypergraph
@@ -132,7 +137,7 @@ class parser(object):
         }
 
     def _1hot(self, labels: list[int]) -> np.ndarray[int, int]:
-        """converts each positive integer (representing a unique class) into ints one-hot form
+        """converts each positive integer (representing a unique class) into ints one-hot form.
 
         Arguments:
             labels:

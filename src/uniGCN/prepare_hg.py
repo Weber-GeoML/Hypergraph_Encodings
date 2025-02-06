@@ -4,8 +4,8 @@ from typing import Union
 import numpy as np
 import scipy.sparse as sp
 import torch
-import torch_sparse
 from torch import optim
+import torch_sparse
 from torch_scatter import scatter
 
 from uniGCN.UniGCN import UniGNN
@@ -46,7 +46,7 @@ def initialise_for_hypergraph_classification(
         - dege2s:
     """
 
-    y: torch.Tensor
+    y: list[int] = []
     degvs: dict = {}
     deges: dict = {}
     dege2s: dict = {}

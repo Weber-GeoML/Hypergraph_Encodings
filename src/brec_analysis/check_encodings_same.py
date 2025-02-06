@@ -225,6 +225,8 @@ def get_regular_encodings(
     hg2_copy = hg2.copy()
     hg1_encodings = get_encodings(hg1_copy, encoder1, name, k_rwpe=k, k_lape=k)
     hg2_encodings = get_encodings(hg2_copy, encoder2, name, k_rwpe=k, k_lape=k)
+    assert hg1_encodings is not None
+    assert hg2_encodings is not None
     if verbose:
         print(f"hg1_encodings for {name}{k}: \n {hg1_encodings['features']}")
         print(f"hg2_encodings for {name}{k}: \n {hg2_encodings['features']}")
@@ -390,9 +392,9 @@ def checks_encodings(
         )
 
     if name_of_encoding.startswith("LAPE-"):
-        eigenvectors1, eigenvectors2 = lap_checks_to_clean_up(
-            name_of_encoding, hg1, hg2, graph_type
-        )
+        # eigenvectors1, eigenvectors2 = lap_checks_to_clean_up(
+        #     name_of_encoding, hg1, hg2, graph_type
+        # )
         # assert np.isclose(eigenvectors1[:, :k], hg1_encodings).all()
         # assert np.isclose(eigenvectors2[:, :k], hg2_encodings).all()
 
@@ -483,9 +485,13 @@ def checks_encodings(
 
         # Save plot if requested - This will handle both LAPE and non-LAPE cases
         if save_plots:
-            plt.tight_layout()
-            save_comparison_plot(plt, plot_dir, pair_idx, category, modified_name, k)
-        plt.close()  # Only close the figure once at the end
+            if pair_idx is None:
+                pair_idx_str = "Example_pair"
+            else:
+                pair_idx_str = str(pair_idx)
+            assert category is not None
+            save_comparison_plot(plt, plot_dir, pair_idx_str, category, modified_name, k)
+            plt.close()  # Only close the figure once at the end
 
     return comparison_result
 
@@ -504,17 +510,15 @@ def check_for_matches(encoding1, encoding2, name: str) -> dict:
     Returns:
         the comparison results
     """
-    is_direct_match: bool
-    permuted: np.ndarray
-    permuted2: np.ndarray
-    perm: tuple[int, ...]
-    timeout: str | None
-    is_direct_match, permuted, perm, permuted2, timeout = find_encoding_match(
-        encoding1, encoding2, name_of_encoding=name, verbose=True
-    )
-
-    # if is_direct_match and timeout is None:
-    #     assert np.allclose(permuted, permuted2, rtol=1e-9)  # type: ignore
+    is_direct_match: bool | None = None
+    permuted: np.ndarray | None = None
+    permuted2: np.ndarray | None = None
+    perm: tuple[int, ...] | None = None
+    result = find_encoding_match(encoding1, encoding2, name_of_encoding=name, verbose=True)
+    assert result is not None
+    is_direct_match, permuted, perm, permuted2, _ = result
+    assert permuted is not None
+    assert perm is not None
 
     is_same_up_to_scaling: bool = False
     scaling_factor: float | None = None

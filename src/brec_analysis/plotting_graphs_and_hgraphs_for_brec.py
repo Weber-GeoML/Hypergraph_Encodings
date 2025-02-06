@@ -6,6 +6,7 @@ import hypernetx as hnx
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
+from matplotlib.figure import Figure
 
 from brec_analysis.utils_for_brec import create_comparison_table
 
@@ -313,7 +314,7 @@ def plot_graph_pair(
             The directory to save the plots.
     """
     # Create figure with 3x2 subplot grid (added row for adjacency matrices)
-    fig = plt.figure(figsize=(16, 32))
+    fig: Figure = plt.figure(figsize=(16, 32))
 
     # Set isomorphism status
 
@@ -604,7 +605,7 @@ def plot_graph_pair(
     plt.close()
 
     # Return to main figure and finish
-    plt.figure(fig.number)
+    plt.figure(fig.number)  # type: ignore
     plt.tight_layout()
     plt.savefig(
         f"{output_dir}/pair_{pair_idx}_{category.lower()}.png",

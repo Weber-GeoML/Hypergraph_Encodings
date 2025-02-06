@@ -245,17 +245,17 @@ class HypergraphEncodings:
 
             # for each node, get the min, max, mean, median,
             # and std of the FRC or ORC values of the hyperedges it belongs to
-            rc_profile: dict[list[float]] = {}
+            rc_profile: dict[int, list[float]] = {}
             assert self.hyperedges is not None
-            for node in self.hyperedges.keys():  # type: ignore
+            for node in self.hyperedges.keys():
                 if curvature_type == "FRC":
-                    rc: FormanRicci  # type: ignore
+                    assert isinstance(rc, FormanRicci)
                     rc_values = [
                         rc.forman_ricci[hyperedge]
                         for hyperedge in self.hyperedges[node]
                     ]
                 elif curvature_type == "ORC":
-                    rc: ORC  # type: ignore
+                    assert isinstance(rc, ORC)
                     rc_values = [
                         rc.edge_curvature[hyperedge]
                         for hyperedge in self.hyperedges[node]
@@ -332,7 +332,7 @@ class HypergraphEncodings:
         k: int = 20,  # to vary!
         use_same_sign: bool = False,
     ) -> dict:
-        """Adds encodings based on Laplacians
+        """Adds encodings based on Laplacians.
 
         Args:
             hypergraph:
@@ -528,7 +528,7 @@ class HypergraphEncodings:
         normalized: bool = True,
         dataset_name: str | None = None,
     ) -> dict[str, dict | int]:
-        """Adds encodings based on RW
+        """Adds encodings based on RW.
 
         Args:
             hypergraph:
