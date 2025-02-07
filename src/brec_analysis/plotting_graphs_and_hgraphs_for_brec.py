@@ -94,7 +94,9 @@ def plot_hypergraph_pair(
         with_edge_labels=False,
         convex=False,
     )
-    plt.title(f"Hypergraph A\n({len(hg1['hypergraph'])} hyperedges)", fontsize=30)
+    plt.title(
+        f"Hypergraph A\n({len(hg1['hypergraph'])} hyperedges)", fontsize=30
+    )
 
     # Plot second hypergraph
     plt.subplot(244)
@@ -108,7 +110,9 @@ def plot_hypergraph_pair(
         with_edge_labels=False,
         convex=False,
     )
-    plt.title(f"Hypergraph B\n({len(hg2['hypergraph'])} hyperedges)", fontsize=30)
+    plt.title(
+        f"Hypergraph B\n({len(hg2['hypergraph'])} hyperedges)", fontsize=30
+    )
 
     # # Row 3: Bipartite representations
     # # Plot first bipartite
@@ -397,22 +401,6 @@ def plot_graph_pair(
     # Set x-axis ticks to integers only
     plt.xticks(range(min_degree, max_degree + 1))
 
-    # # Add text with exact counts for Graph A
-    # unique_degrees1 = sorted(set(degrees1))
-    # degree_counts1 = {deg: degrees1.count(deg) for deg in unique_degrees1}
-    # text1 = "Graph A:\n" + "\n".join(
-    #     [f"Degree {deg}: {count}" for deg, count in degree_counts1.items()]
-    # )
-    # plt.text(
-    #     0.95,
-    #     0.95,
-    #     text1,
-    #     transform=ax3.transAxes,
-    #     verticalalignment="top",
-    #     horizontalalignment="right",
-    #     bbox=dict(facecolor="white", alpha=0.8),
-    #     fontsize=25,
-    # )
 
     # Plot second histogram
     ax3.hist(
@@ -423,23 +411,6 @@ def plot_graph_pair(
         rwidth=0.8,
         label="Graph B",
     )
-
-    # # Add text with exact counts for Graph B
-    # unique_degrees2 = sorted(set(degrees2))
-    # degree_counts2 = {deg: degrees2.count(deg) for deg in unique_degrees2}
-    # text2 = "Graph B:\n" + "\n".join(
-    #     [f"Degree {deg}: {count}" for deg, count in degree_counts2.items()]
-    # )
-    # plt.text(
-    #     0.75,
-    #     0.95,
-    #     text2,
-    #     transform=ax3.transAxes,
-    #     verticalalignment="top",
-    #     horizontalalignment="right",
-    #     bbox=dict(facecolor="white", alpha=0.8),
-    #     fontsize=25,
-    # )
 
     # Compute and display graph statistics
     ax4 = plt.subplot(3, 2, 4)
@@ -467,7 +438,9 @@ def plot_graph_pair(
             "Number of components": nx.number_connected_components(G),
             "Is planar": nx.is_planar(G),
             # Centrality measures (averaged over nodes)
-            "Avg betweenness": np.mean(list(nx.betweenness_centrality(G).values())),
+            "Avg betweenness": np.mean(
+                list(nx.betweenness_centrality(G).values())
+            ),
             "Avg closeness": np.mean(list(nx.closeness_centrality(G).values())),
             # "Avg eigenvector": np.mean(
             #     list(nx.eigenvector_centrality_numpy(G).values())
@@ -492,27 +465,6 @@ def plot_graph_pair(
                     "Periphery size": len(nx.periphery(G)),
                 }
             )
-            # try:
-            #     stats["Girth"] = (
-            #         len(min(nx.cycle_basis(G), key=len))
-            #         if nx.cycle_basis(G)
-            #         else float("inf")
-            #     )
-            # except:
-            #     stats["Girth"] = "N/A"
-        # else:
-        #     stats.update(
-        #         {
-        #             "Diameter": "N/A (disconnected)",
-        #             "Average shortest path": "N/A (disconnected)",
-        #             "Average clustering": nx.average_clustering(G),
-        #             "Assortativity": nx.degree_assortativity_coefficient(G),
-        #             "Girth": "N/A (disconnected)",
-        #             "Radius": "N/A (disconnected)",
-        #             "Center size": "N/A (disconnected)",
-        #             "Periphery size": "N/A (disconnected)",
-        #         }
-        #     )
 
         return stats
 
