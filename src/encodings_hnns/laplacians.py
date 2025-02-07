@@ -1,4 +1,4 @@
-"""laplacians.py.
+"""Add Laplacian encodings.
 
 This module contains functions for computing the Laplacians
 (Hodge, random walks, etc).
@@ -13,10 +13,9 @@ from scipy.linalg import fractional_matrix_power
 class DisconnectedError(Exception):
     """Exception raised when a node is found to be disconnected."""
 
-    pass
-
 
 class Laplacians:
+    """Laplacian object."""
     def __init__(self, hypergraph) -> None:
         """Initialize the Laplacian object.
 

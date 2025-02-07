@@ -19,7 +19,9 @@ import torch.nn.functional as F
 
 # load data
 from encodings_hnns.data_handling import load
-from uniGCN.calculate_vertex_edges import calculate_V_E
+from uniGCN.calculate_vertex_edges import calculate_v_e
+
+from uniGCN.split import get_splits
 
 ### configure logger
 from uniGCN.logger import get_logger
@@ -123,38 +125,10 @@ X, Y, G = fetch_data(
 print(f"X are the features \n {X} \n with shape {X.shape}")
 print(f"Y are the labels \n {Y}")
 print("G is the hg")
-V, E, degE, degV, degE2 = calculate_V_E(X, G, args)
+V, E, dege, degv, dege2 = calculate_v_e(X, G, args)
 
 
-def get_split(Y, p: float = 0.2) -> tuple[list[int], list[int]]:
-    """Splits Y into a test and val set.
 
-    Args:
-        Y:
-            the labels of nodes.
-        p:
-            the proportion of nodes in the val set
-
-    Returns:
-        val_idx:
-            the indices of nodes in the val set
-        test_idx:
-            the indices of nodes in the test set
-
-    """
-    Y: list = Y.tolist()
-    N: int = len(Y)  # number of nodes
-    nclass: int = len(set(Y))  # number of different labels
-    D: list = [[] for _ in range(nclass)]
-    for i, y in enumerate(Y):
-        D[y].append(i)
-    k: int = int(N * p / nclass)
-    val_idx: list[int] = torch.cat(
-        [torch.LongTensor(sample(idxs, k)) for idxs in D]
-    ).tolist()
-    test_idx: list[int] = list(set(range(N)) - set(val_idx))
-
-    return val_idx, test_idx
 
 
 # Create a more detailed output directory name
@@ -278,7 +252,8 @@ for seed in range(1, 9):
 
             # eval
             model.eval()
-            Z: torch.Tensor = model(X, V, E)  # this calls forward
+            Z: torch.Tensor | None= model(X, V, E)  # this calls forward
+            assert Z is not None
 
             # gets the trains, test and val accuracy
             train_acc: float = accuracy(Z[train_idx], Y[train_idx])

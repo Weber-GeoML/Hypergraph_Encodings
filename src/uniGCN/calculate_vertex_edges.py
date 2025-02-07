@@ -7,7 +7,7 @@ from torch_scatter import scatter
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def calculate_V_E(X: torch.Tensor, G: dict, args) -> tuple:
+def calculate_v_e(X: torch.Tensor, G: dict, args) -> tuple:
     """Calculates V and E
 
     Arguments:
@@ -17,12 +17,12 @@ def calculate_V_E(X: torch.Tensor, G: dict, args) -> tuple:
             the graph
 
     Returns:
-        a tuple with V, E, degE, degV, degE2.
+        a tuple with V, E, dege, degv, dege2.
             V: the row indices of the non-zero elements in H
             E: the column indices of the non-zero elements in H
-            degE: the degree of each edge
-            degV: the degree of each vertex
-            degE2: the degree of each edge weighted by the degree of the vertices
+            dege: the degree of each edge
+            degv: the degree of each vertex
+            dege2: the degree of each edge weighted by the degree of the vertices
 
     """
 
@@ -115,19 +115,19 @@ def calculate_V_E(X: torch.Tensor, G: dict, args) -> tuple:
     # V represents the row indices (i.e., vertices), and E represents
     # the column indices (i.e., edges) of the non-zero elements in H.
     V, E = row, col
-    degV: torch.Tensor = (
+    degv: torch.Tensor = (
         torch.from_numpy(H.sum(1)).view(-1, 1).float()
     )  # the degree of each vertices
-    degE2: torch.Tensor = (
+    dege2: torch.Tensor = (
         torch.from_numpy(H.sum(0)).view(-1, 1).float()
     )  # the degree of each edge
-    degE = scatter(degV[V], E, dim=0, reduce=args.first_aggregate)
+    dege = scatter(degv[V], E, dim=0, reduce=args.first_aggregate)
     # this is what goes into the UniGCN/UniGCNII formula
     # for d_i and d_e
     # x_i= 1/√d_i sum 1/√d_e Wh_e,
-    degE: torch.Tensor = degE.pow(-0.5)
-    degV: torch.Tensor = degV.pow(-0.5)
-    degV[degV.isinf()] = (
+    dege: torch.Tensor = dege.pow(-0.5)
+    degv: torch.Tensor = degv.pow(-0.5)
+    degv[degv.isinf()] = (
         1  # when not added self-loop, some nodes might not be connected with any edge
     )
-    return V, E, degE, degV, degE2
+    return V, E, dege, degv, dege2

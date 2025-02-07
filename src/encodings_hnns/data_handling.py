@@ -7,6 +7,7 @@ import inspect
 import os
 import pickle
 import warnings
+from typing import Callable
 
 # import hypernetx as hnx
 import numpy as np
@@ -84,7 +85,7 @@ class parser(object):
             self.d = os.path.join(current, "data", data)
         self.data, self.dataset = data, dataset
 
-    def parse(self):
+    def parse(self) -> dict:
         """Returns a dataset specific function to parse.
 
         Returns:
@@ -92,7 +93,7 @@ class parser(object):
         """
 
         name: str = "_load_data"
-        function = getattr(self, name, lambda: {})
+        function: Callable = getattr(self, name, lambda: {})
         return function()
 
     def _load_data(self, verbose: bool = True) -> dict:

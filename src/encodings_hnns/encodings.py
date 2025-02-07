@@ -1,4 +1,4 @@
-"""encodings.py
+"""Adding encodings to a dataset.
 
 This module contains functions for adding encodings
 to a dataset (curvature, laplacians, random walks).

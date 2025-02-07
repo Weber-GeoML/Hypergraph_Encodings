@@ -1,4 +1,5 @@
-"""Code for lifting (graph to hypergraph) and expanding (hypergraph to graph)
+"""Code for lifting (graph to hypergraph) and expanding (hypergraph to graph).
+
 Run:
 pip install --no-deps hypernetx
 pip install fastjsonschema
