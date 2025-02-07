@@ -603,12 +603,12 @@ class UniGNN(nn.Module):
 
         X = self.input_drop(X)
         for conv in self.convs:  # note that we loop for as many layers as specified
-            X_orig = X.clone()  # Create copy of original X
+            x_orig = X.clone()  # Create copy of original X
             X = conv(X, V, E)
             X = self.act(X)
             X = self.dropout(X)
             X = X.to(device)
-            X_orig = X_orig.to(device)
+            x_orig = x_orig.to(device)
 
             if self.args.do_transformer:
                 if self.args.transformer_version == "v1":
@@ -621,31 +621,31 @@ class UniGNN(nn.Module):
 
                     # Handle dimension mismatch with projection if needed
                     # TODO: if we remove MP, could do X_without_encoding.shape[-1] and project there
-                    if X_orig.shape[-1] != feature_dim:
+                    if x_orig.shape[-1] != feature_dim:
                         if verbose:
                             print(f"feature_dim is {feature_dim}")
-                            print(f"X_orig.shape is {X_orig.shape}")
+                            print(f"x_orig.shape is {x_orig.shape}")
                         projection = nn.Linear(
-                            X_orig.shape[-1], feature_dim, device=X.device
+                            x_orig.shape[-1], feature_dim, device=X.device
                         )
-                        X_orig = projection(X_orig)
+                        x_orig = projection(x_orig)
 
                     # Add batch dimension for attention computation
-                    X_transformer = X_orig.unsqueeze(0)  # [1, N, features]
+                    x_transformer = x_orig.unsqueeze(0)  # [1, N, features]
 
                     # Apply basic self-attention using PyTorch's built-in function
                     # This is equivalent to a single attention head without the feed-forward network
-                    X_transformer = F.scaled_dot_product_attention(
-                        query=X_transformer,
-                        key=X_transformer,
-                        value=X_transformer,
+                    x_transformer = F.scaled_dot_product_attention(
+                        query=x_transformer,
+                        key=x_transformer,
+                        value=x_transformer,
                         dropout_p=self.dropout.p if self.training else 0.0,
                     )
-                    X_transformer = X_transformer.to(device)
+                    x_transformer = x_transformer.to(device)
 
                     # Add residual connection
-                    # TODO: remove MP: X = X_transformer
-                    X = X + X_transformer.squeeze(0)
+                    # TODO: remove MP: X = x_transformer
+                    X = X + x_transformer.squeeze(0)
 
                 elif self.args.transformer_version == "v2":
                     # VERSION 2: Full Transformer Encoder Architecture
@@ -681,24 +681,24 @@ class UniGNN(nn.Module):
                         ).to(device)
 
                     # Handle dimension mismatch with projection if needed
-                    if X_orig.shape[-1] != feature_dim:
+                    if x_orig.shape[-1] != feature_dim:
                         if verbose:
                             print(f"feature_dim is {feature_dim}")
-                            print(f"X_orig.shape[-1] is {X_orig.shape}")
+                            print(f"x_orig.shape[-1] is {x_orig.shape}")
                         projection = nn.Linear(
-                            X_orig.shape[-1], feature_dim, device=X.device
+                            x_orig.shape[-1], feature_dim, device=X.device
                         ).to(device)
-                        X_orig = projection(X_orig)
+                        x_orig = projection(x_orig)
 
                     # Add batch dimension for transformer
-                    X_transformer = X_orig.unsqueeze(0).to(device)
+                    x_transformer = x_orig.unsqueeze(0).to(device)
                     X = X.to(device)
 
                     # Apply full transformer encoding
-                    X_transformer = self.transformer(X_transformer)
+                    x_transformer = self.transformer(x_transformer)
 
                     # Add residual connection
-                    X = X + X_transformer.squeeze(0)
+                    X = X + x_transformer.squeeze(0)
 
         X = self.conv_out(X, V, E)
         return F.log_softmax(X, dim=1)
@@ -749,7 +749,7 @@ class UniGNN(nn.Module):
             # Forward pass through the network
             X = self.input_drop(X)
             for conv in self.convs:
-                X_orig = X.clone()  # Store original features for transformer
+                x_orig = X.clone()  # Store original features for transformer
                 X = conv(
                     X=X,
                     vertex=V,
@@ -771,26 +771,26 @@ class UniGNN(nn.Module):
                         feature_dim = X.shape[-1]
 
                         # Handle dimension mismatch with projection if needed
-                        if X_orig.shape[-1] != feature_dim:
+                        if x_orig.shape[-1] != feature_dim:
                             projection = nn.Linear(
-                                X_orig.shape[-1], feature_dim, device=X.device
+                                x_orig.shape[-1], feature_dim, device=X.device
                             )
-                            X_orig = projection(X_orig)
+                            x_orig = projection(x_orig)
 
                         # Add batch dimension for attention computation
-                        X_transformer = X_orig.unsqueeze(0)  # [1, N, features]
+                        x_transformer = x_orig.unsqueeze(0)  # [1, N, features]
 
                         # Apply basic self-attention using PyTorch's built-in function
                         # This is equivalent to a single attention head without the feed-forward network
-                        X_transformer = F.scaled_dot_product_attention(
-                            query=X_transformer,
-                            key=X_transformer,
-                            value=X_transformer,
+                        x_transformer = F.scaled_dot_product_attention(
+                            query=x_transformer,
+                            key=x_transformer,
+                            value=x_transformer,
                             dropout_p=self.dropout.p if self.training else 0.0,
                         )
 
                         # Add residual connection
-                        X = X + X_transformer.squeeze(0)
+                        X = X + x_transformer.squeeze(0)
 
                     elif self.args.transformer_version == "v2":
                         # VERSION 2: Full Transformer Encoder Architecture
@@ -826,20 +826,20 @@ class UniGNN(nn.Module):
                             ).to(device)
 
                         # Handle dimension mismatch with projection if needed
-                        if X_orig.shape[-1] != feature_dim:
+                        if x_orig.shape[-1] != feature_dim:
                             projection = nn.Linear(
-                                X_orig.shape[-1], feature_dim, device=X.device
+                                x_orig.shape[-1], feature_dim, device=X.device
                             ).to(device)
-                            X_orig = projection(X_orig)
+                            x_orig = projection(x_orig)
 
                         # Add batch dimension for transformer
-                        X_transformer = X_orig.unsqueeze(0).to(device)
+                        x_transformer = x_orig.unsqueeze(0).to(device)
 
                         # Apply full transformer encoding
-                        X_transformer = self.transformer(X_transformer)
+                        x_transformer = self.transformer(x_transformer)
 
                         # Add residual connection
-                        X = X + X_transformer.squeeze(0)
+                        X = X + x_transformer.squeeze(0)
 
             # Output layer
             X = self.conv_out(

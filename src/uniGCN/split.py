@@ -1,26 +1,12 @@
-
 """Split data into train, val, test sets."""
 
-import datetime
-import os
-import shutil
-import sys
-import time
 from random import sample
 
-import config
-import numpy as np
-import path
 import torch
-import torch.nn.functional as F
 
 # load data
-from encodings_hnns.data_handling import load
-from uniGCN.calculate_vertex_edges import calculate_v_e
 
 ### configure logger
-from uniGCN.logger import get_logger
-from uniGCN.prepare import accuracy, fetch_data, initialise
 
 
 def get_split(Y, p: float = 0.2) -> tuple[list[int], list[int]]:

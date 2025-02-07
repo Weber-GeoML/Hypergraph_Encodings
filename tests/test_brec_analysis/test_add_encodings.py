@@ -56,7 +56,6 @@ def test_rwpe_encoding(
     assert result["features"].shape[1] == k + 1  # k + 1 features per node
 
 
-
 def test_lape_normalized(
     sample_hypergraph: dict[str, dict[str, Any] | int | np.ndarray],
     encoder: HypergraphEncodings,

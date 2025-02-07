@@ -1,6 +1,6 @@
-""" Forman-Ricci Curvature.
+"""Forman-Ricci Curvature.
 
-This module contains functions for computing the Forman-Ricci 
+This module contains functions for computing the Forman-Ricci
 curvatures of an undirected hypergraph.
 """
 

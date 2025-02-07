@@ -1,4 +1,4 @@
-""" File taken from UniGCN
+"""File taken from UniGCN
 
 This is the file for node level classifications. This is the file
 that we call from run_all_general_parallel.sh, run_all_general.sh, run_all_ablation.sh
@@ -9,7 +9,6 @@ import os
 import shutil
 import sys
 import time
-from random import sample
 
 import config
 import numpy as np
@@ -21,14 +20,15 @@ import torch.nn.functional as F
 from encodings_hnns.data_handling import load
 from uniGCN.calculate_vertex_edges import calculate_v_e
 
-from uniGCN.split import get_splits
-
 ### configure logger
 from uniGCN.logger import get_logger
 from uniGCN.prepare import accuracy, fetch_data, initialise
+from uniGCN.split import get_split
 
 # Initialize results dictionary before the training loops
-all_results: dict[str, dict[str, list[float] | dict[str, float]]] = {
+all_results: dict[
+    str, dict[str, list[float] | dict[str, float | list[float] | str]]
+] = {
     "train_accs": {},
     "val_accs": {},
     "test_accs": {},
@@ -46,7 +46,7 @@ print("=" * 80)
 print("\nContents of config.py:")
 print("=" * 80)
 try:
-    with open("scripts/config.py", "r") as f:
+    with open("scripts/config.py", "r", encoding="utf-8") as f:
         print(f.read())
 except Exception as e:
     print(f"Error reading config.py: {e}")
@@ -128,9 +128,6 @@ print("G is the hg")
 V, E, dege, degv, dege2 = calculate_v_e(X, G, args)
 
 
-
-
-
 # Create a more detailed output directory name
 out_dir_components = [
     args.out_dir,
@@ -192,8 +189,8 @@ for seed in range(1, 9):
 
     #### configure output directory
 
-    val_idx: list[int]
-    test_idx: list[int]
+    val_idx: torch.Tensor
+    test_idx: torch.Tensor
     train_idx: torch.Tensor
 
     for run in range(1, args.n_runs + 1):
@@ -243,6 +240,7 @@ for seed in range(1, 9):
 
             optimizer.zero_grad()
             Z = model(X, V, E)  # this call forward.
+            assert Z is not None
             loss = F.nll_loss(Z[train_idx], Y[train_idx])
 
             loss.backward()
@@ -252,7 +250,7 @@ for seed in range(1, 9):
 
             # eval
             model.eval()
-            Z: torch.Tensor | None= model(X, V, E)  # this calls forward
+            Z = model(X, V, E)  # this calls forward
             assert Z is not None
 
             # gets the trains, test and val accuracy

@@ -1,6 +1,6 @@
 """ORC Curvature.
 
-This module contains functions for computing the 
+This module contains functions for computing the
 Ollivier-Ricci curvatures of an undirected hypergraph.
 """
 
@@ -86,6 +86,7 @@ def _save_to_tsv(hypergraph: dict, output_file: str) -> None:
 
 class ORC:
     """ORC Curvature."""
+
     def __init__(self, hypergraph: dict) -> None:
         """Initialize the ORC curvature object.
 

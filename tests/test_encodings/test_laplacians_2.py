@@ -1,4 +1,4 @@
-""" Test for the Laplacianss
+"""Test for the Laplacianss
 
 Can use the toy graph 1 - 2 - 3
 
@@ -45,27 +45,27 @@ def boundary() -> np.ndarray:
 @pytest.fixture
 def degree_v() -> np.ndarray:
     """Returns the degree (vertices) matrix"""
-    D_v: np.ndarray = np.array(
+    degree_vertices: np.ndarray = np.array(
         [
             [1, 0, 0],
             [0, 2, 0],
             [0, 0, 1],
         ]
     )
-    return D_v
+    return degree_vertices
 
 
 @pytest.fixture
 def degree_v_inverse() -> np.ndarray:
     """Returns the inverse of the degree (vertices) matrix"""
-    D_v: np.ndarray = np.array(
+    degree_vertices: np.ndarray = np.array(
         [
             [1, 0, 0],
             [0, 1 / 2, 0],
             [0, 0, 1],
         ]
     )
-    return D_v
+    return degree_vertices
 
 
 @pytest.fixture
@@ -113,14 +113,14 @@ def normalized_laplacian() -> np.ndarray:
     which coincides with the simple graph Laplacian up to a factor of 1/2
     (Zhou: Learning with Hypergraphs: Clustering,
     Classification, and Embedding)"""
-    Delta = np.array(
+    delta = np.array(
         [
             [1, -1 / (np.sqrt(2)), 0],
             [-1 / (np.sqrt(2)), 1, -1 / (np.sqrt(2))],
             [0, -1 / (np.sqrt(2)), 1],
         ]
     )
-    return (1 / 2) * Delta
+    return (1 / 2) * delta
 
 
 @pytest.fixture
@@ -137,29 +137,29 @@ def rw_laplacian() -> np.ndarray:
 
 
 @pytest.fixture
-def rw_laplacian_EN() -> np.ndarray:
+def rw_laplacian_en() -> np.ndarray:
     """Returns the rw Laplacian, EN"""
-    L_EN_alpha_0: np.ndarray = np.array(
+    l_en_alpha_0: np.ndarray = np.array(
         [
             [1, -1, 0],
             [-1 / 2, 1, -1 / 2],
             [0, -1, 1],
         ]
     )
-    return L_EN_alpha_0
+    return l_en_alpha_0
 
 
 @pytest.fixture
-def rw_laplacian_WE() -> np.ndarray:
+def rw_laplacian_we() -> np.ndarray:
     """Returns the rw Laplacian, WE"""
-    L_WE_alpha_0 = np.array(
+    l_we_alpha_0 = np.array(
         [
             [1, -1, 0],
             [-1 / 2, 1, -1 / 2],
             [0, -1, 1],
         ]
     )
-    return L_WE_alpha_0
+    return l_we_alpha_0
 
 
 def test_compute_boundary(toy_graph, boundary) -> None:
@@ -255,10 +255,10 @@ def test_compute_normalized_laplacian(toy_graph, normalized_laplacian) -> None:
 
     assert_allclose(
         laplacian.normalized_laplacian, normalized_laplacian, atol=1e-8
-    ), f"The normalized laplacian is {laplacian.normalized_laplacian} and the expected is {normalized_laplacian}. The inverse of D_v is {np.linalg.inv(laplacian.degree_vertices)}"
+    ), f"The normalized laplacian is {laplacian.normalized_laplacian} and the expected is {normalized_laplacian}. The inverse of degree_vertices is {np.linalg.inv(laplacian.degree_vertices)}"
 
 
-def test_compute_random_walk_laplacian_EE(toy_graph, rw_laplacian) -> None:
+def test_compute_random_walk_laplacian_ee(toy_graph, rw_laplacian) -> None:
     """Test for compute_random_walk_laplacian (EE)
 
     Args:
@@ -288,33 +288,33 @@ def test_compute_node_neighbors(toy_graph, ngbors) -> None:
     assert laplacian.node_neighbors == ngbors
 
 
-def test_compute_random_walk_laplacian_EN(toy_graph, rw_laplacian_EN) -> None:
+def test_compute_random_walk_laplacian_en(toy_graph, rw_laplacian_en) -> None:
     """Test for compute_random_walk_laplacian (EN)
 
     Args:
         toy_graph:
             hypergraph from draft
-        rw_laplacian_EN:
+        rw_laplacian_en:
             rw laplacian for EN scheme
 
 
     """
     laplacian: Laplacians = Laplacians(toy_graph)
     laplacian.compute_random_walk_laplacian(rw_type="EN")
-    assert_allclose(laplacian.rw_laplacian, rw_laplacian_EN, atol=1e-8)
+    assert_allclose(laplacian.rw_laplacian, rw_laplacian_en, atol=1e-8)
 
 
-def test_compute_random_walk_laplacian_WE(toy_graph, rw_laplacian_WE) -> None:
+def test_compute_random_walk_laplacian_we(toy_graph, rw_laplacian_we) -> None:
     """Test for compute_random_walk_laplacian (WE)
 
     Args:
         toy_graph:
             hypergraph from draft
-        rw_laplacian_WE:
+        rw_laplacian_we:
             rw laplacian for WE scheme
 
 
     """
     laplacian: Laplacians = Laplacians(toy_graph)
     laplacian.compute_random_walk_laplacian(rw_type="WE")
-    assert_allclose(laplacian.rw_laplacian, rw_laplacian_WE, atol=1e-8)
+    assert_allclose(laplacian.rw_laplacian, rw_laplacian_we, atol=1e-8)

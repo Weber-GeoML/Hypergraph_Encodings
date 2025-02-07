@@ -1,7 +1,6 @@
 import pytest
 import torch
 
-
 from uniGCN.calculate_vertex_edges import calculate_v_e
 
 

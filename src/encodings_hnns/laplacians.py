@@ -16,6 +16,7 @@ class DisconnectedError(Exception):
 
 class Laplacians:
     """Laplacian object."""
+
     def __init__(self, hypergraph) -> None:
         """Initialize the Laplacian object.
 
@@ -52,7 +53,7 @@ class Laplacians:
         # the matrix of edge degrees
         self.degree_edges: None | np.ndarray = None
         # the ajacency matrix of a hypergraph is Defined in Zhou, Huang Scholkopf
-        # as BB^T - D_v
+        # as BB^T - degree_vertices
         self.hypergraph_adjacency: None | np.ndarray = None
 
     def compute_boundary(self, verbose: bool = False) -> None:
@@ -133,7 +134,7 @@ class Laplacians:
         assert self.degree_edges is not None
         assert self.degree_vertices is not None
 
-        # intermediate is dv - B_1*D_e^{-1}*B_1^T
+        # intermediate is dv - B_1*degree_edges^{-1}*B_1^T
         assert self.boundary_matrix is not None
         assert self.degree_edges is not None
         intermediate = self.degree_vertices - np.matmul(
@@ -191,6 +192,7 @@ class Laplacians:
                             ] += value  # Reflect the value for symmetry (in A only!)
 
             # the rw Laplacian is I - dv^{-1}*A
+            assert self.degree_vertices is not None
             rw_l = np.eye(num_nodes) + np.matmul(
                 np.linalg.inv(self.degree_vertices), -matrix_
             )

@@ -39,11 +39,11 @@ def load(args) -> tuple[dict[dict, np.matrix, np.ndarray, int], list, list]:
     dataset = parser(args.data, args.dataset).parse()
 
     current: str = os.path.abspath(inspect.getfile(inspect.currentframe()))
-    Dir: str
-    Dir, _ = os.path.split(current)
-    Dir = os.path.dirname(os.path.dirname(Dir))
+    dir: str
+    dir, _ = os.path.split(current)
+    dir = os.path.dirname(os.path.dirname(dir))
     file: str = os.path.join(
-        Dir,
+        dir,
         "data",
         args.data,
         args.dataset,

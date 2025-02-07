@@ -1,5 +1,5 @@
-"""
-This script is used to analyse the BREC dataset.
+"""This script is used to analyse the BREC dataset.
+
 It is used to compare the encodings of the graphs in the BREC dataset.
 """
 

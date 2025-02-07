@@ -125,6 +125,7 @@ class HypergraphEncodings:
 
             # for each node, get the min, max, mean, median,
             # and std of the degrees of the neighbors
+            assert laplacian.ldp is not None
             ld_profile: dict = laplacian.ldp
 
             if self.hyperedges is None:
@@ -256,8 +257,9 @@ class HypergraphEncodings:
                     ]
                 elif curvature_type == "ORC":
                     assert isinstance(rc, ORC)
+                    assert self.hyperedges is not None
                     rc_values = [
-                        rc.edge_curvature[hyperedge]
+                        rc.edge_curvature[hyperedge]  # type: ignore
                         for hyperedge in self.hyperedges[node]
                     ]
                 rc_profile[node] = [
@@ -357,14 +359,11 @@ class HypergraphEncodings:
         Returns:
             the hypergraph with the Laplacian encodings added to the featuress
         """
-        if laplacian_type == "Hodge" or laplacian_type == "Normalized":
-            filename: str = (
-                f"computed_encodings/{dataset_name}_laplacian_encodings_{laplacian_type}_normalized_{normalized}.pkl"
-            )
+        filename: str
+        if laplacian_type in ("Hodge", "Normalized"):
+            filename = f"computed_encodings/{dataset_name}_laplacian_encodings_{laplacian_type}_normalized_{normalized}.pkl"
         elif laplacian_type == "RW":
-            filename: str = (
-                f"computed_encodings/{dataset_name}_laplacian_encodings_{laplacian_type}_rw_{rw_type}_normalized_{normalized}.pkl"
-            )
+            filename = f"computed_encodings/{dataset_name}_laplacian_encodings_{laplacian_type}_rw_{rw_type}_normalized_{normalized}.pkl"
         if os.path.exists(filename):
             with open(filename, "rb") as f:
                 print(f"Loading hypergraph from {filename}")
@@ -396,6 +395,7 @@ class HypergraphEncodings:
                         f"The Hodge Laplacian (down) is \n {self.laplacian.hodge_laplacian_down}"
                     )
                 # Compute the eigenvalues and eigenvectors
+                assert self.laplacian.hodge_laplacian_down is not None
                 eigenvalues, eigenvectors = np.linalg.eigh(
                     self.laplacian.hodge_laplacian_down
                 )
@@ -405,15 +405,17 @@ class HypergraphEncodings:
                     print(
                         f"The normalized Laplacian is {self.laplacian.normalized_laplacian}"
                     )
+                assert self.laplacian.normalized_laplacian is not None
                 eigenvalues, eigenvectors = np.linalg.eigh(
                     self.laplacian.normalized_laplacian
                 )
             elif laplacian_type == "RW":
                 self.laplacian.compute_random_walk_laplacian(
-                    type=rw_type, verbose=verbose
+                    rw_type=rw_type, verbose=verbose
                 )
                 if verbose:
                     print(f"The RW laplacian is \n {self.laplacian.rw_laplacian}")
+                assert self.laplacian.rw_laplacian is not None
                 eigenvalues, eigenvectors = np.linalg.eig(self.laplacian.rw_laplacian)
 
             # TODO: take the real part of the eigenvalues/eigenvectors
@@ -682,7 +684,7 @@ if __name__ == "__main__":
             "green": [2, 4, 5],
             "blue": [3, 4],
         },
-        "features": np.matrix([[1], [1], [1], [1], [1], [1]]),
+        "features": np.array([[1], [1], [1], [1], [1], [1]]),
         "labels": {},
         "n": 6,
     }

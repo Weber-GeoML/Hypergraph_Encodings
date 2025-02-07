@@ -1,4 +1,4 @@
-""" File taken from https://github.com/RaphaelPellegrin/UniGNN/tree/master"""
+"""File taken from https://github.com/RaphaelPellegrin/UniGNN/tree/master"""
 
 import numpy as np
 import scipy.sparse as sp
