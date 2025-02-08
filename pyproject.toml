@@ -15,7 +15,7 @@ dependencies = [
     "numpy",
     "pandas",
     "hypernetx",
-    "numba",
+    "numba==0.56.4",
     "matplotlib",
     "scipy",
     "shapely",
