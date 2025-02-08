@@ -1,4 +1,4 @@
-"""Functions for printing and logging results"""
+"""Functions for printing and logging results."""
 
 import numpy as np
 

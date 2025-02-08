@@ -1,4 +1,4 @@
-"""Parse click arguments for main"""
+"""Parse click arguments for main."""
 
 from brec_analysis.categories_to_check import VALID_CATEGORIES
 from brec_analysis.encodings_to_check import ENCODINGS_TO_CHECK

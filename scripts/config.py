@@ -1,4 +1,4 @@
-"""File taken from UniGCN
+"""File taken from UniGCN.
 
 Specifies all the configurations. Note that the bash script might modify/loop some of these parameters.
 """

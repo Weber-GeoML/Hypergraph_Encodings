@@ -1,4 +1,4 @@
-"""Functions for adding encodings to a graph or hypergraph"""
+"""Functions for adding encodings to a graph or hypergraph."""
 
 from torch_geometric.data import Data
 

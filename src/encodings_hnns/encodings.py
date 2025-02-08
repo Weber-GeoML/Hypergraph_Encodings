@@ -1,4 +1,4 @@
-"""encodings.py
+"""Adding encodings to a dataset.
 
 This module contains functions for adding encodings
 to a dataset (curvature, laplacians, random walks).
@@ -125,6 +125,7 @@ class HypergraphEncodings:
 
             # for each node, get the min, max, mean, median,
             # and std of the degrees of the neighbors
+            assert laplacian.ldp is not None
             ld_profile: dict = laplacian.ldp
 
             if self.hyperedges is None:
@@ -256,8 +257,9 @@ class HypergraphEncodings:
                     ]
                 elif curvature_type == "ORC":
                     assert isinstance(rc, ORC)
+                    assert self.hyperedges is not None
                     rc_values = [
-                        rc.edge_curvature[hyperedge]
+                        rc.edge_curvature[hyperedge]  # type: ignore
                         for hyperedge in self.hyperedges[node]
                     ]
                 rc_profile[node] = [
@@ -357,14 +359,11 @@ class HypergraphEncodings:
         Returns:
             the hypergraph with the Laplacian encodings added to the featuress
         """
-        if laplacian_type == "Hodge" or laplacian_type == "Normalized":
-            filename: str = (
-                f"computed_encodings/{dataset_name}_laplacian_encodings_{laplacian_type}_normalized_{normalized}.pkl"
-            )
+        filename: str
+        if laplacian_type in ("Hodge", "Normalized"):
+            filename = f"computed_encodings/{dataset_name}_laplacian_encodings_{laplacian_type}_normalized_{normalized}.pkl"
         elif laplacian_type == "RW":
-            filename: str = (
-                f"computed_encodings/{dataset_name}_laplacian_encodings_{laplacian_type}_rw_{rw_type}_normalized_{normalized}.pkl"
-            )
+            filename = f"computed_encodings/{dataset_name}_laplacian_encodings_{laplacian_type}_rw_{rw_type}_normalized_{normalized}.pkl"
         if os.path.exists(filename):
             with open(filename, "rb") as f:
                 print(f"Loading hypergraph from {filename}")
@@ -396,6 +395,7 @@ class HypergraphEncodings:
                         f"The Hodge Laplacian (down) is \n {self.laplacian.hodge_laplacian_down}"
                     )
                 # Compute the eigenvalues and eigenvectors
+                assert self.laplacian.hodge_laplacian_down is not None
                 eigenvalues, eigenvectors = np.linalg.eigh(
                     self.laplacian.hodge_laplacian_down
                 )
@@ -405,15 +405,17 @@ class HypergraphEncodings:
                     print(
                         f"The normalized Laplacian is {self.laplacian.normalized_laplacian}"
                     )
+                assert self.laplacian.normalized_laplacian is not None
                 eigenvalues, eigenvectors = np.linalg.eigh(
                     self.laplacian.normalized_laplacian
                 )
             elif laplacian_type == "RW":
                 self.laplacian.compute_random_walk_laplacian(
-                    type=rw_type, verbose=verbose
+                    rw_type=rw_type, verbose=verbose
                 )
                 if verbose:
                     print(f"The RW laplacian is \n {self.laplacian.rw_laplacian}")
+                assert self.laplacian.rw_laplacian is not None
                 eigenvalues, eigenvectors = np.linalg.eig(self.laplacian.rw_laplacian)
 
             # TODO: take the real part of the eigenvalues/eigenvectors
@@ -629,7 +631,7 @@ class HypergraphEncodings:
                 raise NotImplementedError
 
             i: int = 0
-            for node in self.hyperedges.keys():
+            for node in self.hyperedges:
                 if verbose:
                     print(f"The node is {node}")
                 assert matrix_powers[:, i].shape == (k,)
@@ -668,50 +670,3 @@ class HypergraphEncodings:
                     pickle.dump(hypergraph, f)
                 print(f"Hypergraph saved as {filename}")
             return hypergraph
-
-
-# Example utilization
-if __name__ == "__main__":
-
-    print("EXAMPLE UTILIZATION")
-
-    hg: dict[str, dict | int] = {
-        "hypergraph": {
-            "yellow": [0, 1, 2, 3],
-            "red": [1, 2],
-            "green": [2, 4, 5],
-            "blue": [3, 4],
-        },
-        "features": np.matrix([[1], [1], [1], [1], [1], [1]]),
-        "labels": {},
-        "n": 6,
-    }
-    # Instantiates the Hypergraph Curvature Profile class
-    hgcurvaturprofile = HypergraphEncodings()
-    hg = hgcurvaturprofile.add_randowm_walks_encodings(hg, verbose=False)
-    # k is 20 so the features are shape n by 21
-    assert isinstance(hg["features"], np.ndarray)
-    assert hg["features"].shape[0] == hg["n"]
-    assert hg["features"].shape[1] == 21, f"The shape is {hg['features'].shape[1]}"
-
-    # 21 + 6 makes 27
-    # becuase we have already added features
-    hg = hgcurvaturprofile.add_degree_encodings(hg, verbose=True)
-    assert hg["features"].shape[0] == hg["n"]
-    assert hg["features"].shape[1] == 27, f"The shape is {hg['features'].shape[1]}"
-
-    # 27+6 makes 33
-    hg = hgcurvaturprofile.add_laplacian_encodings(hg, verbose=True)
-    assert hg["features"].shape[0] == hg["n"]
-    assert hg["features"].shape[1] == 33, f"The shape is {hg['features'].shape[1]}"
-
-    # 33 plus 5 makes 38
-    hg = hgcurvaturprofile.add_curvature_encodings(hg, True)
-    assert hg["features"].shape[0] == hg["n"]
-    assert hg["features"].shape[1] == 38, f"The shape is {hg['features'].shape[1]}"
-
-    # hg = hgcurvaturprofile.add_laplacian_encodings(hg)
-    hg = hgcurvaturprofile.add_randowm_walks_encodings(hg)
-    assert hg["features"].shape[0] == hg["n"]
-    print(hg)
-    print("DONE")

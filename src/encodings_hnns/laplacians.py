@@ -1,4 +1,4 @@
-"""laplacians.py.
+"""Add Laplacian encodings.
 
 This module contains functions for computing the Laplacians
 (Hodge, random walks, etc).
@@ -13,10 +13,10 @@ from scipy.linalg import fractional_matrix_power
 class DisconnectedError(Exception):
     """Exception raised when a node is found to be disconnected."""
 
-    pass
-
 
 class Laplacians:
+    """Laplacian object."""
+
     def __init__(self, hypergraph) -> None:
         """Initialize the Laplacian object.
 
@@ -53,7 +53,7 @@ class Laplacians:
         # the matrix of edge degrees
         self.degree_edges: None | np.ndarray = None
         # the ajacency matrix of a hypergraph is Defined in Zhou, Huang Scholkopf
-        # as BB^T - D_v
+        # as BB^T - degree_vertices
         self.hypergraph_adjacency: None | np.ndarray = None
 
     def compute_boundary(self, verbose: bool = False) -> None:
@@ -134,7 +134,7 @@ class Laplacians:
         assert self.degree_edges is not None
         assert self.degree_vertices is not None
 
-        # intermediate is dv - B_1*D_e^{-1}*B_1^T
+        # intermediate is dv - B_1*degree_edges^{-1}*B_1^T
         assert self.boundary_matrix is not None
         assert self.degree_edges is not None
         intermediate = self.degree_vertices - np.matmul(
@@ -192,6 +192,7 @@ class Laplacians:
                             ] += value  # Reflect the value for symmetry (in A only!)
 
             # the rw Laplacian is I - dv^{-1}*A
+            assert self.degree_vertices is not None
             rw_l = np.eye(num_nodes) + np.matmul(
                 np.linalg.inv(self.degree_vertices), -matrix_
             )
@@ -367,38 +368,3 @@ class Laplacians:
     # edge.drop(node)
     # random.choice(edge)
     # if WE: to_do
-
-
-# Example utilization
-if __name__ == "__main__":
-
-    print("EXAMPLE UTILIZATION")
-    hg: dict[str, dict | int] = {
-        "hypergraph": {
-            "yellow": [1, 2, 3],
-            "red": [2, 3],
-            "green": [3, 5, 6],
-            "blue": [4, 5],
-        },
-        "features": {},
-        "labels": {},
-        "n": 6,
-    }
-    data = hg
-    # print(data["hypergraph"])
-    # So hypergraph is a dict:
-    # key: authors, values: papers participates in.
-    # print(data["features"])
-    # print(data["labels"])
-
-    # Instantiates the Laplacians class
-    laplacian = Laplacians(data)
-    laplacian.compute_node_neighbors()
-    print(f"node_neighbors: \n {laplacian.node_neighbors}")
-    laplacian.compute_node_degrees()
-    print(f"node_degrees: \n {laplacian.node_degrees}")
-    laplacian.compute_random_walk_laplacian(rw_type="WE")
-    laplacian.compute_normalized_laplacian()
-    laplacian.compute_random_walk_laplacian()
-    print(f"rw_laplacian: \n {laplacian.rw_laplacian}")
-    print("DONE")

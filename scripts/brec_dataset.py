@@ -1,5 +1,5 @@
-"""
-This script is used to plot the BREC dataset.
+"""This script is used to plot the BREC dataset.
+
 This is a small example of how to plot the graphs in the BREC dataset.
 """
 

@@ -1,4 +1,4 @@
-"""Define encodings to check"""
+"""Define encodings to check."""
 
 ENCODINGS_TO_CHECK: list[tuple[str, str]] = [
     ("LDP", "Local Degree Profile"),

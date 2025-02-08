@@ -1,6 +1,8 @@
-""" Test for the curvature
+"""Test for the curvature
 
 Can use the toy hypergraph from our draft"""
+
+from typing import Any
 
 import pytest
 
@@ -16,7 +18,7 @@ def toy_hypergraph() -> dict[str, dict]:
             hypergraph from draft
     """
     # We don't care about features or labels
-    hg: dict[str, dict] = {
+    hg: dict[str, dict | int] = {
         "hypergraph": {
             "yellow": [1, 2, 3],
             "red": [2, 3],
@@ -39,7 +41,7 @@ def toy_hypergraph_2() -> dict[str, dict]:
             hypergraph
     """
     # We don't care about features or labels
-    hg: dict[str, dict] = {
+    hg: dict[str, dict | int] = {
         "hypergraph": {
             "yellow": [4, 5, 7],
             "red": [5, 7],
@@ -63,7 +65,7 @@ def toy_hypergraph_3() -> dict[str, dict]:
             hypergraph
     """
     # We don't care about features or labels
-    hg: dict[str, dict] = {
+    hg: dict[str, dict | int] = {
         "hypergraph": {
             "yellow": [7, 5, 4],
             "red": [7, 5],
@@ -75,7 +77,7 @@ def toy_hypergraph_3() -> dict[str, dict]:
     return hg
 
 
-def test_compute_node_degrees(toy_hypergraph) -> None:
+def test_compute_node_degrees(toy_hypergraph: Any) -> None:
     """
     Test for compute_node_degrees
 
@@ -90,7 +92,7 @@ def test_compute_node_degrees(toy_hypergraph) -> None:
     assert forman_ricci.node_degrees == {1: 1, 2: 2, 3: 3, 4: 1, 5: 2, 6: 1}
 
 
-def test_compute_node_degrees_2(toy_hypergraph_2) -> None:
+def test_compute_node_degrees_2(toy_hypergraph_2: Any) -> None:
     """
     Test for compute_node_degrees
 
@@ -105,7 +107,7 @@ def test_compute_node_degrees_2(toy_hypergraph_2) -> None:
     assert forman_ricci.node_degrees == {4: 1, 5: 2, 7: 2}
 
 
-def test_compute_node_degrees_3(toy_hypergraph_3) -> None:
+def test_compute_node_degrees_3(toy_hypergraph_3: Any) -> None:
     """
     Test for compute_node_degrees
 
@@ -121,7 +123,7 @@ def test_compute_node_degrees_3(toy_hypergraph_3) -> None:
     assert forman_ricci.node_degrees == {4: 1, 5: 2, 7: 2}
 
 
-def test_compute_forman_ricci(toy_hypergraph) -> None:
+def test_compute_forman_ricci(toy_hypergraph: Any) -> None:
     """
     Test for compute_forman_ricci
 

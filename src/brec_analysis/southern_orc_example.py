@@ -1,12 +1,9 @@
-"""Example of ORC computation for the Southern Github repo"""
+"""Example of ORC computation for the Southern Github repo."""
 
 from scipy.stats import ks_2samp
 
-from encodings_hnns.orc_from_southern import (
-    ollivier_ricci_curvature,
-    prob_rw,
-    prob_two_hop,
-)
+from encodings_hnns.orc_from_southern import (ollivier_ricci_curvature,
+                                              prob_rw, prob_two_hop)
 
 
 def southern_orc_example(rook, shrikhande) -> None:

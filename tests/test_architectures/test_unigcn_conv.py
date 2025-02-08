@@ -45,14 +45,14 @@ def test_unigcn_conv_hypergraph_classification(simple_args, simple_hypergraph):
     conv = UniGCNConv(simple_args, in_channels=2, out_channels=2, heads=1)
 
     # Create degree tensors matching the structure from test_calculate_vertex_edges
-    degE = torch.tensor([[0.8165], [0.8165]])  # From test_degree_calculations
-    degV = torch.tensor([[1.0], [2.0], [1.0]]).pow(
+    dege = torch.tensor([[0.8165], [0.8165]])  # From test_degree_calculations
+    degv = torch.tensor([[1.0], [2.0], [1.0]]).pow(
         -0.5
     )  # From test_degree_calculations
 
     # Run forward pass with hypergraph classification
     output = conv(
-        X, vertex, edges, hypergraph_classification=True, degE=degE, degV=degV
+        X, vertex, edges, hypergraph_classification=True, dege=dege, degv=degv
     )
 
     assert output.shape == (3, 2)

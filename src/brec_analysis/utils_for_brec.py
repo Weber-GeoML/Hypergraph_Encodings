@@ -1,4 +1,4 @@
-"""Utility functions for the BREC dataset"""
+"""Utility functions for the BREC dataset."""
 
 import os
 

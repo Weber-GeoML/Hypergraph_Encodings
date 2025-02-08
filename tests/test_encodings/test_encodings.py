@@ -1,4 +1,4 @@
-""" Test for the curvature
+"""Test for the curvature
 
 Can use the toy hypergraph from our draft"""
 
@@ -53,7 +53,7 @@ def toy_hypergraph_with_features() -> dict[str, dict[str, Any] | int]:
     """
     # We don't care about features or labels
     # CHANGE THE VERTICES: SUBSTRACTED -1
-    hg: dict[str, dict[str, Any] | int] = {
+    hg: dict[str, dict[str, Any] | matrix | int] = {
         "hypergraph": {
             "yellow": [0, 1, 2],
             "red": [1, 2],
@@ -76,7 +76,7 @@ def toy_hypergraph_with_encodings_ldp() -> dict[str, dict[str, Any] | int]:
             hypergraph from draft
     """
     # We don't care about features or labels
-    hg: dict[str, dict[str, Any] | int] = {
+    hg: dict[str, dict[str, Any] | matrix | int] = {
         "hypergraph": {
             "yellow": [1, 2, 3],
             "red": [2, 3],
@@ -155,7 +155,7 @@ def hyperedges() -> dict[str, dict[str, Any] | int]:
             hedges the node belongs to
     """
     # We don't care about features or labels
-    he: dict[str, dict[str, Any] | int] = {
+    he: dict[int, list[str]] = {
         1: ["yellow"],
         2: ["yellow", "red"],
         3: ["yellow", "red", "green"],
@@ -176,7 +176,7 @@ def hyperedges_2() -> dict[str, dict[str, Any] | int]:
             hedges the node belongs to
     """
     # We don't care about features or labels
-    he: dict[str, dict[str, Any] | int] = {
+    he: dict[str, dict[str, Any] | int | list[str]] = {
         4: ["yellow"],
         5: ["yellow", "red"],
         7: ["yellow", "red"],
@@ -194,7 +194,7 @@ def hyperedges_3() -> dict[str, dict[str, Any] | int]:
             hedges the node belongs to
     """
     # We don't care about features or labels
-    he: dict[str, dict[str, Any] | int] = {
+    he: dict[int, list[str]] = {
         4: ["yellow"],
         5: ["yellow", "red"],
         7: ["yellow", "red"],
@@ -203,7 +203,7 @@ def hyperedges_3() -> dict[str, dict[str, Any] | int]:
 
 
 def test_add_degree_encodings(
-    toy_hypergraph_with_features, toy_hypergraph_with_encodings_ldp
+    toy_hypergraph_with_features: Any, toy_hypergraph_with_encodings_ldp: Any
 ) -> None:
     """
     Test for add_degree_encodings
@@ -237,7 +237,7 @@ def test_add_degree_encodings(
 #     assert toy_hypergraph_with_features["features"].shape[0] == 6, f"the shape is {toy_hypergraph_with_features['features'].shape[0]}"
 
 
-def test_compute_hyperedges(toy_hypergraph, hyperedges) -> None:
+def test_compute_hyperedges(toy_hypergraph: Any, hyperedges: Any) -> None:
     """
     Test for compute_hyperedges
 
@@ -255,7 +255,7 @@ def test_compute_hyperedges(toy_hypergraph, hyperedges) -> None:
     assert_array_equal(hgencodings.hyperedges, hyperedges)
 
 
-def test_compute_hyperedges_2(toy_hypergraph_2, hyperedges_2) -> None:
+def test_compute_hyperedges_2(toy_hypergraph_2: Any, hyperedges_2: Any) -> None:
     """
     Test for compute_hyperedges
 
@@ -274,7 +274,7 @@ def test_compute_hyperedges_2(toy_hypergraph_2, hyperedges_2) -> None:
     assert_array_equal(hgencodings.hyperedges, hyperedges_2)
 
 
-def test_compute_hyperedges_3(toy_hypergraph_3, hyperedges_3) -> None:
+def test_compute_hyperedges_3(toy_hypergraph_3: Any, hyperedges_3: Any) -> None:
     """
     Test for compute_hyperedges
 

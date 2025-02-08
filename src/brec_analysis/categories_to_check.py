@@ -1,4 +1,4 @@
-"""Categories to check for BREC dataset"""
+"""Categories to check for BREC dataset."""
 
 # Define valid categories with their ranges
 # (0,60) is number of pairs (ie 120 graphs)

@@ -1,4 +1,4 @@
-""" File taken from https://github.com/RaphaelPellegrin/UniGNN/tree/master"""
+"""File taken from https://github.com/RaphaelPellegrin/UniGNN/tree/master"""
 
 import math
 
@@ -161,7 +161,7 @@ class SparseMM(torch.autograd.Function):
 
     @staticmethod
     def backward(
-        ctx: torch.autograd.function.FunctionContext, g: torch.Tensor
+        ctx: torch.autograd.function.FunctionCtx, g: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """Backward pass of the SparseMM layer.
 

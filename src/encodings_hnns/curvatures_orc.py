@@ -1,7 +1,7 @@
-"""
-curvatures_orc.py
+"""ORC Curvature.
 
-This module contains functions for computing the Ollivier-Ricci curvatures of an undirected hypergraph.
+This module contains functions for computing the
+Ollivier-Ricci curvatures of an undirected hypergraph.
 """
 
 import json
@@ -15,7 +15,7 @@ from encodings_hnns.data_handling import parser
 
 
 def _map_nodes_to_integers(hypergraph: dict) -> tuple[dict, dict, dict]:
-    """
+    """Map nodes to integers.
     Reason I am doing this is because Julia code
     assumes that the nodes are [1,2,3,...,n]
     where n is the number of nodes.
@@ -85,6 +85,8 @@ def _save_to_tsv(hypergraph: dict, output_file: str) -> None:
 
 
 class ORC:
+    """ORC Curvature."""
+
     def __init__(self, hypergraph: dict) -> None:
         """Initialize the ORC curvature object.
 

@@ -1,4 +1,4 @@
-"""File used to save the encodings for lukas
+"""File used to save the encodings for lukas.
 
 Will just save in the same format Lukas provided to me.ie a list of dict
 And now the "features" field of every dict will have been updated with the features
@@ -124,8 +124,9 @@ class encodings_saver(object):
                     dataset_name=None,
                     verbose=False,
                 )
-                features_shapes_with_encodings = dataset_copy["features"].shape
-                assert features_shapes != features_shapes_with_encodings
+                if isinstance(dataset_copy["features"], np.ndarray):
+                    features_shapes_with_encodings = dataset_copy["features"].shape
+                    assert features_shapes != features_shapes_with_encodings
                 if random_walk_type == "WE":
                     list_hgs_rw_WE.append(dataset_copy)
                 elif random_walk_type == "EE":
@@ -165,7 +166,7 @@ class encodings_saver(object):
                 dataset_copy = dataset.copy()
                 dataset_copy = hgencodings.add_curvature_encodings(
                     dataset_copy,
-                    type=curvature_type,
+                    curvature_type=curvature_type,
                     normalized=True,
                     dataset_name=None,
                     verbose=verbose,

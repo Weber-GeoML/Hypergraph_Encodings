@@ -1,4 +1,4 @@
-""" File taken from https://github.com/RaphaelPellegrin/UniGNN/tree/master"""
+"""File taken from https://github.com/RaphaelPellegrin/UniGNN/tree/master"""
 
 import numpy as np
 import scipy.sparse as sp
@@ -391,12 +391,12 @@ def initialise(
         torch.from_numpy(H.sum(1)).view(-1, 1).float()
     )  # the degree of each vertices
 
-    # Similarly, calculate the degree of each edge (degE2) by summing
+    # Similarly, calculate the degree of each edge (dege2) by summing
     # the values in each column of the matrix H.
     # This gives the number of vertices connected to each edge.
     # Again, the result is converted from NumPy to a PyTorch tensor,
     # reshaped, and cast to float.
-    degE2: torch.Tensor = (
+    dege2: torch.Tensor = (
         torch.from_numpy(H.sum(0)).view(-1, 1).float()
     )  # the degree of each edge
 
@@ -445,7 +445,7 @@ def initialise(
     V, E = V.to(device), E.to(device)
     args.degree_vertices = degree_vertices.to(device)
     args.degree_edges = degree_edges.to(device)
-    args.degE2 = degE2.pow(-1.0).to(device)
+    args.dege2 = dege2.pow(-1.0).to(device)
 
     # nfeat: the dimension of the features
     # nclass: the number of classes in the labels

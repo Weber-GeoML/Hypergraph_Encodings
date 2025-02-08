@@ -1,4 +1,6 @@
-"""File taken from https://github.com/RaphaelPellegrin/UniGNN/tree/master"""
+"""Architecture of UniGCN.
+
+File taken from https://github.com/RaphaelPellegrin/UniGNN/tree/master"""
 
 import math
 
@@ -8,7 +10,7 @@ import torch.nn.functional as F
 from torch_geometric.utils import softmax
 from torch_scatter import scatter
 
-from uniGCN.calculate_vertex_edges import calculate_V_E
+from uniGCN.calculate_vertex_edges import calculate_v_e
 
 # code from UniGCN paper
 # https://github.com/RaphaelPellegrin/UniGNN/tree/master
@@ -88,8 +90,8 @@ class UniSAGEConv(nn.Module):
         edges: torch.Tensor,
         verbose: bool = False,
         hypergraph_classification: bool = False,
-        degE: None | list = None,
-        degV: None | list = None,
+        dege: None | list = None,
+        degv: None | list = None,
     ) -> torch.Tensor:
         device = X.device
         vertex = vertex.to(device)
@@ -157,8 +159,8 @@ class UniGINConv(nn.Module):
         edges: torch.Tensor,
         verbose: bool = False,
         hypergraph_classification: bool = False,
-        degE: None | list = None,
-        degV: None | list = None,
+        dege: None | list = None,
+        degv: None | list = None,
     ) -> torch.Tensor:
         N = X.shape[0]
         X = X.to(device)
@@ -243,8 +245,8 @@ class UniGCNConv(nn.Module):
         edges: torch.Tensor,
         verbose: bool = False,
         hypergraph_classification: bool = False,
-        degE: None | list = None,
-        degV: None | list = None,
+        dege: None | list = None,
+        degv: None | list = None,
     ) -> torch.Tensor:
         """Performs 1/srqrt(di) * [sum_e 1/sqrt(d_e)Wh_e], ie x tilde i
 
@@ -284,10 +286,10 @@ class UniGCNConv(nn.Module):
             print(f"edges {edges}")
             print(f"X is \n {X}")
         if hypergraph_classification:
-            assert degE is not None
-            assert degV is not None
-            degE = torch.tensor(degE, dtype=torch.float32, device=device)
-            degV = torch.tensor(degV, dtype=torch.float32, device=device)
+            assert dege is not None
+            assert degv is not None
+            dege = torch.tensor(dege, dtype=torch.float32, device=device)
+            degv = torch.tensor(degv, dtype=torch.float32, device=device)
         N: int = X.shape[0]  # the number of nodes
         if verbose:
             print(f"N is {N}")
@@ -295,39 +297,39 @@ class UniGCNConv(nn.Module):
         if hypergraph_classification:
             pass
         else:
-            if not hasattr(self.args, "degE"):
+            if not hasattr(self.args, "dege"):
                 available_attrs = [
                     attr for attr in dir(self.args) if not attr.startswith("_")
                 ]
                 raise AttributeError(
-                    f"args must have degE attribute for non-hypergraph classification.\n"
+                    f"args must have dege attribute for non-hypergraph classification.\n"
                     f"Available attributes are: {available_attrs}"
                 )
-            if self.args.degE is None:
+            if self.args.dege is None:
                 raise ValueError(
-                    f"args.degE cannot be None for non-hypergraph classification.\n"
-                    f"args.degE type: {type(self.args.degE)}\n"
-                    f"args.degE value: {self.args.degE}"
+                    f"args.dege cannot be None for non-hypergraph classification.\n"
+                    f"args.dege type: {type(self.args.dege)}\n"
+                    f"args.dege value: {self.args.dege}"
                 )
-            degE = torch.tensor(self.args.degE, device=device)
-            degV = torch.tensor(self.args.degV, device=device)
+            dege = torch.tensor(self.args.dege, device=device)
+            degv = torch.tensor(self.args.degv, device=device)
         if verbose:
-            print(f"degE is {degE}")
+            print(f"dege is {dege}")
         # degree of vertices
-        # TODO: Modify this so that it is a dictionary (ie self.args.degV is a dictionary, with the
-        # first hg having it's first degV saved, etc)
+        # TODO: Modify this so that it is a dictionary (ie self.args.degv is a dictionary, with the
+        # first hg having it's first degv saved, etc)
         if hypergraph_classification:
             pass
         else:
             assert hasattr(
-                self.args, "degV"
-            ), "args must have degV attribute for non-hypergraph classification"
+                self.args, "degv"
+            ), "args must have degv attribute for non-hypergraph classification"
             assert (
-                self.args.degV is not None
-            ), "args.degV cannot be None for non-hypergraph classification"
-            degV = self.args.degV
+                self.args.degv is not None
+            ), "args.degv cannot be None for non-hypergraph classification"
+            degv = self.args.degv
         if verbose:
-            print(f"degV is {degV}")
+            print(f"degv is {degv}")
 
         # v1: X -> XW -> AXW -> norm
 
@@ -345,7 +347,7 @@ class UniGCNConv(nn.Module):
         )  # [E, C]
 
         # 1/sqrt(d_e)Wh_e
-        Xe = Xe * degE
+        Xe = Xe * dege
 
         # this return the row ofs Xev for edges
         # ie only the features h_e for edges
@@ -359,7 +361,7 @@ class UniGCNConv(nn.Module):
         # 1/srqrt(di) * [sum_e 1/sqrt(d_e)Wh_e]
         # where [sum_e 1/sqrt(d_e)Wh_2] is Xv
         Xv = (
-            Xv * degV
+            Xv * degv
         )  # Scale node features by the reciprocal of the square root of vertex degrees
 
         X = Xv
@@ -406,20 +408,20 @@ class UniGCNConv2(nn.Module):
         vertex = vertex.to(device)
         edges = edges.to(device)
         N = X.shape[0]
-        degE = self.args.degE
-        degV = self.args.degV
+        dege = self.args.dege
+        degv = self.args.degv
 
         # v3: X -> AX -> norm -> AXW
 
         Xve = X[vertex]  # [nnz, C]
         Xe = scatter(Xve, edges, dim=0, reduce=self.args.first_aggregate)  # [E, C]
 
-        Xe = Xe * degE
+        Xe = Xe * dege
 
         Xev = Xe[edges]  # [nnz, C]
         Xv = scatter(Xev, vertex, dim=0, reduce="sum", dim_size=N)  # [N, C]
 
-        Xv = Xv * degV
+        Xv = Xv * degv
 
         X = Xv
 
@@ -481,8 +483,8 @@ class UniGATConv(nn.Module):
         edges: torch.Tensor,
         verbose: bool = False,
         hypergraph_classification: bool = False,
-        degE: None | list = None,
-        degV: None | list = None,
+        dege: None | list = None,
+        degv: None | list = None,
     ) -> torch.Tensor:
         device = X.device
         vertex = vertex.to(device)
@@ -603,12 +605,12 @@ class UniGNN(nn.Module):
 
         X = self.input_drop(X)
         for conv in self.convs:  # note that we loop for as many layers as specified
-            X_orig = X.clone()  # Create copy of original X
+            x_orig = X.clone()  # Create copy of original X
             X = conv(X, V, E)
             X = self.act(X)
             X = self.dropout(X)
             X = X.to(device)
-            X_orig = X_orig.to(device)
+            x_orig = x_orig.to(device)
 
             if self.args.do_transformer:
                 if self.args.transformer_version == "v1":
@@ -621,31 +623,31 @@ class UniGNN(nn.Module):
 
                     # Handle dimension mismatch with projection if needed
                     # TODO: if we remove MP, could do X_without_encoding.shape[-1] and project there
-                    if X_orig.shape[-1] != feature_dim:
+                    if x_orig.shape[-1] != feature_dim:
                         if verbose:
                             print(f"feature_dim is {feature_dim}")
-                            print(f"X_orig.shape is {X_orig.shape}")
+                            print(f"x_orig.shape is {x_orig.shape}")
                         projection = nn.Linear(
-                            X_orig.shape[-1], feature_dim, device=X.device
+                            x_orig.shape[-1], feature_dim, device=X.device
                         )
-                        X_orig = projection(X_orig)
+                        x_orig = projection(x_orig)
 
                     # Add batch dimension for attention computation
-                    X_transformer = X_orig.unsqueeze(0)  # [1, N, features]
+                    x_transformer = x_orig.unsqueeze(0)  # [1, N, features]
 
                     # Apply basic self-attention using PyTorch's built-in function
                     # This is equivalent to a single attention head without the feed-forward network
-                    X_transformer = F.scaled_dot_product_attention(
-                        query=X_transformer,
-                        key=X_transformer,
-                        value=X_transformer,
+                    x_transformer = F.scaled_dot_product_attention(
+                        query=x_transformer,
+                        key=x_transformer,
+                        value=x_transformer,
                         dropout_p=self.dropout.p if self.training else 0.0,
                     )
-                    X_transformer = X_transformer.to(device)
+                    x_transformer = x_transformer.to(device)
 
                     # Add residual connection
-                    # TODO: remove MP: X = X_transformer
-                    X = X + X_transformer.squeeze(0)
+                    # TODO: remove MP: X = x_transformer
+                    X = X + x_transformer.squeeze(0)
 
                 elif self.args.transformer_version == "v2":
                     # VERSION 2: Full Transformer Encoder Architecture
@@ -681,24 +683,24 @@ class UniGNN(nn.Module):
                         ).to(device)
 
                     # Handle dimension mismatch with projection if needed
-                    if X_orig.shape[-1] != feature_dim:
+                    if x_orig.shape[-1] != feature_dim:
                         if verbose:
                             print(f"feature_dim is {feature_dim}")
-                            print(f"X_orig.shape[-1] is {X_orig.shape}")
+                            print(f"x_orig.shape[-1] is {x_orig.shape}")
                         projection = nn.Linear(
-                            X_orig.shape[-1], feature_dim, device=X.device
+                            x_orig.shape[-1], feature_dim, device=X.device
                         ).to(device)
-                        X_orig = projection(X_orig)
+                        x_orig = projection(x_orig)
 
                     # Add batch dimension for transformer
-                    X_transformer = X_orig.unsqueeze(0).to(device)
+                    x_transformer = x_orig.unsqueeze(0).to(device)
                     X = X.to(device)
 
                     # Apply full transformer encoding
-                    X_transformer = self.transformer(X_transformer)
+                    x_transformer = self.transformer(x_transformer)
 
                     # Add residual connection
-                    X = X + X_transformer.squeeze(0)
+                    X = X + x_transformer.squeeze(0)
 
         X = self.conv_out(X, V, E)
         return F.log_softmax(X, dim=1)
@@ -731,9 +733,9 @@ class UniGNN(nn.Module):
             G = dico["hypergraph"]
 
             # Get or calculate degrees
-            if "degE" in dico and "degV" in dico:
-                degE = torch.tensor(dico["degE"], dtype=torch.float32)
-                degV = torch.tensor(dico["degV"], dtype=torch.float32)
+            if "dege" in dico and "degv" in dico:
+                dege = torch.tensor(dico["dege"], dtype=torch.float32)
+                degv = torch.tensor(dico["degv"], dtype=torch.float32)
                 # Convert vertex/edge indices from G
                 V, E = [], []
                 for edge_idx, (_, nodes) in enumerate(G.items()):
@@ -742,21 +744,21 @@ class UniGNN(nn.Module):
                 V = torch.tensor(V, dtype=torch.long)
                 E = torch.tensor(E, dtype=torch.long)
             else:
-                V, E, degE, degV, _ = calculate_V_E(X, G, self.args)
-                degE = degE.float()
-                degV = degV.float()
+                V, E, dege, degv, _ = calculate_v_e(X, G, self.args)
+                dege = dege.float()
+                degv = degv.float()
 
             # Forward pass through the network
             X = self.input_drop(X)
             for conv in self.convs:
-                X_orig = X.clone()  # Store original features for transformer
+                x_orig = X.clone()  # Store original features for transformer
                 X = conv(
                     X=X,
                     vertex=V,
                     edges=E,
                     hypergraph_classification=True,
-                    degE=degE,
-                    degV=degV,
+                    dege=dege,
+                    degv=degv,
                 )
                 X = self.act(X)
                 X = self.dropout(X)
@@ -771,26 +773,26 @@ class UniGNN(nn.Module):
                         feature_dim = X.shape[-1]
 
                         # Handle dimension mismatch with projection if needed
-                        if X_orig.shape[-1] != feature_dim:
+                        if x_orig.shape[-1] != feature_dim:
                             projection = nn.Linear(
-                                X_orig.shape[-1], feature_dim, device=X.device
+                                x_orig.shape[-1], feature_dim, device=X.device
                             )
-                            X_orig = projection(X_orig)
+                            x_orig = projection(x_orig)
 
                         # Add batch dimension for attention computation
-                        X_transformer = X_orig.unsqueeze(0)  # [1, N, features]
+                        x_transformer = x_orig.unsqueeze(0)  # [1, N, features]
 
                         # Apply basic self-attention using PyTorch's built-in function
                         # This is equivalent to a single attention head without the feed-forward network
-                        X_transformer = F.scaled_dot_product_attention(
-                            query=X_transformer,
-                            key=X_transformer,
-                            value=X_transformer,
+                        x_transformer = F.scaled_dot_product_attention(
+                            query=x_transformer,
+                            key=x_transformer,
+                            value=x_transformer,
                             dropout_p=self.dropout.p if self.training else 0.0,
                         )
 
                         # Add residual connection
-                        X = X + X_transformer.squeeze(0)
+                        X = X + x_transformer.squeeze(0)
 
                     elif self.args.transformer_version == "v2":
                         # VERSION 2: Full Transformer Encoder Architecture
@@ -826,20 +828,20 @@ class UniGNN(nn.Module):
                             ).to(device)
 
                         # Handle dimension mismatch with projection if needed
-                        if X_orig.shape[-1] != feature_dim:
+                        if x_orig.shape[-1] != feature_dim:
                             projection = nn.Linear(
-                                X_orig.shape[-1], feature_dim, device=X.device
+                                x_orig.shape[-1], feature_dim, device=X.device
                             ).to(device)
-                            X_orig = projection(X_orig)
+                            x_orig = projection(x_orig)
 
                         # Add batch dimension for transformer
-                        X_transformer = X_orig.unsqueeze(0).to(device)
+                        x_transformer = x_orig.unsqueeze(0).to(device)
 
                         # Apply full transformer encoding
-                        X_transformer = self.transformer(X_transformer)
+                        x_transformer = self.transformer(x_transformer)
 
                         # Add residual connection
-                        X = X + X_transformer.squeeze(0)
+                        X = X + x_transformer.squeeze(0)
 
             # Output layer
             X = self.conv_out(
@@ -847,8 +849,8 @@ class UniGNN(nn.Module):
                 vertex=V,
                 edges=E,
                 hypergraph_classification=True,
-                degE=degE,
-                degV=degV,
+                dege=dege,
+                degv=degv,
             )
 
             # Global pooling and prediction
@@ -892,18 +894,18 @@ class UniGCNIIConv(nn.Module):
                 the values of x_i at time 0.
         """
         N: int = X.shape[0]
-        degE = self.args.degE
-        degV = self.args.degV
+        dege = self.args.dege
+        degv = self.args.degv
 
         Xve = X[vertex]  # [nnz, C]
         Xe = scatter(Xve, edges, dim=0, reduce=self.args.first_aggregate)  # [E, C]
 
-        Xe = Xe * degE
+        Xe = Xe * dege
 
         Xev = Xe[edges]  # [nnz, C]
         Xv = scatter(Xev, vertex, dim=0, reduce="sum", dim_size=N)  # [N, C]
 
-        Xv = Xv * degV
+        Xv = Xv * degv
 
         X = Xv
 
@@ -998,7 +1000,7 @@ class UniGCNII(nn.Module):
                 Each dict must have:
                     - 'features': node features tensor
                     - 'hypergraph': dictionary of edge lists
-                    - Optional: 'degE', 'degV' (pre-computed degrees)
+                    - Optional: 'dege', 'degv' (pre-computed degrees)
 
         Returns:
             List of prediction tensors (one per hypergraph)
@@ -1012,9 +1014,9 @@ class UniGCNII(nn.Module):
             G = dico["hypergraph"]
 
             # Get or calculate degrees and indices
-            if "degE" in dico and "degV" in dico:
-                degE = torch.tensor(dico["degE"], dtype=torch.float32)
-                degV = torch.tensor(dico["degV"], dtype=torch.float32)
+            if "dege" in dico and "degv" in dico:
+                dege = torch.tensor(dico["dege"], dtype=torch.float32)
+                degv = torch.tensor(dico["degv"], dtype=torch.float32)
                 # Convert vertex/edge indices from G
                 V, E = [], []
                 for edge_idx, (_, nodes) in enumerate(G.items()):
@@ -1023,9 +1025,9 @@ class UniGCNII(nn.Module):
                 V = torch.tensor(V, dtype=torch.long)
                 E = torch.tensor(E, dtype=torch.long)
             else:
-                V, E, degE, degV, _ = calculate_V_E(X, G, self.args)
-                degE = degE.float()
-                degV = degV.float()
+                V, E, dege, degv, _ = calculate_v_e(X, G, self.args)
+                dege = dege.float()
+                degv = degv.float()
 
             # Initial transformation
             X = self.dropout(X)

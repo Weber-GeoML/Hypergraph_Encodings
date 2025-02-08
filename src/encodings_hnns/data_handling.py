@@ -7,6 +7,7 @@ import inspect
 import os
 import pickle
 import warnings
+from typing import Callable
 
 # import hypernetx as hnx
 import numpy as np
@@ -38,11 +39,11 @@ def load(args) -> tuple[dict[dict, np.matrix, np.ndarray, int], list, list]:
     dataset = parser(args.data, args.dataset).parse()
 
     current: str = os.path.abspath(inspect.getfile(inspect.currentframe()))
-    Dir: str
-    Dir, _ = os.path.split(current)
-    Dir = os.path.dirname(os.path.dirname(Dir))
+    dir: str
+    dir, _ = os.path.split(current)
+    dir = os.path.dirname(os.path.dirname(dir))
     file: str = os.path.join(
-        Dir,
+        dir,
         "data",
         args.data,
         args.dataset,
@@ -84,7 +85,7 @@ class parser(object):
             self.d = os.path.join(current, "data", data)
         self.data, self.dataset = data, dataset
 
-    def parse(self):
+    def parse(self) -> dict:
         """Returns a dataset specific function to parse.
 
         Returns:
@@ -92,7 +93,7 @@ class parser(object):
         """
 
         name: str = "_load_data"
-        function = getattr(self, name, lambda: {})
+        function: Callable = getattr(self, name, lambda: {})
         return function()
 
     def _load_data(self, verbose: bool = True) -> dict:

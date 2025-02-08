@@ -1,4 +1,4 @@
-"""Plotting functions for the encodings of the BREC dataset"""
+"""Plotting functions for the encodings of the BREC dataset."""
 
 import os
 
@@ -67,8 +67,9 @@ def plot_matched_encodings(
     k: int = 1,
     abs_values: bool = True,
 ) -> None:
-    """
-    Plot two encodings and their difference, attempting to match their row orderings if possible.
+    """Plot two encodings and their difference.
+
+    Attempting to match their row orderings if possible.
 
     Args:
         is_direct_match:

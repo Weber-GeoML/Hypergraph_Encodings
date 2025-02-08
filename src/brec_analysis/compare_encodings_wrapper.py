@@ -1,4 +1,4 @@
-"""Wrapper for comparing encodings between two (hyper)graphs"""
+"""Wrapper for comparing encodings between two (hyper)graphs."""
 
 from typing import Any
 

@@ -1,5 +1,6 @@
-"""
-This script is used to create a results table from the log files in the log_dir directory.
+"""This script is used to create a results table.
+
+The table is created from the log files in the log_dir directory.
 
 It creates a latex table and a png table.
 """
