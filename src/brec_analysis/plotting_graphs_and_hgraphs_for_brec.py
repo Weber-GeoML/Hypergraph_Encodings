@@ -18,8 +18,7 @@ def plot_hypergraph_pair(
     hg2: dict,
     pair_idx: str,
     category: str,
-    is_isomorphic: bool,
-    output_dir: str,
+    display: bool = False,
 ):
     """Plot comparison of two hypergraphs with their bipartite representations.
 
@@ -38,8 +37,10 @@ def plot_hypergraph_pair(
             The category of the pair.
         is_isomorphic (bool):
             Whether the graphs are isomorphic.
-        output_dir (str):
-            The directory to save the plots.
+        output_dir (str, optional):
+            The directory to save the plots. If None, won't save.
+        display (bool, optional):
+            Whether to display the plot in notebook. Defaults to False.
     """
     # Create figure with 4x2 subplot grid (increased height for new row)
     plt.figure(figsize=(35, 15))
@@ -253,7 +254,10 @@ def plot_hypergraph_pair(
         bbox_inches="tight",
         dpi=300,
     )
-    plt.close()
+    if display:
+        plt.show()
+    else:
+        plt.close()
 
     # Second figure: Statistics
     plt.figure(figsize=(10, 6))
@@ -292,7 +296,10 @@ def plot_hypergraph_pair(
         bbox_inches="tight",
         dpi=300,
     )
-    plt.close()
+    if display:
+        plt.show()
+    else:
+        plt.close()
 
 
 def plot_graph_pair(

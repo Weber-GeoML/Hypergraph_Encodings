@@ -150,8 +150,6 @@ def analyze_graph_pair(
             hg2_lifted,
             pair_idx,
             category,
-            is_isomorphic,
-            "plots/hypergraph_pairs",
         )
 
     # Compare hypergraph-level encodings

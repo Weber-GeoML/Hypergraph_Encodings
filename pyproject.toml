@@ -31,6 +31,7 @@ dependencies = [
     "torch-geometric>=2.3.0",
     "torch-scatter>=2.1.1",
     "torch-sparse>=0.6.17",
+    "alphashape",
 ]
 
 [project.optional-dependencies]
