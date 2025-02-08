@@ -1,12 +1,29 @@
+from typing import Optional
+
 import torch
 import torch.nn as nn
 from measure_smoothing import dirichlet_normalized
-from torch.nn import ModuleList, Dropout, ReLU, BatchNorm1d, Embedding, Linear, ModuleList, Sequential
-from torch_geometric.nn import GCNConv, RGCNConv, SAGEConv, GatedGraphConv, GINConv, FiLMConv, global_mean_pool, GATConv, GINEConv, global_add_pool, GPSConv
-import torch.nn.functional as F
-
-from typing import Any, Dict, Optional
 from models.performer import PerformerAttention
+from torch.nn import (
+    BatchNorm1d,
+    Dropout,
+    Embedding,
+    Linear,
+    ModuleList,
+    ReLU,
+    Sequential,
+)
+from torch_geometric.nn import (
+    FiLMConv,
+    GATConv,
+    GCNConv,
+    GINConv,
+    GPSConv,
+    RGCNConv,
+    SAGEConv,
+    global_add_pool,
+    global_mean_pool,
+)
 
 
 class RGATConv(torch.nn.Module):
@@ -20,12 +37,14 @@ class RGATConv(torch.nn.Module):
         for i in range(self.num_relations):
             convs.append(GATConv(in_features, out_features))
         self.convs = ModuleList(convs)
+
     def forward(self, x, edge_index, edge_type):
         x_new = self.self_loop_conv(x)
         for i, conv in enumerate(self.convs):
-            rel_edge_index = edge_index[:, edge_type==i]
+            rel_edge_index = edge_index[:, edge_type == i]
             x_new += conv(x, rel_edge_index)
         return x_new
+
 
 class RGINConv(torch.nn.Module):
     def __init__(self, in_features, out_features, num_relations):
@@ -36,14 +55,25 @@ class RGINConv(torch.nn.Module):
         self.self_loop_conv = torch.nn.Linear(in_features, out_features)
         convs = []
         for i in range(self.num_relations):
-            convs.append(GINConv(nn.Sequential(nn.Linear(in_features, out_features),nn.BatchNorm1d(out_features), nn.ReLU(),nn.Linear(out_features, out_features))))
+            convs.append(
+                GINConv(
+                    nn.Sequential(
+                        nn.Linear(in_features, out_features),
+                        nn.BatchNorm1d(out_features),
+                        nn.ReLU(),
+                        nn.Linear(out_features, out_features),
+                    )
+                )
+            )
         self.convs = ModuleList(convs)
+
     def forward(self, x, edge_index, edge_type):
         x_new = self.self_loop_conv(x)
         for i, conv in enumerate(self.convs):
-            rel_edge_index = edge_index[:, edge_type==i]
+            rel_edge_index = edge_index[:, edge_type == i]
             x_new += conv(x, rel_edge_index)
         return x_new
+
 
 class GNN(torch.nn.Module):
     def __init__(self, args):
@@ -52,10 +82,14 @@ class GNN(torch.nn.Module):
         self.num_relations = args.num_relations
         self.layer_type = args.layer_type
         self.hidden_dim = args.hidden_dim
-        num_features = [args.input_dim] + list(args.hidden_layers)# + [args.output_dim]
+        num_features = [args.input_dim] + list(
+            args.hidden_layers
+        )  # + [args.output_dim]
         self.num_layers = len(num_features) - 1
         layers = []
-        for i, (in_features, out_features) in enumerate(zip(num_features[:-1], num_features[1:])):
+        for i, (in_features, out_features) in enumerate(
+            zip(num_features[:-1], num_features[1:])
+        ):
             layers.append(self.get_layer(in_features, out_features))
         self.layers = ModuleList(layers)
         self.dropout = Dropout(p=args.dropout)
@@ -63,12 +97,19 @@ class GNN(torch.nn.Module):
 
         if self.args.last_layer_fa:
             if self.layer_type == "R-GCN" or self.layer_type == "GCN":
-                self.last_layer_transform = torch.nn.Linear(self.args.hidden_dim, self.args.output_dim)
+                self.last_layer_transform = torch.nn.Linear(
+                    self.args.hidden_dim, self.args.output_dim
+                )
             elif self.layer_type == "R-GIN" or self.layer_type == "GIN":
-                self.last_layer_transform = nn.Sequential(nn.Linear(self.args.hidden_dim, self.args.hidden_dim),nn.BatchNorm1d(self.args.hidden_dim), nn.ReLU(),nn.Linear(self.args.hidden_dim, self.args.output_dim))
+                self.last_layer_transform = nn.Sequential(
+                    nn.Linear(self.args.hidden_dim, self.args.hidden_dim),
+                    nn.BatchNorm1d(self.args.hidden_dim),
+                    nn.ReLU(),
+                    nn.Linear(self.args.hidden_dim, self.args.output_dim),
+                )
             else:
                 raise NotImplementedError
-            
+
         self.mlp = Sequential(
             Linear(self.hidden_dim, self.hidden_dim // 2),
             ReLU(),
@@ -87,7 +128,14 @@ class GNN(torch.nn.Module):
         elif self.layer_type == "R-GIN":
             return RGINConv(in_features, out_features, self.num_relations)
         elif self.layer_type == "GIN":
-            return GINConv(nn.Sequential(nn.Linear(in_features, out_features),nn.BatchNorm1d(out_features), nn.ReLU(),nn.Linear(out_features, out_features)))
+            return GINConv(
+                nn.Sequential(
+                    nn.Linear(in_features, out_features),
+                    nn.BatchNorm1d(out_features),
+                    nn.ReLU(),
+                    nn.Linear(out_features, out_features),
+                )
+            )
         elif self.layer_type == "SAGE":
             return SAGEConv(in_features, out_features)
         elif self.layer_type == "FiLM":
@@ -110,9 +158,11 @@ class GNN(torch.nn.Module):
                     x_new += combined_values[batch]
                 else:
                     x_new = combined_values[batch]
-            x = x_new 
+            x = x_new
         if measure_dirichlet:
-            energy = dirichlet_normalized(x.cpu().numpy(), graph.edge_index.cpu().numpy())
+            energy = dirichlet_normalized(
+                x.cpu().numpy(), graph.edge_index.cpu().numpy()
+            )
             return energy
         x = global_mean_pool(x, batch)
         return self.mlp(x)
@@ -124,6 +174,7 @@ class GINE(torch.nn.Module):
     Create a GCN model for node classification
     with hidden layers of size 32.
     """
+
     # def __init__(self, channels=64, num_layers=4):
     def __init__(self, args):
         super().__init__()
@@ -139,7 +190,7 @@ class GINE(torch.nn.Module):
             # peptides-struct
             input_dim = 9
             edge_dim = 3
-        
+
         self.node_emb = Embedding(input_dim, hidden_dim)
         self.edge_emb = Embedding(edge_dim, hidden_dim)
 
@@ -152,8 +203,8 @@ class GINE(torch.nn.Module):
             )
             conv = GINConv(nn)
             # conv = GINEConv(nn)
-            self.convs.append(conv)       
-            
+            self.convs.append(conv)
+
         self.mlp = Sequential(
             Linear(hidden_dim, hidden_dim // 2),
             ReLU(),
@@ -161,7 +212,6 @@ class GINE(torch.nn.Module):
             ReLU(),
             Linear(hidden_dim // 4, output_dim),
         )
-        
 
     def forward(self, x, edge_index, edge_attr, batch):
         # x_pe = self.pe_norm(pe)
@@ -193,7 +243,7 @@ class GPS(torch.nn.Module):
         channels = args.hidden_dim
         input_dim = args.input_dim
         num_layers = len(list(args.hidden_layers)) + 1
-        attn_type = 'performer'
+        attn_type = "performer"
         output_dim = args.output_dim
         if output_dim == 1:
             edge_dim = 4
@@ -202,7 +252,6 @@ class GPS(torch.nn.Module):
         print("input_dim", input_dim)
         print("channels", channels)
         print("output_dim", output_dim)
-
 
         # self.node_emb = Linear(1, channels - pe_dim)
         self.node_emb = Embedding(input_dim, channels)
@@ -229,8 +278,8 @@ class GPS(torch.nn.Module):
         )
 
         self.redraw_projection = RedrawProjection(
-            self.convs,
-            redraw_interval=1000 if attn_type == 'performer' else None)
+            self.convs, redraw_interval=1000 if attn_type == "performer" else None
+        )
 
     # def forward(self, x, pe, edge_index, edge_attr, batch):
     def forward(self, x, edge_index, edge_attr, batch):
@@ -244,8 +293,7 @@ class GPS(torch.nn.Module):
 
 
 class RedrawProjection:
-    def __init__(self, model: torch.nn.Module,
-                 redraw_interval: Optional[int] = None):
+    def __init__(self, model: torch.nn.Module, redraw_interval: Optional[int] = None):
         self.model = model
         self.redraw_interval = redraw_interval
         self.num_last_redraw = 0
@@ -255,7 +303,8 @@ class RedrawProjection:
             return
         if self.num_last_redraw >= self.redraw_interval:
             fast_attentions = [
-                module for module in self.model.modules()
+                module
+                for module in self.model.modules()
                 if isinstance(module, PerformerAttention)
             ]
             for fast_attention in fast_attentions:

@@ -18,11 +18,11 @@ import torch.nn.functional as F
 
 # load data
 from encodings_hnns.data_handling import load
-from uniGCN.calculate_vertex_edges import calculate_v_e
+from unignn_architectures.calculate_vertex_edges import calculate_v_e
 ### configure logger
-from uniGCN.logger import get_logger
-from uniGCN.prepare import accuracy, fetch_data, initialise
-from uniGCN.split import get_split
+from unignn_architectures.logger import get_logger
+from unignn_architectures.prepare import accuracy, fetch_data, initialise
+from unignn_architectures.split import get_split
 
 # Initialize results dictionary before the training loops
 all_results: dict[

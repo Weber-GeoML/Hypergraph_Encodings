@@ -1,5 +1,6 @@
-from numba import jit
 import numpy as np
+from numba import jit
+
 
 @jit(nopython=True)
 def dirichlet_energy(X, edge_index):
@@ -18,7 +19,9 @@ def dirichlet_energy(X, edge_index):
             v = edge_index[1][I]
             y -= X[u][i] * X[v][i] / (degrees[u] * degrees[v]) ** 0.5
     return y
+
+
 def dirichlet_normalized(X, edge_index):
     energy = dirichlet_energy(X, edge_index)
-    norm_squared = sum(sum(X ** 2))
+    norm_squared = sum(sum(X**2))
     return energy / norm_squared

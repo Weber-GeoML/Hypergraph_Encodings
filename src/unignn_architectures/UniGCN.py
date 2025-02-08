@@ -10,7 +10,7 @@ import torch.nn.functional as F
 from torch_geometric.utils import softmax
 from torch_scatter import scatter
 
-from uniGCN.calculate_vertex_edges import calculate_v_e
+from unignn_architectures.calculate_vertex_edges import calculate_v_e
 
 # code from UniGCN paper
 # https://github.com/RaphaelPellegrin/UniGNN/tree/master

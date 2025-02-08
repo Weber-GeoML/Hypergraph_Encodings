@@ -1,7 +1,14 @@
 import torch
 import torch.nn as nn
-from torch.nn import ModuleList, Dropout, ReLU
-from torch_geometric.nn import GCNConv, RGCNConv, SAGEConv, GINConv, FiLMConv, global_mean_pool
+from torch.nn import Dropout, ModuleList, ReLU
+from torch_geometric.nn import (
+    FiLMConv,
+    GCNConv,
+    GINConv,
+    RGCNConv,
+    SAGEConv,
+)
+
 
 class RGINConv(torch.nn.Module):
     def __init__(self, in_features, out_features, num_relations):
@@ -12,14 +19,25 @@ class RGINConv(torch.nn.Module):
         self.self_loop_conv = torch.nn.Linear(in_features, out_features)
         convs = []
         for i in range(self.num_relations):
-            convs.append(GINConv(nn.Sequential(nn.Linear(in_features, out_features),nn.BatchNorm1d(out_features), nn.ReLU(),nn.Linear(out_features, out_features))))
+            convs.append(
+                GINConv(
+                    nn.Sequential(
+                        nn.Linear(in_features, out_features),
+                        nn.BatchNorm1d(out_features),
+                        nn.ReLU(),
+                        nn.Linear(out_features, out_features),
+                    )
+                )
+            )
         self.convs = ModuleList(convs)
+
     def forward(self, x, edge_index, edge_type):
         x_new = self.self_loop_conv(x)
         for i, conv in enumerate(self.convs):
-            rel_edge_index = edge_index[:, edge_type==i]
+            rel_edge_index = edge_index[:, edge_type == i]
             x_new += conv(x, rel_edge_index)
         return x_new
+
 
 class GCN(torch.nn.Module):
     def __init__(self, args):
@@ -30,7 +48,9 @@ class GCN(torch.nn.Module):
         num_features = [args.input_dim] + list(args.hidden_layers) + [args.output_dim]
         self.num_layers = len(num_features) - 1
         layers = []
-        for i, (in_features, out_features) in enumerate(zip(num_features[:-1], num_features[1:])):
+        for i, (in_features, out_features) in enumerate(
+            zip(num_features[:-1], num_features[1:])
+        ):
             layers.append(self.get_layer(in_features, out_features))
         self.layers = ModuleList(layers)
 
@@ -39,19 +59,28 @@ class GCN(torch.nn.Module):
 
         self.dropout = Dropout(p=args.dropout)
         self.act_fn = ReLU()
+
     def get_layer(self, in_features, out_features):
         if self.layer_type == "GCN":
             return GCNConv(in_features, out_features)
         elif self.layer_type == "R-GCN":
             return RGCNConv(in_features, out_features, self.num_relations)
         elif self.layer_type == "GIN":
-            return GINConv(nn.Sequential(nn.Linear(in_features, out_features),nn.BatchNorm1d(out_features), nn.ReLU(),nn.Linear(out_features, out_features)))
+            return GINConv(
+                nn.Sequential(
+                    nn.Linear(in_features, out_features),
+                    nn.BatchNorm1d(out_features),
+                    nn.ReLU(),
+                    nn.Linear(out_features, out_features),
+                )
+            )
         elif self.layer_type == "R-GIN":
             return RGINConv(in_features, out_features, self.num_relations)
         elif self.layer_type == "SAGE":
             return SAGEConv(in_features, out_features)
         elif self.layer_type == "FiLM":
             return FiLMConv(in_features, out_features)
+
     def reset_parameters(self):
         for layer in self.layers:
             layer.reset_parameters()
