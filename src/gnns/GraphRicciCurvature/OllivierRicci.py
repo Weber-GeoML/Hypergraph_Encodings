@@ -337,7 +337,6 @@ def _compute_ricci_curvature_single_edge(source, target):
         return {(source, target): 0}
 
     # compute transportation distance
-    m = 1  # assign an initial cost
     assert _method in ["OTD", "ATD", "Sinkhorn", "OTDSinkhornMix"], (
         'Method %s not found, support method:["OTD", "ATD", "Sinkhorn", "OTDSinkhornMix]'
         % _method
@@ -348,25 +347,6 @@ def _compute_ricci_curvature_single_edge(source, target):
     optimal_cost = optimal_plan * d
     optimal_total_cost = np.sum(optimal_cost)
     optimal_cost = pd.DataFrame(optimal_cost, columns=neighbors_y, index=neighbors_x)
-
-    """
-    if _method == "OTD":
-        x, y, d = _distribute_densities(source, target)
-        m = _optimal_transportation_distance(x, y, d)
-    elif _method == "ATD":
-        m = _average_transportation_distance(source, target)
-    elif _method == "Sinkhorn":
-        x, y, d = _distribute_densities(source, target)
-        m = _sinkhorn_distance(x, y, d)
-    elif _method == "OTDSinkhornMix":
-        x, y, d = _distribute_densities(source, target)
-        # When x and y are small (usually around 2000 to 3000), ot.emd2 is way faster than ot.sinkhorn2
-        # So we only do sinkhorn when both x and y are too large for ot.emd2
-        if len(x) > _OTDSinkhorn_threshold and len(y) > _OTDSinkhorn_threshold:
-            m = _sinkhorn_distance(x, y, d)
-        else:
-            m = _optimal_transportation_distance(x, y, d)
-    """
 
     # compute Ricci curvature: k=1-(m_{x,y})/d(x,y)
     result = 1 - (

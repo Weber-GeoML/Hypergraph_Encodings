@@ -87,7 +87,6 @@ class Experiment:
             dataset_size = len(self.dataset)
             train_size = int(self.args.train_fraction * dataset_size)
             validation_size = int(self.args.validation_fraction * dataset_size)
-            test_size = dataset_size - train_size - validation_size
             # self.train_dataset, self.validation_dataset, self.test_dataset = random_split(self.dataset,[train_size, validation_size, test_size])
             (
                 self.train_dataset,

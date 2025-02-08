@@ -39,6 +39,10 @@ contains the bash scripts to run the experiments. The bash scripts run the pytho
 ```scripts/``` 
 
 contains the interface. You can also run the bash scripts.
+brec/ contains the scripts to compare pairs of graphs in the BREC
+dataset.
+gnn/ contains the scripts to run the experiments for on the graph-level architectures (graph classification, graph regression, node classification).
+unignn/ contains the scripts to run the experiments for on the hypergraph-level architectures (hypergraph node classification).
 
 ```src/```
 
@@ -71,7 +75,7 @@ contains the gifs of the random walks.
 contains the github actions workflows.
 
 
-We follow the interface from UniGCN:
+We follow the interface from UniGCN for the unignn models:
 
 ```
 python scripts/unignn/train_val.py --data=coauthorship --dataset=dblp --model-name=UniSAGE 
@@ -79,7 +83,7 @@ python scripts/unignn/train_val.py --data=coauthorship --dataset=dblp --model-na
 
 will run the node level classification on the dblp dataset with the UniSAGE model.
 
-We have the following optional arguments that are in the script/config.py file:
+We have the following optional arguments that are in the script/unignn/config.py file:
 
 ```
 optional arguments:

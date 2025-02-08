@@ -228,7 +228,6 @@ class GINE(torch.nn.Module):
             batch.to(device)
         """
         x = self.node_emb(x.squeeze(-1))
-        attr = self.edge_emb(edge_attr)
 
         for conv in self.convs:
             # x = conv(x, edge_index, batch, attr)
@@ -286,7 +285,6 @@ class GPS(torch.nn.Module):
     # def forward(self, x, pe, edge_index, edge_attr, batch):
     def forward(self, x, edge_index, edge_attr, batch):
         x = self.node_emb(x.squeeze(-1))
-        attr = self.edge_emb(edge_attr)
 
         for conv in self.convs:
             x = conv(x, edge_index)

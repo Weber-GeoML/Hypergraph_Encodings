@@ -169,7 +169,8 @@ for key in datasets:
                     )
                     current_graph += 1
 
-                except:
+                except Exception as e:
+                    print(e)
                     print(
                         f"Graph {current_graph} of {org_dataset_len} dropped due to encoding error"
                     )
