@@ -1,3 +1,5 @@
+"""Functions for computing expansions of hypergraphs."""
+
 import itertools
 
 import hypernetx as hnx

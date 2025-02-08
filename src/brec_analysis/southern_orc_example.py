@@ -1,4 +1,4 @@
-"""Example of ORC computation for the Southern Github repo"""
+"""Example of ORC computation for the Southern Github repo."""
 
 from scipy.stats import ks_2samp
 

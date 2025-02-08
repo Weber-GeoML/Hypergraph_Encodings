@@ -1,4 +1,4 @@
-"""Functions for checking if two encodings are the same"""
+"""Functions for checking if two encodings are the same."""
 
 import matplotlib.pyplot as plt
 import networkx as nx

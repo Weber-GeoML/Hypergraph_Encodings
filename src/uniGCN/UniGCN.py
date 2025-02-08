@@ -1,4 +1,6 @@
-"""File taken from https://github.com/RaphaelPellegrin/UniGNN/tree/master"""
+"""Architecture of UniGCN.
+
+File taken from https://github.com/RaphaelPellegrin/UniGNN/tree/master"""
 
 import math
 

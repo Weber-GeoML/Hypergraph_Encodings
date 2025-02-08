@@ -1,4 +1,4 @@
-"""Plotting functions for the BREC dataset"""
+"""Plotting functions for the BREC dataset."""
 
 import os
 
@@ -94,9 +94,7 @@ def plot_hypergraph_pair(
         with_edge_labels=False,
         convex=False,
     )
-    plt.title(
-        f"Hypergraph A\n({len(hg1['hypergraph'])} hyperedges)", fontsize=30
-    )
+    plt.title(f"Hypergraph A\n({len(hg1['hypergraph'])} hyperedges)", fontsize=30)
 
     # Plot second hypergraph
     plt.subplot(244)
@@ -110,9 +108,7 @@ def plot_hypergraph_pair(
         with_edge_labels=False,
         convex=False,
     )
-    plt.title(
-        f"Hypergraph B\n({len(hg2['hypergraph'])} hyperedges)", fontsize=30
-    )
+    plt.title(f"Hypergraph B\n({len(hg2['hypergraph'])} hyperedges)", fontsize=30)
 
     # # Row 3: Bipartite representations
     # # Plot first bipartite
@@ -401,7 +397,6 @@ def plot_graph_pair(
     # Set x-axis ticks to integers only
     plt.xticks(range(min_degree, max_degree + 1))
 
-
     # Plot second histogram
     ax3.hist(
         degrees2,
@@ -438,9 +433,7 @@ def plot_graph_pair(
             "Number of components": nx.number_connected_components(G),
             "Is planar": nx.is_planar(G),
             # Centrality measures (averaged over nodes)
-            "Avg betweenness": np.mean(
-                list(nx.betweenness_centrality(G).values())
-            ),
+            "Avg betweenness": np.mean(list(nx.betweenness_centrality(G).values())),
             "Avg closeness": np.mean(list(nx.closeness_centrality(G).values())),
             # "Avg eigenvector": np.mean(
             #     list(nx.eigenvector_centrality_numpy(G).values())

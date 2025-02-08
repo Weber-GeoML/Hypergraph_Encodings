@@ -1,4 +1,4 @@
-"""Functions for analysing the BREC dataset by category
+"""Functions for analysing the BREC dataset by category.
 
 Should tell us about the distribution of nodes in each category, the counts.
 """

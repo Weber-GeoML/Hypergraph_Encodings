@@ -1,3 +1,5 @@
+"""Functions for calculating the vertex and edge degrees."""
+
 import scipy.sparse as sp
 import torch
 import torch_sparse

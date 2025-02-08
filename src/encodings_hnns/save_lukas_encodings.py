@@ -1,4 +1,4 @@
-"""File used to save the encodings for lukas
+"""File used to save the encodings for lukas.
 
 Will just save in the same format Lukas provided to me.ie a list of dict
 And now the "features" field of every dict will have been updated with the features

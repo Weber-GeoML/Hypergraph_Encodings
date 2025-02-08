@@ -1,4 +1,4 @@
-"""Enum for match status"""
+"""Enum for match status."""
 
 from enum import Enum
 

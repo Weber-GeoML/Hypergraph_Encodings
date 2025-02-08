@@ -125,7 +125,15 @@ X, Y, G = fetch_data(
 print(f"X are the features \n {X} \n with shape {X.shape}")
 print(f"Y are the labels \n {Y}")
 print("G is the hg")
-V, E, dege, degv, dege2 = calculate_v_e(X, G, args)
+
+# After loading your args
+args.dege = None  # Initialize it
+args.degv = None  # Initialize this too since it's also required
+
+# Then calculate and set the degrees
+V, E, dege, degv, _ = calculate_v_e(X, G, args)
+args.dege = dege
+args.degv = degv
 
 
 # Create a more detailed output directory name
