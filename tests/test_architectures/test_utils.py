@@ -3,7 +3,7 @@ import math
 import pytest
 import torch
 
-from uniGCN.UniGCN import glorot, normalize_l2
+from unignn_architectures.UniGCN import glorot, normalize_l2
 
 
 @pytest.fixture

@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from uniGCN.UniGCN import UniGCNConv
+from unignn_architectures.UniGCN import UniGCNConv
 
 
 @pytest.fixture

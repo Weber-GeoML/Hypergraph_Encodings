@@ -74,7 +74,7 @@ contains the github actions workflows.
 We follow the interface from UniGCN:
 
 ```
-python scripts/train_val.py --data=coauthorship --dataset=dblp --model-name=UniSAGE 
+python scripts/unignn/train_val.py --data=coauthorship --dataset=dblp --model-name=UniSAGE 
 ```
 
 will run the node level classification on the dblp dataset with the UniSAGE model.
@@ -160,7 +160,7 @@ conda install pytorch-scatter -c pyg
 Using Visual Studio, navigate to the file 
 
 ```
-scripts/train_val.py
+scripts/unignn/train_val.py
 ``` 
 
 and use the build in debugger. You can add breakpoints etc.

@@ -1,11 +1,12 @@
 import logging
+from functools import partial, partialmethod
+
 import community as community_louvain
 import networkx as nx
 import numpy as np
-from functools import partial, partialmethod
 
 logging.TRACE = logging.DEBUG + 5
-logging.addLevelName(logging.TRACE, 'TRACE')
+logging.addLevelName(logging.TRACE, "TRACE")
 logging.Logger.trace = partialmethod(logging.Logger.log, logging.TRACE)
 logging.trace = partial(logging.log, logging.TRACE)
 
@@ -32,7 +33,9 @@ def set_verbose(verbose="ERROR"):
     elif verbose == "ERROR":
         logger.setLevel(logging.ERROR)
     else:
-        print('Incorrect verbose level, option:["INFO","DEBUG","ERROR"], use "ERROR instead."')
+        print(
+            'Incorrect verbose level, option:["INFO","DEBUG","ERROR"], use "ERROR instead."'
+        )
         logger.setLevel(logging.ERROR)
 
 
@@ -62,7 +65,9 @@ def cut_graph_by_cutoff(G_origin, cutoff, weight="weight"):
     return G
 
 
-def get_rf_metric_cutoff(G_origin, weight="weight", cutoff_step=0.025, drop_threshold=0.01):
+def get_rf_metric_cutoff(
+    G_origin, weight="weight", cutoff_step=0.025, drop_threshold=0.01
+):
     """Get good clustering cutoff points for Ricci flow metric by detect the change of modularity while removing edges.
     Parameters
     ----------
@@ -88,7 +93,9 @@ def get_rf_metric_cutoff(G_origin, weight="weight", cutoff_step=0.025, drop_thre
     for cutoff in cutoff_range:
         G = cut_graph_by_cutoff(G, cutoff, weight=weight)
         # Get connected component after cut as clustering
-        clustering = {c: idx for idx, comp in enumerate(nx.connected_components(G)) for c in comp}
+        clustering = {
+            c: idx for idx, comp in enumerate(nx.connected_components(G)) for c in comp
+        }
         # Compute modularity
         modularity.append(community_louvain.modularity(clustering, G, weight))
 
@@ -98,10 +105,15 @@ def get_rf_metric_cutoff(G_origin, weight="weight", cutoff_step=0.025, drop_thre
     # check drop from 1 -> maxw
     for i in range(len(modularity) - 1, 0, -1):
         mod_now = modularity[i]
-        if mod_last > mod_now > 1e-4 and abs(mod_last - mod_now) / mod_last > drop_threshold:
-            logger.trace("Cut detected: cut:%f, diff:%f, mod_now:%f, mod_last:%f" % (
-                cutoff_range[i+1], mod_last - mod_now, mod_now, mod_last))
-            good_cuts.append(cutoff_range[i+1])
+        if (
+            mod_last > mod_now > 1e-4
+            and abs(mod_last - mod_now) / mod_last > drop_threshold
+        ):
+            logger.trace(
+                "Cut detected: cut:%f, diff:%f, mod_now:%f, mod_last:%f"
+                % (cutoff_range[i + 1], mod_last - mod_now, mod_now, mod_last)
+            )
+            good_cuts.append(cutoff_range[i + 1])
         mod_last = mod_now
 
     return good_cuts

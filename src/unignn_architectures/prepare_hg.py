@@ -8,7 +8,7 @@ import torch_sparse
 from torch import optim
 from torch_scatter import scatter
 
-from uniGCN.UniGCN import UniGNN
+from unignn_architectures.UniGCN import UniGNN
 
 # Check if CUDA is available and move tensors to GPU if possible
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

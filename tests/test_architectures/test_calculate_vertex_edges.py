@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from uniGCN.calculate_vertex_edges import calculate_v_e
+from unignn_architectures.calculate_vertex_edges import calculate_v_e
 
 
 @pytest.fixture

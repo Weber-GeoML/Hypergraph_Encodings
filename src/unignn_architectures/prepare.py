@@ -9,8 +9,8 @@ from torch_scatter import scatter
 
 from encodings_hnns.data_handling import load
 from encodings_hnns.encodings import HypergraphEncodings
-from uniGCN.HyperGCN import HyperGCN
-from uniGCN.UniGCN import UniGCNII, UniGNN
+from unignn_architectures.HyperGCN import HyperGCN
+from unignn_architectures.UniGCN import UniGCNII, UniGNN
 
 # Check if CUDA is available and move tensors to GPU if possible
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
