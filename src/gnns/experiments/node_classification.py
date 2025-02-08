@@ -94,9 +94,7 @@ class Experiment:
         best_train_acc = 0.0
         train_goal = 0.0
         validation_goal = 0.0
-        best_epoch = 0
         epochs_no_improve = 0
-        train_size = len(self.train_mask)
         # batch = self.dataset.data.to(self.args.device)
         batch = self.dataset.to(self.args.device)
         y = batch.y
@@ -104,14 +102,12 @@ class Experiment:
         for epoch in range(self.args.max_epochs):
             self.model.train()
             total_loss = 0
-            sample_size = 0
             optimizer.zero_grad()
 
             out = self.model(batch)
             loss = self.loss_fn(input=out[self.train_mask], target=y[self.train_mask])
             total_loss += loss.item()
-            _, train_pred = out[self.train_mask].max(dim=1)
-            train_correct = train_pred.eq(y[self.train_mask]).sum().item() / train_size
+            _, _ = out[self.train_mask].max(dim=1)
 
             loss.backward()
             optimizer.step()

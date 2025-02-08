@@ -148,7 +148,7 @@ class GNN(torch.nn.Module):
             return FiLMConv(in_features, out_features)
 
     def forward(self, graph, measure_dirichlet=False):
-        x, edge_index, ptr, batch = graph.x, graph.edge_index, graph.ptr, graph.batch
+        x, edge_index, _, batch = graph.x, graph.edge_index, graph.ptr, graph.batch
         x = x.float()
         for i, layer in enumerate(self.layers):
             if self.layer_type in ["R-GCN", "R-GAT", "R-GIN", "FiLM"]:
