@@ -1,11 +1,14 @@
+"""Compute Forman-Ricci curvature for a given NetworkX graph.
+
+TODO: merge with encodings_hnns
+"""
 
 import torch
-
-_device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-
 import networkx as nx
 
 from .util import logger
+
+_device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 
 def _compute_afrc_edge(G: nx.Graph, ni: int, nj: int, t_num: int, q_num: int) -> float:

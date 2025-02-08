@@ -4,8 +4,8 @@ from typing import Optional
 
 import torch
 import torch.nn as nn
-from measure_smoothing import dirichlet_normalized
-from models.performer import PerformerAttention
+from gnns.measure_smoothing import dirichlet_normalized
+from gnns.models.performer import PerformerAttention
 from torch.nn import (
     BatchNorm1d,
     Dropout,

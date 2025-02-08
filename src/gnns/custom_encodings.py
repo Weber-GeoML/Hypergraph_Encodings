@@ -7,12 +7,11 @@ This file contains the following custom encodings:
     - Ollivier-Ricci curvature shortest path relative positional encodings
 """
 
-
 import numpy as np
 import torch
-from GraphRicciCurvature.FormanRicci import FormanRicci
-from GraphRicciCurvature.FormanRicci4 import FormanRicci4
-from GraphRicciCurvature.OllivierRicci import OllivierRicci
+from gnns.GraphRicciCurvature.FormanRicci import FormanRicci
+from gnns.GraphRicciCurvature.FormanRicci4 import FormanRicci4
+from gnns.GraphRicciCurvature.OllivierRicci import OllivierRicci
 from torch_geometric.data import Data
 from torch_geometric.data.datapipes import functional_transform
 from torch_geometric.transforms import BaseTransform

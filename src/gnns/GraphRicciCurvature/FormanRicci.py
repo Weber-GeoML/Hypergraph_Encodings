@@ -1,10 +1,14 @@
+"""Compute Forman-Ricci curvature for a given NetworkX graph.
+
+TODO: merge with encodings_hnns
+"""
 
 import torch
 
+import networkx as nx
+
 # torch.multiprocessing.set_start_method('spawn')
 _device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-
-import networkx as nx
 
 # from .util import logger
 

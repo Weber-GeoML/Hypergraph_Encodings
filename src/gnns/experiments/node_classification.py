@@ -1,7 +1,6 @@
-
 import torch
 from attrdict import AttrDict
-from models.node_model import GCN
+from gnns.models.node_model import GCN
 from sklearn.model_selection import train_test_split
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 

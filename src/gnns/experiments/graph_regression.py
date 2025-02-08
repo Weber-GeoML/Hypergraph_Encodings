@@ -6,7 +6,7 @@ import torch
 
 # from measure_smoothing import dirichlet_normalized
 from attrdict import AttrDict
-from models.graph_regression_model import GINE, GNN, GPS
+from gnns.models.graph_regression_model import GINE, GNN, GPS
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import Subset, random_split
 from torch_geometric.loader import DataLoader

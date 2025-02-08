@@ -1,3 +1,8 @@
+"""Compute Ollivier-Ricci curvature for a given NetworkX graph.
+
+TODO: merge with encodings_hnns
+"""
+
 import heapq
 import importlib
 import math
