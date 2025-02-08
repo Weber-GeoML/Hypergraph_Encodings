@@ -1,5 +1,4 @@
-"""
-custom_encodings.py
+"""Custom encodings for GNNs.
 
 This file contains the following custom encodings:
     - shortest path relative positional encodings
