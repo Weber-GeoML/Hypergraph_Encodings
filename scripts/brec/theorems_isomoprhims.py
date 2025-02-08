@@ -47,10 +47,12 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 
-from brec_analysis.check_encodings_same import (check_isospectrality,
-                                                checks_encodings,
-                                                matrix_to_pmatrix,
-                                                reconstruct_matrix)
+from brec_analysis.check_encodings_same import (
+    check_isospectrality,
+    checks_encodings,
+    matrix_to_pmatrix,
+    reconstruct_matrix,
+)
 from encodings_hnns.encodings import HypergraphEncodings
 
 

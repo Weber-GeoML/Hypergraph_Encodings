@@ -10,11 +10,12 @@ import shutil
 import sys
 import time
 
-import scripts.unignn.config as config
 import numpy as np
 import path
 import torch
 import torch.nn.functional as F
+
+import scripts.unignn.config as config
 
 # load data
 from encodings_hnns.data_handling import load

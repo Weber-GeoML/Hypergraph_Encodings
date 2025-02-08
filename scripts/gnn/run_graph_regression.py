@@ -7,10 +7,11 @@ import pandas as pd
 import torch
 import torch_geometric.transforms as T
 from attrdict import AttrDict
-from custom_encodings import LocalCurvatureProfile
-from experiments.graph_regression import Experiment
-from hyperparams import get_args_from_config, get_args_from_input
 from torch_geometric.data import Data
+
+from gnns.custom_encodings import LocalCurvatureProfile
+from gnns.experiments.graph_regression import Experiment
+from scripts.gnn.hyperparams import get_args_from_config, get_args_from_input
 
 # import custom encodings
 

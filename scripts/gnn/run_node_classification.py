@@ -6,15 +6,13 @@ import pandas as pd
 import torch
 import torch_geometric.transforms as T
 from attrdict import AttrDict
+from hyperparams import get_args_from_input
+from torch_geometric.utils import dropout_edge
 
 # from torch_geometric.transforms import Compose
-from custom_encodings import LocalCurvatureProfile
-from experiments.node_classification import Experiment
-from hyperparams import get_args_from_input
-from preprocessing import borf, fosr, sdrf
-from torch_geometric.utils import (
-    dropout_edge,
-)
+from gnns.custom_encodings import LocalCurvatureProfile
+from gnns.experiments.node_classification import Experiment
+from gnns.preprocessing import borf, fosr, sdrf
 
 default_args = AttrDict(
     {

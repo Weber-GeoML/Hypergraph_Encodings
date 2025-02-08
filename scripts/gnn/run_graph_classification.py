@@ -6,11 +6,12 @@ import pandas as pd
 import torch
 import torch_geometric.transforms as T
 from attrdict import AttrDict
-from custom_encodings import LocalCurvatureProfile
-from experiments.graph_classification import Experiment
-from hyperparams import get_args_from_input
 from torch_geometric.data import Data
 from torch_geometric.datasets import TUDataset
+
+from gnns.custom_encodings import LocalCurvatureProfile
+from gnns.experiments.graph_classification import Experiment
+from scripts.gnn.hyperparams import get_args_from_input
 
 # import custom encodings
 
