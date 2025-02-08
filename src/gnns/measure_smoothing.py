@@ -1,3 +1,5 @@
+"""Measure smoothing of a vector field on a graph."""
+
 import numpy as np
 from numba import jit
 

@@ -1,3 +1,5 @@
+"""Attention mechanisms for GNNs."""
+
 import math
 from typing import Callable, Optional
 

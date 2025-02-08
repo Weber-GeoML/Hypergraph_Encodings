@@ -1,3 +1,5 @@
+"""Models for graph classification."""
+
 from typing import Optional
 
 import torch
