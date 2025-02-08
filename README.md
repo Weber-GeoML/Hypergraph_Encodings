@@ -31,21 +31,32 @@
 
 ## Organisation of repo
 
-```data/``` 
 
-contains the coauthorship and cocitation data.
+```bash_interface/``` 
 
-```src/```
-
-contains backend functions for the package.
+contains the bash scripts to run the experiments. The bash scripts run the python scripts (found in the scripts folder) with the appropriate parameters. For example, run_all_general.sh will run all the experiments for the hypergraph-level node classifications with the Unignns models. run_all_encodings_brec.sh will run all the experiments for the BREC dataset (trying to see if the pairs can be distinguished using the encodings computed at the graph-level or hypergraph-level).
 
 ```scripts/``` 
 
 contains the interface. You can also run the bash scripts.
 
+```src/```
+
+contains backend functions for the package. 
+
 ```tests/```
 
 contains the test files - we use pytest.
+
+```example_notebooks/```
+
+Contains the example notebooks to interact with the package.
+
+```data/``` 
+
+contains the coauthorship and cocitation data.
+
+
 
 ```computed_encodings/```
 
@@ -104,11 +115,6 @@ optional arguments:
   --split SPLIT                       choose which train/test split to use (default: 1)
   --out-dir OUT_DIR                   output dir (default: runs/test)
 ```
-
-## Adding encodings
-
-This is done in the src/encodings_hnns/save_lukas_encodings.py file. (to be moved to scripts)
-
 
 ## Data
 
@@ -199,6 +205,6 @@ pytest tests/test_curvature.py
 You might need to give permission to the file. Eg
 
 ```
-chmod +x /Users/pellegrinraphael/Desktop/Repos_GNN/Hypergraph_Encodings/src/orchid/orchid_interface.jl
+chmod +x Hypergraph_Encodings/src/orchid/orchid_interface.jl
 ```
 
