@@ -14,6 +14,7 @@ dependencies = [
     # Base requirements
     "numpy",
     "pandas",
+    "hypernetx",
     "matplotlib",
     "scipy",
     "shapely",

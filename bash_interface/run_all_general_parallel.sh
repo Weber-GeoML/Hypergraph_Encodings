@@ -152,7 +152,7 @@ log_file="${log_file}_nlayer${nlayer}.log"
 # Run the specific combination
 echo "Hi! We are running"
 echo "Running combination $SLURM_ARRAY_TASK_ID: $model $data_type $dataset $encoding $encoding_type $transformer $transformer_version $transformer_depth $add_encoding $nlayer"
-python scripts/train_val.py \
+python scripts/unignn/train_val.py \
     --add-self-loop \
     --model="$model" \
     --data="$data_type" \

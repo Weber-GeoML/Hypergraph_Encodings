@@ -10,7 +10,7 @@ import shutil
 import sys
 import time
 
-import config
+import scripts.unignn.config as config
 import numpy as np
 import path
 import torch
@@ -19,6 +19,7 @@ import torch.nn.functional as F
 # load data
 from encodings_hnns.data_handling import load
 from unignn_architectures.calculate_vertex_edges import calculate_v_e
+
 ### configure logger
 from unignn_architectures.logger import get_logger
 from unignn_architectures.prepare import accuracy, fetch_data, initialise
@@ -45,7 +46,7 @@ print("=" * 80)
 print("\nContents of config.py:")
 print("=" * 80)
 try:
-    with open("scripts/config.py", "r", encoding="utf-8") as f:
+    with open("scripts/unignn/config.py", "r", encoding="utf-8") as f:
         print(f.read())
 except Exception as e:
     print(f"Error reading config.py: {e}")
