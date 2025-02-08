@@ -19,7 +19,6 @@ import torch.nn.functional as F
 # load data
 from encodings_hnns.data_handling import load
 from uniGCN.calculate_vertex_edges import calculate_v_e
-
 ### configure logger
 from uniGCN.logger import get_logger
 from uniGCN.prepare import accuracy, fetch_data, initialise

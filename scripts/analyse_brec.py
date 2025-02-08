@@ -12,11 +12,9 @@ import networkx as nx
 from torch_geometric.data import Data
 from torch_geometric.utils import to_networkx
 
-from brec_analysis.analyse_brec_categories import (
-    analyze_brec_categories,
-    plot_edge_distribution,
-    quick_eda_from_github,
-)
+from brec_analysis.analyse_brec_categories import (analyze_brec_categories,
+                                                   plot_edge_distribution,
+                                                   quick_eda_from_github)
 from brec_analysis.categories_to_check import PART_DICT
 from brec_analysis.compare_encodings_wrapper import compare_encodings_wrapper
 from brec_analysis.encodings_to_check import ENCODINGS_TO_CHECK
@@ -24,16 +22,11 @@ from brec_analysis.isomorphism_mapping import find_isomorphism_mapping
 from brec_analysis.match_status import MatchStatus
 from brec_analysis.parse_click_args import parse_categories, parse_encoding
 from brec_analysis.plotting_graphs_and_hgraphs_for_brec import (
-    plot_graph_pair,
-    plot_hypergraph_pair,
-)
+    plot_graph_pair, plot_hypergraph_pair)
 from brec_analysis.southern_orc_example import southern_orc_example
 from brec_analysis.statistics import generate_latex_table
-from brec_analysis.utils_for_brec import (
-    convert_nx_to_hypergraph_dict,
-    create_output_dirs,
-    nx_to_pyg,
-)
+from brec_analysis.utils_for_brec import (convert_nx_to_hypergraph_dict,
+                                          create_output_dirs, nx_to_pyg)
 from encodings_hnns.liftings_and_expansions import lift_to_hypergraph
 
 

@@ -5,16 +5,12 @@ import networkx as nx
 import numpy as np
 
 from brec_analysis.add_encodings import get_encodings
-from brec_analysis.laplacians_specific_functions import (
-    check_isospectrality,
-    compute_laplacian,
-)
+from brec_analysis.laplacians_specific_functions import (check_isospectrality,
+                                                         compute_laplacian)
 from brec_analysis.match_encodings import find_encoding_match
 from brec_analysis.match_status import MatchStatus
-from brec_analysis.plotting_encodings_for_brec import (
-    plot_matched_encodings,
-    save_comparison_plot,
-)
+from brec_analysis.plotting_encodings_for_brec import (plot_matched_encodings,
+                                                       save_comparison_plot)
 from brec_analysis.printers_and_loggers import print_comparison_results
 from encodings_hnns.encodings import HypergraphEncodings
 
