@@ -631,7 +631,7 @@ class HypergraphEncodings:
                 raise NotImplementedError
 
             i: int = 0
-            for node in self.hyperedges.keys():
+            for node in self.hyperedges:
                 if verbose:
                     print(f"The node is {node}")
                 assert matrix_powers[:, i].shape == (k,)
@@ -670,50 +670,3 @@ class HypergraphEncodings:
                     pickle.dump(hypergraph, f)
                 print(f"Hypergraph saved as {filename}")
             return hypergraph
-
-
-# Example utilization
-if __name__ == "__main__":
-
-    print("EXAMPLE UTILIZATION")
-
-    hg: dict[str, dict | int] = {
-        "hypergraph": {
-            "yellow": [0, 1, 2, 3],
-            "red": [1, 2],
-            "green": [2, 4, 5],
-            "blue": [3, 4],
-        },
-        "features": np.array([[1], [1], [1], [1], [1], [1]]),
-        "labels": {},
-        "n": 6,
-    }
-    # Instantiates the Hypergraph Curvature Profile class
-    hgcurvaturprofile = HypergraphEncodings()
-    hg = hgcurvaturprofile.add_randowm_walks_encodings(hg, verbose=False)
-    # k is 20 so the features are shape n by 21
-    assert isinstance(hg["features"], np.ndarray)
-    assert hg["features"].shape[0] == hg["n"]
-    assert hg["features"].shape[1] == 21, f"The shape is {hg['features'].shape[1]}"
-
-    # 21 + 6 makes 27
-    # becuase we have already added features
-    hg = hgcurvaturprofile.add_degree_encodings(hg, verbose=True)
-    assert hg["features"].shape[0] == hg["n"]
-    assert hg["features"].shape[1] == 27, f"The shape is {hg['features'].shape[1]}"
-
-    # 27+6 makes 33
-    hg = hgcurvaturprofile.add_laplacian_encodings(hg, verbose=True)
-    assert hg["features"].shape[0] == hg["n"]
-    assert hg["features"].shape[1] == 33, f"The shape is {hg['features'].shape[1]}"
-
-    # 33 plus 5 makes 38
-    hg = hgcurvaturprofile.add_curvature_encodings(hg, True)
-    assert hg["features"].shape[0] == hg["n"]
-    assert hg["features"].shape[1] == 38, f"The shape is {hg['features'].shape[1]}"
-
-    # hg = hgcurvaturprofile.add_laplacian_encodings(hg)
-    hg = hgcurvaturprofile.add_randowm_walks_encodings(hg)
-    assert hg["features"].shape[0] == hg["n"]
-    print(hg)
-    print("DONE")

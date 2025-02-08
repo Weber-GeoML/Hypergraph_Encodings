@@ -368,38 +368,3 @@ class Laplacians:
     # edge.drop(node)
     # random.choice(edge)
     # if WE: to_do
-
-
-# Example utilization
-if __name__ == "__main__":
-
-    print("EXAMPLE UTILIZATION")
-    hg: dict[str, dict | int] = {
-        "hypergraph": {
-            "yellow": [1, 2, 3],
-            "red": [2, 3],
-            "green": [3, 5, 6],
-            "blue": [4, 5],
-        },
-        "features": {},
-        "labels": {},
-        "n": 6,
-    }
-    data = hg
-    # print(data["hypergraph"])
-    # So hypergraph is a dict:
-    # key: authors, values: papers participates in.
-    # print(data["features"])
-    # print(data["labels"])
-
-    # Instantiates the Laplacians class
-    laplacian = Laplacians(data)
-    laplacian.compute_node_neighbors()
-    print(f"node_neighbors: \n {laplacian.node_neighbors}")
-    laplacian.compute_node_degrees()
-    print(f"node_degrees: \n {laplacian.node_degrees}")
-    laplacian.compute_random_walk_laplacian(rw_type="WE")
-    laplacian.compute_normalized_laplacian()
-    laplacian.compute_random_walk_laplacian()
-    print(f"rw_laplacian: \n {laplacian.rw_laplacian}")
-    print("DONE")
