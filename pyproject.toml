@@ -14,8 +14,9 @@ dependencies = [
     # Base requirements
     "numpy",
     "pandas",
-    "hypernetx",
-    "numba==0.56.4",
+    "hypernetx @ git+https://github.com/RaphaelPellegrin/HyperNetX.git@nonconvex",
+    "numba",
+    "fastjsonschema",
     "matplotlib",
     "scipy",
     "shapely",
