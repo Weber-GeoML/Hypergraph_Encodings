@@ -3,13 +3,7 @@
 import torch
 import torch.nn as nn
 from torch.nn import Dropout, ModuleList, ReLU
-from torch_geometric.nn import (
-    FiLMConv,
-    GCNConv,
-    GINConv,
-    RGCNConv,
-    SAGEConv,
-)
+from torch_geometric.nn import FiLMConv, GCNConv, GINConv, RGCNConv, SAGEConv
 
 
 class RGINConv(torch.nn.Module):

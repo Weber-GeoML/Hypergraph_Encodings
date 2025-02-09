@@ -21,7 +21,8 @@ import networkx as nx
 import numpy as np
 import ot
 
-from .util import cut_graph_by_cutoff, get_rf_metric_cutoff, logger, set_verbose
+from .util import (cut_graph_by_cutoff, get_rf_metric_cutoff, logger,
+                   set_verbose)
 
 EPSILON = 1e-7  # to prevent divided by zero
 

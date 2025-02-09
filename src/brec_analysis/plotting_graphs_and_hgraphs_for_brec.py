@@ -296,10 +296,7 @@ def plot_hypergraph_pair(
         bbox_inches="tight",
         dpi=300,
     )
-    if display:
-        plt.show()
-    else:
-        plt.close()
+    plt.close()
 
 
 def plot_graph_pair(
@@ -309,6 +306,8 @@ def plot_graph_pair(
     category: str,
     is_isomorphic: bool,
     output_dir: str,
+    display: bool = False,
+    figsize: tuple[int, int] = (16, 32),
 ) -> None:
     """Plot a pair of graphs side by side with graph statistics and degree distributions.
 
@@ -325,9 +324,11 @@ def plot_graph_pair(
             Whether the graphs are isomorphic.
         output_dir (str):
             The directory to save the plots.
+        display (bool):
+            Whether to display the plot in notebook. Defaults to False.
     """
     # Create figure with 3x2 subplot grid (added row for adjacency matrices)
-    fig: Figure = plt.figure(figsize=(16, 32))
+    fig: Figure = plt.figure(figsize=figsize)
 
     # Set isomorphism status
 
@@ -559,7 +560,10 @@ def plot_graph_pair(
         bbox_inches="tight",
         dpi=300,
     )
-    plt.close()
+    if display:
+        plt.show()
+    else:
+        plt.close()
 
     # Return to main figure and finish
     plt.figure(fig.number)  # type: ignore
@@ -569,4 +573,7 @@ def plot_graph_pair(
         bbox_inches="tight",
         dpi=300,
     )
-    plt.close()
+    if display:
+        plt.show()
+    else:
+        plt.close()

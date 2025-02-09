@@ -522,8 +522,6 @@ def check_for_matches(encoding1, encoding2, name: str) -> dict:
     )
     assert result is not None
     is_direct_match, permuted, perm, permuted2, _ = result
-    assert permuted is not None
-    assert perm is not None
 
     is_same_up_to_scaling: bool = False
     scaling_factor: float | None = None

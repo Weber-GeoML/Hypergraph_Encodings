@@ -3,9 +3,8 @@
 TODO: merge with encodings_hnns
 """
 
-import torch
-
 import networkx as nx
+import torch
 
 # torch.multiprocessing.set_start_method('spawn')
 _device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")

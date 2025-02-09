@@ -1,8 +1,9 @@
 import torch
 from attrdict import AttrDict
-from gnns.models.node_model import GCN
 from sklearn.model_selection import train_test_split
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+
+from gnns.models.node_model import GCN
 
 default_args = AttrDict(
     {
