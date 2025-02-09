@@ -438,9 +438,9 @@ def initialise(
     # x_i= 1/√d_i sum 1/√d_e Wh_e,
     degree_edges: torch.Tensor = degree_edges.pow(-0.5)
     degree_vertices: torch.Tensor = degree_vertices.pow(-0.5)
-    degree_vertices[degree_vertices.isinf()] = (
-        1  # when not added self-loop, some nodes might not be connected with any edge
-    )
+    degree_vertices[
+        degree_vertices.isinf()
+    ] = 1  # when not added self-loop, some nodes might not be connected with any edge
 
     V, E = V.to(device), E.to(device)
     args.degree_vertices = degree_vertices.to(device)

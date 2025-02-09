@@ -461,9 +461,7 @@ def check_encodings_same_up_to_scaling(
 
     # If we get here, the encodings are truly different
     if verbose:
-        print(
-            "\n❌ Encodings are different even after trying scaling and normalization"
-        )
+        print("\n❌ Encodings are different even after trying scaling and normalization")
         print("Statistics for diagnosis:")
         print(
             f"Encoding 1 - min: {np.min(encoding1):.4e}, max: {np.max(encoding1):.4e}, mean: {np.mean(encoding1):.4e}"

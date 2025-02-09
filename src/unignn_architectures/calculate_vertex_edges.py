@@ -129,7 +129,7 @@ def calculate_v_e(X: torch.Tensor, G: dict, args) -> tuple:
     # x_i= 1/√d_i sum 1/√d_e Wh_e,
     dege: torch.Tensor = dege.pow(-0.5)
     degv: torch.Tensor = degv.pow(-0.5)
-    degv[degv.isinf()] = (
-        1  # when not added self-loop, some nodes might not be connected with any edge
-    )
+    degv[
+        degv.isinf()
+    ] = 1  # when not added self-loop, some nodes might not be connected with any edge
     return V, E, dege, degv, dege2
