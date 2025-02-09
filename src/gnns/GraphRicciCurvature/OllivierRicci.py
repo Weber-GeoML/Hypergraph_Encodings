@@ -6,23 +6,21 @@ TODO: merge with encodings_hnns
 import heapq
 import importlib
 import math
-import time
-
-import pandas as pd
-import torch
-
-torch.multiprocessing.set_start_method("spawn")
-_device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 import multiprocessing as mp
+import time
 from functools import lru_cache
 
 import networkit as nk
 import networkx as nx
 import numpy as np
 import ot
+import pandas as pd
+import torch
 
-from .util import (cut_graph_by_cutoff, get_rf_metric_cutoff, logger,
-                   set_verbose)
+from .util import cut_graph_by_cutoff, get_rf_metric_cutoff, logger, set_verbose
+
+torch.multiprocessing.set_start_method("spawn")
+_device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 EPSILON = 1e-7  # to prevent divided by zero
 

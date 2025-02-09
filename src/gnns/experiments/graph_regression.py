@@ -3,6 +3,7 @@ import os
 import random
 
 import torch
+
 # from measure_smoothing import dirichlet_normalized
 from attrdict import AttrDict
 from torch.optim.lr_scheduler import ReduceLROnPlateau
@@ -86,7 +87,6 @@ class Experiment:
             dataset_size = len(self.dataset)
             train_size = int(self.args.train_fraction * dataset_size)
             validation_size = int(self.args.validation_fraction * dataset_size)
-            test_size = dataset_size - train_size - validation_size
             # self.train_dataset, self.validation_dataset, self.test_dataset = random_split(self.dataset,[train_size, validation_size, test_size])
             # self.train_dataset, self.validation_dataset, self.test_dataset, self.categories = custom_random_split(self.dataset, [self.args.train_fraction, self.args.validation_fraction, self.args.test_fraction])
             # set the first 10873 graphs as the training set, the next 2331 as the validation set, and the last 2331 as the test set

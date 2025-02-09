@@ -86,7 +86,7 @@ def get_rf_metric_cutoff(
     """
 
     G = G_origin.copy()
-    modularity, ari = [], []
+    modularity = []
     maxw = max(nx.get_edge_attributes(G, weight).values())
     cutoff_range = np.arange(maxw, 1, -cutoff_step)
 

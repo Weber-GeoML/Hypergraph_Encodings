@@ -163,8 +163,8 @@ class HypergraphEncodings:
                         stacked_features = np.hstack(
                             ([hypergraph["features"][node]], ld_vals)
                         )
-                    except Exception as e:
-                        print(f"Handling different dimensions.")
+                    except Exception:
+                        print("Handling different dimensions.")
                         stacked_features = np.hstack(
                             (hypergraph["features"][node], ld_vals)
                         )
@@ -300,8 +300,8 @@ class HypergraphEncodings:
                         padded_features[node] = np.hstack(
                             (hypergraph["features"][node], rc_vals)
                         )
-                    except Exception as e:
-                        print(f"Handling different dimensions.")
+                    except Exception:
+                        print("Handling different dimensions.")
                         padded_features[node] = np.hstack(
                             ([hypergraph["features"][node]], rc_vals)
                         )
@@ -498,8 +498,8 @@ class HypergraphEncodings:
                         stacked_features = np.hstack(
                             ([hypergraph["features"][node]], laplacian_vals)
                         )
-                    except Exception as e:
-                        print(f"Handling different dimensions.")
+                    except Exception:
+                        print("Handling different dimensions.")
                         stacked_features = np.hstack(
                             (hypergraph["features"][node], laplacian_vals)
                         )
@@ -649,8 +649,8 @@ class HypergraphEncodings:
                         stacked_features = np.hstack(
                             ([hypergraph["features"][node]], laplacian_vals)
                         )
-                    except Exception as e:
-                        print(f"Handling different dimensions.")
+                    except Exception:
+                        print("Handling different dimensions.")
                         stacked_features = np.hstack(
                             (hypergraph["features"][node], laplacian_vals)
                         )

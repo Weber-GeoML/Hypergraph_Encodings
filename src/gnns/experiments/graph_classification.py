@@ -3,6 +3,7 @@ import os
 import random
 
 import torch
+
 # from measure_smoothing import dirichlet_normalized
 from attrdict import AttrDict
 from torch.optim.lr_scheduler import ReduceLROnPlateau
@@ -66,7 +67,8 @@ class Experiment:
         if self.args.input_dim is None:
             try:
                 self.args.input_dim = self.dataset[0].x.shape[1]
-            except:
+            except Exception as e:
+                print(f"Error getting input dim: {e}")
                 self.args.input_dim = 9  # peptides-func
         for graph in self.dataset:
             if "edge_type" not in graph.keys:

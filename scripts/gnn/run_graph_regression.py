@@ -243,9 +243,9 @@ for i in range(len(train_datasets)):
                         )
                         current_graph += 1
 
-                    except:
+                    except Exception as e:
                         print(
-                            f"Graph {current_graph} of {org_dataset_len} dropped due to encoding error"
+                            f"Graph {current_graph} of {org_dataset_len} dropped due to encoding error: {e}"
                         )
                         drop_datasets.append(k)
                         current_graph += 1

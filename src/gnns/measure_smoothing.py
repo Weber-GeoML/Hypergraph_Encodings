@@ -11,14 +11,14 @@ def dirichlet_energy(X, edge_index):
     m = len(edge_index[0])
     l = X.shape[1]
     degrees = np.zeros(n)
-    for I in range(m):
-        u = edge_index[0][I]
+    for counter in range(m):
+        u = edge_index[0][counter]
         degrees[u] += 1
     y = np.linalg.norm(X.flatten()) ** 2
-    for I in range(m):
+    for counter in range(m):
         for i in range(l):
-            u = edge_index[0][I]
-            v = edge_index[1][I]
+            u = edge_index[0][counter]
+            v = edge_index[1][counter]
             y -= X[u][i] * X[v][i] / (degrees[u] * degrees[v]) ** 0.5
     return y
 
