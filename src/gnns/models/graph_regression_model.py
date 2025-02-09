@@ -25,7 +25,6 @@ from torch_geometric.nn import (
     global_mean_pool,
 )
 
-from gnns.measure_smoothing import dirichlet_normalized
 from gnns.models.performer import PerformerAttention
 
 
@@ -90,7 +89,7 @@ class GNN(torch.nn.Module):
         )  # + [args.output_dim]
         self.num_layers = len(num_features) - 1
         layers = []
-        for i, (in_features, out_features) in enumerate(
+        for _, (in_features, out_features) in enumerate(
             zip(num_features[:-1], num_features[1:])
         ):
             layers.append(self.get_layer(in_features, out_features))
@@ -144,11 +143,11 @@ class GNN(torch.nn.Module):
         elif self.layer_type == "FiLM":
             return FiLMConv(in_features, out_features)
 
-    def forward(self, x, edge_index, edge_attr, batch, measure_dirichlet=False):
+    def forward(self, x, edge_index, edge_attr, batch):
         x = x.float()
         for i, layer in enumerate(self.layers):
             if self.layer_type in ["R-GCN", "R-GAT", "R-GIN", "FiLM"]:
-                x_new = layer(x, edge_index, edge_type=graph.edge_type)
+                x_new = layer(x, edge_index, edge_type=edge_attr)
             else:
                 x_new = layer(x, edge_index)
             if i != self.num_layers - 1:
@@ -162,11 +161,6 @@ class GNN(torch.nn.Module):
                 else:
                     x_new = combined_values[batch]
             x = x_new
-        if measure_dirichlet:
-            energy = dirichlet_normalized(
-                x.cpu().numpy(), graph.edge_index.cpu().numpy()
-            )
-            return energy
         x = global_mean_pool(x, batch)
         return self.mlp(x)
         # return x
