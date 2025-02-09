@@ -5,11 +5,26 @@ from typing import Optional
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn import (BatchNorm1d, Dropout, Embedding, Linear, ModuleList,
-                      ReLU, Sequential)
-from torch_geometric.nn import (FiLMConv, GATConv, GCNConv, GINConv, GPSConv,
-                                RGCNConv, SAGEConv, global_add_pool,
-                                global_mean_pool)
+from torch.nn import (
+    BatchNorm1d,
+    Dropout,
+    Embedding,
+    Linear,
+    ModuleList,
+    ReLU,
+    Sequential,
+)
+from torch_geometric.nn import (
+    FiLMConv,
+    GATConv,
+    GCNConv,
+    GINConv,
+    GPSConv,
+    RGCNConv,
+    SAGEConv,
+    global_add_pool,
+    global_mean_pool,
+)
 
 from gnns.measure_smoothing import dirichlet_normalized
 from gnns.models.performer import PerformerAttention

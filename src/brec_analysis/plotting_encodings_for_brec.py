@@ -96,7 +96,7 @@ def plot_matched_encodings(
             whether to take the absolute values of the encodings for the plots
     """
     if perm is None or permuted is None:
-        print(f"Warning: No valid permutation found")
+        print("Warning: No valid permutation found")
         return  # Skip plotting
 
     # Create figure and axes
