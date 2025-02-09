@@ -12,11 +12,9 @@ import networkx as nx
 from torch_geometric.data import Data
 from torch_geometric.utils import to_networkx
 
-from brec_analysis.analyse_brec_categories import (
-    analyze_brec_categories,
-    plot_edge_distribution,
-    quick_eda_from_github,
-)
+from brec_analysis.analyse_brec_categories import (analyze_brec_categories,
+                                                   plot_edge_distribution,
+                                                   quick_eda_from_github)
 from brec_analysis.categories_to_check import PART_DICT
 from brec_analysis.compare_encodings_wrapper import compare_encodings_wrapper
 from brec_analysis.encodings_to_check import ENCODINGS_TO_CHECK
@@ -24,16 +22,10 @@ from brec_analysis.isomorphism_mapping import find_isomorphism_mapping
 from brec_analysis.match_status import MatchStatus
 from brec_analysis.parse_click_args import parse_categories, parse_encoding
 from brec_analysis.plotting_graphs_and_hgraphs_for_brec import (
-    plot_graph_pair,
-    plot_hypergraph_pair,
-)
+    plot_graph_pair, plot_hypergraph_pair)
 from brec_analysis.southern_orc_example import southern_orc_example
-from brec_analysis.statistics import generate_latex_table
-from brec_analysis.utils_for_brec import (
-    convert_nx_to_hypergraph_dict,
-    create_output_dirs,
-    nx_to_pyg,
-)
+from brec_analysis.utils_for_brec import (convert_nx_to_hypergraph_dict,
+                                          create_output_dirs, nx_to_pyg)
 from encodings_hnns.liftings_and_expansions import lift_to_hypergraph
 
 
@@ -325,132 +317,6 @@ def rook_and_shrikhande_special_case() -> None:
     with open(results_file, "w") as f:
         write_results(f, json_path, special_results, json_results)
 
-    # # Check each pair in each category
-    # for category, (start, end) in PART_DICT.items():
-    #     print(f"\nChecking connectivity for {category} category...")
-    #     for pair_idx in range(start, end):
-    #         # Get both graphs in the pair
-    #         G1 = to_networkx(dataset[pair_idx * 2], to_undirected=True)
-    #         G2 = to_networkx(dataset[pair_idx * 2 + 1], to_undirected=True)
-
-    #         # Check connectivity
-    #         is_G1_connected = nx.is_connected(G1)
-    #         is_G2_connected = nx.is_connected(G2)
-
-    #         connectivity_stats[category]["total_pairs"] += 1
-
-    #         # If both graphs are connected
-    #         if is_G1_connected and is_G2_connected:
-    #             connectivity_stats[category]["connected"] += 1
-    #         else:
-    #             connectivity_stats[category]["disconnected"] += 1
-    #             # Print which graphs are disconnected and plot them
-    #             if not is_G1_connected and not is_G2_connected:
-    #                 print(f"  Pair {pair_idx}: Both graphs are disconnected")
-    #             elif not is_G1_connected:
-    #                 print(f"  Pair {pair_idx}: First graph is disconnected")
-    #             else:
-    #                 print(f"  Pair {pair_idx}: Second graph is disconnected")
-
-    #             # Plot the disconnected pair
-    #             plot_disconnected_pair(G1, G2, pair_idx, category)
-    #             print(
-    #                 f"  Plot saved to: plots/disconnected_pairs/pair_{pair_idx}_{category.lower()}.png"
-    #             )
-
-    # # Print summary
-    # print("\nConnectivity Summary:")
-    # print("-" * 60)
-    # print(f"{'Category':<20} {'Connected':<12} {'Disconnected':<12} {'Total':<12}")
-    # print("-" * 60)
-
-    # for category in connectivity_stats:
-    #     stats = connectivity_stats[category]
-    #     connected_percent = (stats["connected"] / stats["total_pairs"]) * 100
-    #     print(
-    #         f"{category:<20} {stats['connected']:<12} {stats['disconnected']:<12} {stats['total_pairs']:<12} ({connected_percent:.1f}% connected)"
-    #     )
-
-    # return connectivity_stats
-
-
-# def process_pair(dataset: BRECDataset, encoding: str, pair_info: tuple) -> dict | None:
-#     """Process a single pair of graphs."""
-#     category, pair_idx = pair_info
-#     print(f"\nDEBUG: Processing pair_info: {pair_info}")
-#     print(f"DEBUG: Category: {category}, Pair Index: {pair_idx}")
-#     print(f"DEBUG: Dataset indices: {pair_idx * 2} and {pair_idx * 2 + 1}")
-
-#     # Get both graphs and check connectivity
-#     G1 = to_networkx(dataset[pair_idx * 2], to_undirected=True)
-#     G2 = to_networkx(dataset[pair_idx * 2 + 1], to_undirected=True)
-
-#     # Check regularity for Regular category
-#     if category == "Regular":
-#         is_reg1, deg1 = is_regular(G1)
-#         is_reg2, deg2 = is_regular(G2)
-#         assert (
-#             is_reg1
-#         ), f"Graph 1 in Regular pair {pair_idx} is not regular! Degrees: {[d for _, d in G1.degree()]}"
-#         assert (
-#             is_reg2
-#         ), f"Graph 2 in Regular pair {pair_idx} is not regular! Degrees: {[d for _, d in G2.degree()]}"
-#         print(f"Regular graphs confirmed: degrees {deg1} and {deg2}")
-
-#     # Skip if either graph is disconnected
-#     if not (nx.is_connected(G1) and nx.is_connected(G2)):
-#         print(f"Skipping pair {pair_idx} ({category}): Contains disconnected graph(s)")
-#         return None
-
-#     # Analyze connected pair
-#     pair_results = analyze_graph_pair(
-#         dataset[pair_idx * 2],
-#         dataset[pair_idx * 2 + 1],
-#         pair_idx,
-#         category,
-#         is_isomorphic=False,
-#         types_of_encoding=list(encoding),
-#     )
-
-#     return pair_results
-
-# print(f"\nAnalyzing BREC dataset with {encoding} encoding...")
-# print(f"Using {num_workers} worker processes")
-
-# create_output_dirs()
-# dataset: BRECDataset = BRECDataset()
-
-# # First check connectivity
-# print("\nAnalyzing connectivity of BREC dataset...")
-# connectivity_stats: dict = check_connectivity_stats(dataset)
-
-# # Save connectivity stats to JSON
-# connectivity_file: str = "results/brec/connectivity_stats.json"
-# with open(connectivity_file, "w") as f:
-#     json.dump(connectivity_stats, f, indent=2)
-# print(f"\nConnectivity statistics saved to: {connectivity_file}")
-
-
-def is_regular(G: nx.Graph) -> tuple[bool, int]:
-    """Check if a graph is regular (all nodes have same degree).
-
-    Args:
-        G: NetworkX graph
-
-    Returns:
-        tuple[bool, int]: (is_regular, degree if regular else -1)
-    """
-    if len(G) == 0:  # Empty graph
-        return True, 0
-
-    degrees = [d for _, d in G.degree()]
-    first_degree = degrees[0]
-
-    # Check if all degrees are equal to the first degree
-    is_reg = all(d == first_degree for d in degrees)
-
-    return is_reg, first_degree if is_reg else -1
-
 
 @click.command()
 @click.option(
@@ -485,10 +351,7 @@ def main(encodings: str, categories: str, k: int = 2) -> None:
 
     create_output_dirs()
 
-    # rook_and_shrikhande_special_case()
-
-    # dataset_pip = BRECDataset()
-    # print(f"Total number of graphs in BREC dataset: {len(dataset_pip)}")
+    rook_and_shrikhande_special_case()
 
     # Get the graphs for analysis
     graphs_read_from_files: dict[str, list[nx.Graph]] = analyze_brec_categories()
@@ -503,35 +366,6 @@ def main(encodings: str, categories: str, k: int = 2) -> None:
             assert (
                 len(components) == 1
             ), f"Graph in {category} has {len(components)} components"
-
-    # BREC with pip package
-    # help(BRECDataset)
-    # or
-    # from brec import __version__
-    # print(f"BREC version: {__version__}")
-
-    # print(f"Total number of graphs in BREC dataset: {len(dataset)}")
-
-    # # After loading dataset
-    # print("\nDataset Summary:")
-    # dataset_pip.print_summary()
-
-    # # We can also try to get the number of classes
-    # print(f"\nNumber of classes: {dataset_pip.num_classes}")
-
-    # # Since BREC contains pairs of graphs, let's show the breakdown
-    # num_pairs = len(dataset_pip) // 2
-    # print(f"Number of graph pairs: {num_pairs}")
-    # # After loading dataset
-    # first_graph = dataset_pip[0]
-    # print("First graph object:")
-    # print(first_graph)
-    # print("\nObject type:", type(first_graph))
-    # print("\nAvailable attributes:")
-    # for attr in dir(first_graph):
-    #     if not attr.startswith('_'):  # Skip private attributes
-    #         print(f"{attr}: {getattr(first_graph, attr)}")
-    # assert False
 
     # Create results files
     results_file = f"results/brec/all_comparisons_encodings_{encodings}_categories_{categories}.txt"
@@ -572,104 +406,85 @@ def main(encodings: str, categories: str, k: int = 2) -> None:
         print(f"Only checking these types of encodings: {selected_encodings}")
         print(f"Only checking these categories: {selected_categories}")
 
-        pip = False
-        # if pip:
-        #     # Process pairs and collect results
-        #     for category, (start, end) in PART_DICT.items():
-        #         print(f"\nProcessing {category} category...")
-        #         for pair_idx in range(start, end):
-        #             pair_results = analyze_graph_pair(
-        #                 dataset[pair_idx * 2],
-        #                 dataset[pair_idx * 2 + 1],
-        #                 pair_idx,
-        #                 category,
-        #                 is_isomorphic=False,
-        #                 types_of_encoding=selected_encodings,
-        #             )
-        #             if len(selected_encodings) == 1:
-        #                 json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{pair_idx}_statistics.json"
-        #                 write_results(f, json_path, pair_results, json_results)
+        total_pair_idx = 0  # Keep track of total pairs processed
 
-        if not pip:
-            total_pair_idx = 0  # Keep track of total pairs processed
+        # looping over categories
+        for category, graphs in graphs_read_from_files.items():
+            if category not in selected_categories:
+                print(f"Skipping {category} category")
+                continue
 
-            # looping over categories
-            for category, graphs in graphs_read_from_files.items():
-                if category not in selected_categories:
-                    print(f"Skipping {category} category")
-                    continue
+            print(f"\nProcessing {category} category...")
+            num_pairs_to_process = len(graphs) // 2
+            print(f"Number of pairs to process: {num_pairs_to_process}")
 
-                print(f"\nProcessing {category} category...")
-                num_pairs_to_process = len(graphs) // 2
-                print(f"Number of pairs to process: {num_pairs_to_process}")
+            for local_pair_idx in range(num_pairs_to_process):
+                # for local_pair_idx in [10, 11, 16]:
 
-                for local_pair_idx in range(num_pairs_to_process):
-                    # for local_pair_idx in [10, 11, 16]:
+                if len(selected_encodings) == 1:
+                    # check if the json_path = f"results/brec/ran/{category}_pair_{total_pair_idx}_statistics.json"
+                    # already exists
+                    json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{total_pair_idx}_statistics.json"
+                    if os.path.exists(json_path):
+                        print(
+                            f"Skipping {category} category as {json_path} already exists"
+                        )
+                        total_pair_idx += 1
+                        continue
 
+                g1 = graphs[local_pair_idx * 2]
+                g2 = graphs[local_pair_idx * 2 + 1]
+
+                # Skip if either graph has more than 20 nodes
+                # if g1.number_of_nodes() > 20 or g2.number_of_nodes() > 20:
+                #     print(
+                #         f"Skipping pair {local_pair_idx + 1}/5 in {category} "
+                #         f"(too many nodes: G1={g1.number_of_nodes()}, "
+                #         f"G2={g2.number_of_nodes()})"
+                #     )
+                #     continue
+
+                print(f"(global pair index: {total_pair_idx})")
+
+                pair_results = analyze_graph_pair(
+                    g1,
+                    g2,
+                    total_pair_idx,  # Use the global pair index
+                    category,
+                    is_isomorphic=False,
+                    already_in_nx=True,
+                    types_of_encoding=selected_encodings,
+                    k=k,
+                )
+                # Get first key's values using next() and iter()
+                first_encoding_graph = next(
+                    iter(pair_results["graph_level"]["encodings"].values())
+                )
+                status_graph = first_encoding_graph["status"]
+                first_encoding_hypergraph = next(
+                    iter(pair_results["hypergraph_level"]["encodings"].values())
+                )
+                status_hypergraph = first_encoding_hypergraph["status"]
+                print(f"status_graph: {status_graph}")
+                print(f"status_hypergraph: {status_hypergraph}")
+                if (
+                    status_graph != MatchStatus.TIMEOUT
+                    and status_hypergraph != MatchStatus.TIMEOUT
+                ):
                     if len(selected_encodings) == 1:
-                        # check if the json_path = f"results/brec/ran/{category}_pair_{total_pair_idx}_statistics.json"
-                        # already exists
                         json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{total_pair_idx}_statistics.json"
-                        if os.path.exists(json_path):
-                            print(
-                                f"Skipping {category} category as {json_path} already exists"
-                            )
-                            total_pair_idx += 1
-                            continue
+                        # updates the json_results with the pair_results
+                        # and saves the singleton file
+                        write_results(f, json_path, pair_results, json_results)
+                else:
+                    print("🚨 Timeout")
+                    if len(selected_encodings) == 1:
+                        json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{total_pair_idx}_statistics_TIMEOUT.json"
+                        # updates the json_results with the pair_results
+                        # and saves the singleton file
+                        write_results(f, json_path, pair_results, json_results)
 
-                    g1 = graphs[local_pair_idx * 2]
-                    g2 = graphs[local_pair_idx * 2 + 1]
-
-                    # Skip if either graph has more than 20 nodes
-                    # if g1.number_of_nodes() > 20 or g2.number_of_nodes() > 20:
-                    #     print(
-                    #         f"Skipping pair {local_pair_idx + 1}/5 in {category} "
-                    #         f"(too many nodes: G1={g1.number_of_nodes()}, "
-                    #         f"G2={g2.number_of_nodes()})"
-                    #     )
-                    #     continue
-
-                    print(f"(global pair index: {total_pair_idx})")
-
-                    pair_results = analyze_graph_pair(
-                        g1,
-                        g2,
-                        total_pair_idx,  # Use the global pair index
-                        category,
-                        is_isomorphic=False,
-                        already_in_nx=True,
-                        types_of_encoding=selected_encodings,
-                        k=k,
-                    )
-                    # Get first key's values using next() and iter()
-                    first_encoding_graph = next(
-                        iter(pair_results["graph_level"]["encodings"].values())
-                    )
-                    status_graph = first_encoding_graph["status"]
-                    first_encoding_hypergraph = next(
-                        iter(pair_results["hypergraph_level"]["encodings"].values())
-                    )
-                    status_hypergraph = first_encoding_hypergraph["status"]
-                    print(f"status_graph: {status_graph}")
-                    print(f"status_hypergraph: {status_hypergraph}")
-                    if (
-                        status_graph != MatchStatus.TIMEOUT
-                        and status_hypergraph != MatchStatus.TIMEOUT
-                    ):
-                        if len(selected_encodings) == 1:
-                            json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{total_pair_idx}_statistics.json"
-                            # updates the json_results with the pair_results
-                            # and saves the singleton file
-                            write_results(f, json_path, pair_results, json_results)
-                    else:
-                        print("🚨 Timeout")
-                        if len(selected_encodings) == 1:
-                            json_path = f"results/brec/ran/{category}_{selected_encodings[0]}_pair_{total_pair_idx}_statistics_TIMEOUT.json"
-                            # updates the json_results with the pair_results
-                            # and saves the singleton file
-                            write_results(f, json_path, pair_results, json_results)
-
-                    total_pair_idx += 1  # Increment the global counter
+                total_pair_idx += 1  # Increment the global counter
 
         # Save JSON results with percentages
         # keys are categories
@@ -707,9 +522,6 @@ def main(encodings: str, categories: str, k: int = 2) -> None:
             json.dump(final_stats, json_f, indent=2)
 
         print(f"\nStatistics saved to: {json_file}")
-
-        # Generate LaTeX table
-        generate_latex_table(final_stats)
 
 
 if __name__ == "__main__":

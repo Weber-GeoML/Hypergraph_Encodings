@@ -8,13 +8,14 @@ This file contains the following custom encodings:
 
 import numpy as np
 import torch
-from gnns.GraphRicciCurvature.FormanRicci import FormanRicci
-from gnns.GraphRicciCurvature.FormanRicci4 import FormanRicci4
-from gnns.GraphRicciCurvature.OllivierRicci import OllivierRicci
 from torch_geometric.data import Data
 from torch_geometric.data.datapipes import functional_transform
 from torch_geometric.transforms import BaseTransform
 from torch_geometric.utils import to_networkx
+
+from gnns.GraphRicciCurvature.FormanRicci import FormanRicci
+from gnns.GraphRicciCurvature.FormanRicci4 import FormanRicci4
+from gnns.GraphRicciCurvature.OllivierRicci import OllivierRicci
 
 
 @functional_transform("edge_curvature")

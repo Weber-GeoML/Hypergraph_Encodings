@@ -1,3 +1,5 @@
+"""Create a gif of a random walk on a hypergraph."""
+
 from pathlib import Path
 
 import hypernetx as hnx

@@ -10,7 +10,9 @@ import networkx as nx
 import numpy as np
 
 
-def analyze_brec_categories(verbose: bool = False) -> dict:
+def analyze_brec_categories(
+    data_path: str = "data/BREC_Data", verbose: bool = False
+) -> dict:
     """Analyse the BREC dataset by category
 
     Returns:
@@ -26,7 +28,6 @@ def analyze_brec_categories(verbose: bool = False) -> dict:
         "dr": "dr.npy",  # distance regular
     }
 
-    data_path = "data/BREC_Data"
     print(f"\nLoading data from: {data_path}")
     print("\nBREC Dataset Structure:")
     total_pairs = 0

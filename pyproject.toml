@@ -11,8 +11,8 @@ name = "encodings_hnns"
 version = "1.0.0"
 requires-python = ">=3.10"
 dependencies = [
-    # Base requirements
-    "numpy",
+    # Base requirements with exact versions
+    "numpy>=1.24.3,<2.0.0",  # Pin to numpy 1.x
     "pandas",
     "hypernetx @ git+https://github.com/RaphaelPellegrin/HyperNetX.git@nonconvex",
     "numba",
@@ -21,14 +21,14 @@ dependencies = [
     "scipy",
     "shapely",
     "tabulate",
-    "path",
+    "pathlib",
     "brec",
     "imageio",
     "imageio-ffmpeg",
     "POT",  # Python Optimal Transport library
-    # PyTorch ecosystem
-    "torch>=2.0.0",
-    "torch-geometric>=2.3.0",
+    # PyTorch ecosystem with exact versions
+    "torch==2.0.0",
+    "torch-geometric==2.3.0",
     "torch-scatter>=2.1.1",
     "torch-sparse>=0.6.17",
     "alphashape",

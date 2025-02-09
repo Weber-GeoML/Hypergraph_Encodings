@@ -115,25 +115,28 @@ def compute_star_expansion(dataset: dict) -> Data:
     return graph
 
 
-def plot_hypergraph_and_expansion() -> None:
+def plot_hypergraph_and_expansion(dataset: dict | None = None) -> None:
     """Plot the hypergraph and its clique expansion on an example dataset."""
-    # Create a simple example hypergraph
-    hypergraph = {
-        "e1": [0, 1, 2],  # A 3-node hyperedge
-        "e2": [2, 3, 4],  # Another 3-node hyperedge
-        "e3": [4, 5],  # A 2-node hyperedge
-        "e4": [0, 5, 6, 7],  # A 4-node hyperedge
-    }
+    if dataset is None:
+        # Create a simple example hypergraph
+        hypergraph = {
+            "e1": [0, 1, 2],  # A 3-node hyperedge
+            "e2": [2, 3, 4],  # Another 3-node hyperedge
+            "e3": [4, 5],  # A 2-node hyperedge
+            "e4": [0, 5, 6, 7],  # A 4-node hyperedge
+        }
 
-    # Create dataset dictionary in the required format
-    dataset = {
-        "hypergraph": hypergraph,
-        "n": 8,  # Number of nodes (0-7)
-        "features": [[1.0] for _ in range(8)],  # Simple 1D features
-        "labels": np.array(
-            [[1] if i % 2 == 0 else [0] for i in range(8)]
-        ),  # Binary labels as arrays
-    }
+        # Create dataset dictionary in the required format
+        dataset = {
+            "hypergraph": hypergraph,
+            "n": 8,  # Number of nodes (0-7)
+            "features": [[1.0] for _ in range(8)],  # Simple 1D features
+            "labels": np.array(
+                [[1] if i % 2 == 0 else [0] for i in range(8)]
+            ),  # Binary labels as arrays
+        }
+    else:
+        hypergraph = dataset["hypergraph"]
 
     expanded_graph = compute_clique_expansion(dataset)
     G = nx.Graph()

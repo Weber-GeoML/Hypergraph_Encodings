@@ -3,8 +3,8 @@
 TODO: merge with encodings_hnns
 """
 
-import torch
 import networkx as nx
+import torch
 
 from .util import logger
 

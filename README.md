@@ -144,20 +144,23 @@ IMPORTANT NOTE: We are working on making the code as general, but for now, assum
 
 Create a virtual env, activate it and install the required packages.
 
-```
+```bash
 conda create -n encodings_venv python=3.11
 conda activate encodings_venv
+```
+
+## Installation
+
+```bash
+# Install base package
 pip install -e .
+
+# Install PyTorch Geometric dependencies
+# (depends on your torch version and CPU/GPU setup)
+pip install torch-scatter==2.1.1 torch-sparse==0.6.17 -f https://data.pyg.org/whl/torch-2.0.0+cpu.html
 ```
+
 You might need to install julia separately as well as the ORC routine calls julia code.
-
-You might also need to installl PyTorch, torch-geometric and torch-scatter:
-
-```
-conda install pytorch -c pytorch
-conda install pyg -c pyg
-conda install pytorch-scatter -c pyg
-```
 
 ## Debugging
 
@@ -177,7 +180,7 @@ run_all_general.sh
 
 We can aggregate the results using the script:
 
-```
+```bash
 python scripts/create_results_table.py
 ```
 
@@ -187,19 +190,19 @@ We have a test suite that runs using pytest.
 
 Simply run:
 
-```
+```bash
 pytest
 ``` 
 from root. That sould look for all tests and run them. You can run
 
-```
+```bash
 pytest --verbose
 ```
 for more prints.
 
 For a file in particular, run:
 
-```
+```bash
 pytest tests/test_curvature.py
 ``` 
 
@@ -211,4 +214,9 @@ You might need to give permission to the file. Eg
 ```
 chmod +x Hypergraph_Encodings/src/orchid/orchid_interface.jl
 ```
+
+## Issues
+
+Feel free to open an issue on the repo if you have any questions or issues.
+
 
