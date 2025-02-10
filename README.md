@@ -23,6 +23,7 @@
 <p align="center">
   <img src="gifs/random_walk.gif" width="400" alt="Random Walk on Graph"/>
   <img src="gifs/hypergraph_random_walk.gif" width="400" alt="Random Walk on Hypergraph"/>
+  <img src="gifs/hypergraph_random_walk_2.gif" width="400" alt="Random Walk on Hypergraph"/>
 </p>
 
 
