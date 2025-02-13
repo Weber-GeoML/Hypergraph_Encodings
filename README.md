@@ -1,18 +1,9 @@
 <div align="center">
-  <a href="https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/pylint.yml">
-    <img src="https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/pylint.yml/badge.svg" alt="Pylint"/>
-  </a>
   <a href="https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/pytest.yml">
     <img src="https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/pytest.yml/badge.svg" alt="pytest"/>
   </a>
-  <a href="https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/python-package.yml">
-    <img src="https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/python-package.yml/badge.svg" alt="Python package"/>
-  </a>
   <a href="https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/ruff.yml">
     <img src="https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/ruff.yml/badge.svg" alt="Ruff"/>
-  </a>
-  <a href="https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/mypy.yml">
-    <img src="https://github.com/Weber-GeoML/Hypergraph_Encodings/actions/workflows/mypy.yml/badge.svg" alt="Type Check"/>
   </a>
   <a href="https://www.python.org/downloads/release/python-3110/">
     <img src="https://img.shields.io/badge/python-3.11-blue.svg" alt="Python 3.11"/>
