@@ -35,6 +35,7 @@ brec/ contains the scripts to compare pairs of graphs in the BREC
 dataset.
 gnn/ contains the scripts to run the experiments for on the graph-level architectures (graph classification, graph regression, node classification).
 unignn/ contains the scripts to run the experiments for on the hypergraph-level architectures (hypergraph node classification).
+compute_encodings/ contains the script to process the datasets and compute the encodings on the datasets.
 
 ```src/```
 
