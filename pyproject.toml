@@ -16,6 +16,7 @@ dependencies = [
     "pandas",
     "hypernetx @ git+https://github.com/RaphaelPellegrin/HyperNetX.git@nonconvex",
     "numba",
+    "networkx",
     "fastjsonschema",
     "matplotlib",
     "scipy",
