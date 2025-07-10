@@ -82,7 +82,7 @@ print("=" * 80)
 # Check if CUDA is available and move tensors to GPU if possible
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-test_accs_global: list[float] = []
+test_accs_global: list[list[float]] = []
 best_val_accs: list[float] = []
 best_test_accs: list[float] = []
 
@@ -263,13 +263,13 @@ for seed in range(1, 9):
 
             # gets the trains, test and val accuracy
             train_acc: float = accuracy(Z[train_idx], Y[train_idx])
-            test_acc_current: float = accuracy(Z[test_idx], Y[test_idx])
+            test_acc: float = accuracy(Z[test_idx], Y[test_idx])
             val_acc: float = accuracy(Z[val_idx], Y[val_idx])
 
             # Store accuracies
             train_accs.append(train_acc)
             val_accs.append(val_acc)
-            test_accs.append(test_acc_current)
+            test_accs.append(test_acc)
 
             # log acc
             if best_val_acc < val_acc:
@@ -306,22 +306,25 @@ for seed in range(1, 9):
             "best_test_acc": best_test_acc,
         }
 
+        # For one run
         resultlogger.info(
             f"Run {run}/{args.n_runs}, best test accuracy: {best_test_acc:.2f}, acc(last): {test_acc:.2f}, total time: {time.time()-tic_run:.2f}s"
         )
-        test_accs.append(test_acc)
-        best_val_accs.append(best_val_acc)
-        best_test_accs.append(best_test_acc)
+        test_accs_global.append(
+            test_acc
+        )  # over all runs and seeds. The final test accuracy
+        best_val_accs.append(best_val_acc)  # over all runs and seeds
+        best_test_accs.append(best_test_acc)  # over all runs and seeds
         overall_test_accuracies_best_val.append(test_accs_for_best_val[-1])
 
 
-resultlogger.info(f"We had {len(test_accs)} runs")
+resultlogger.info(f"We had {len(test_accs_global)} runs")
 resultlogger.info(
     f"Average test accuracy for best val: {np.mean(overall_test_accuracies_best_val)} ± {np.std(overall_test_accuracies_best_val)}"
-)
+)  # this is the same as "Average best test accuracy"
 resultlogger.info(
-    f"Average final test accuracy: {np.mean(test_accs)} ± {np.std(test_accs)}"
-)
+    f"Average final test accuracy: {np.mean(test_accs_global)} ± {np.std(test_accs_global)}"
+)  # final test accuracy over all runs/seeds
 resultlogger.info(
     f"Average best test accuracy: {np.mean(best_test_accs)} ± {np.std(best_test_accs)}"
 )
