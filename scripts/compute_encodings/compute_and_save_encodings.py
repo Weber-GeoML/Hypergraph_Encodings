@@ -10,8 +10,8 @@ import pickle
 import warnings
 
 
-from scripts.compute_encodings.encoding_saver_hgraphs import EncodingsSaver
-from scripts.compute_encodings.encoding_saver_lrgb import EncodingsSaverLRGB
+from compute_encodings.encoding_saver_hgraphs import EncodingsSaver
+from compute_encodings.encoding_saver_lrgb import EncodingsSaverLRGB
 
 warnings.simplefilter("ignore")
 
@@ -19,6 +19,7 @@ warnings.simplefilter("ignore")
 if __name__ == "__main__":
     LOCAL = True
     if LOCAL:
+        print("Running locally")
         DATA_TYPE = "hypergraph_classification_datasets"
         encodings_saver_instance = EncodingsSaver(DATA_TYPE)
         parsed_data = encodings_saver_instance.compute_encodings()

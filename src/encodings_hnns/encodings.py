@@ -106,7 +106,9 @@ class HypergraphEncodings:
         I am adding tht ability to save the encodings. Ie, we only compute them once.
         dataset["features"]
         """
-        filename: str = f"computed_encodings/{dataset_name}_degree_encodings_normalized_{normalized}.pkl"
+        filename: str = (
+            f"computed_encodings/{dataset_name}_degree_encodings_normalized_{normalized}.pkl"
+        )
         if os.path.exists(filename):
             with open(filename, "rb") as f:
                 print(f"Loading hypergraph from {filename}")
@@ -162,7 +164,7 @@ class HypergraphEncodings:
                             (hypergraph["features"][node].reshape(-1, 1), ld_vals)
                         )
                     except Exception:
-                        print("Handling different dimensions.")
+                        # print("Handling different dimensions.")
                         stacked_features = np.hstack(
                             (hypergraph["features"][node], ld_vals)
                         )
@@ -212,7 +214,9 @@ class HypergraphEncodings:
             the hypergraph with the frc or orc encodings added to the featuress
 
         """
-        filename: str = f"computed_encodings/{dataset_name}_curvature_encodings_{curvature_type}_normalized_{normalized}.pkl"
+        filename: str = (
+            f"computed_encodings/{dataset_name}_curvature_encodings_{curvature_type}_normalized_{normalized}.pkl"
+        )
         if os.path.exists(filename):
             with open(filename, "rb") as f:
                 print(f"Loading hypergraph from {filename}")
@@ -297,7 +301,7 @@ class HypergraphEncodings:
                             (hypergraph["features"][node], rc_vals)
                         )
                     except Exception:
-                        print("Handling different dimensions.")
+                        # print("Handling different dimensions.")
                         padded_features[node] = np.hstack(
                             ([hypergraph["features"][node]], rc_vals)
                         )
@@ -495,7 +499,7 @@ class HypergraphEncodings:
                             ([hypergraph["features"][node]], laplacian_vals)
                         )
                     except Exception:
-                        print("Handling different dimensions.")
+                        # print("Handling different dimensions.")
                         stacked_features = np.hstack(
                             (hypergraph["features"][node], laplacian_vals)
                         )
@@ -552,7 +556,9 @@ class HypergraphEncodings:
         # Write checks for this!
 
         """
-        filename: str = f"computed_encodings/{dataset_name}_rw_encodings_{rw_type}_k_{k}_normalized_{normalized}.pkl"
+        filename: str = (
+            f"computed_encodings/{dataset_name}_rw_encodings_{rw_type}_k_{k}_normalized_{normalized}.pkl"
+        )
         if os.path.exists(filename):
             with open(filename, "rb") as f:
                 print(f"Loading hypergraph from {filename}")
@@ -644,7 +650,7 @@ class HypergraphEncodings:
                             ([hypergraph["features"][node]], laplacian_vals)
                         )
                     except Exception:
-                        print("Handling different dimensions.")
+                        # print("Handling different dimensions.")
                         stacked_features = np.hstack(
                             (hypergraph["features"][node], laplacian_vals)
                         )

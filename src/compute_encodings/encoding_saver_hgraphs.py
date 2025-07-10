@@ -3,7 +3,7 @@
 import warnings
 from typing import Any, Callable, Dict, List
 
-from base_class import EncodingsSaverBase
+from compute_encodings.base_class import EncodingsSaverBase
 
 warnings.simplefilter("ignore")
 
@@ -43,9 +43,12 @@ class EncodingsSaver(EncodingsSaverBase):
             "reddit_hypergraphs",
         ]
 
+        print(f"Computing encodings on the files \n {list_files}")
+
         all_results: Dict[str, Any] = {}
-        for lukas_file in list_files:
-            results = self._process_file(lukas_file)
-            all_results[lukas_file] = results
+        for file in list_files:
+            print(f"Processing file {file}")
+            results = self._process_file(file)
+            all_results[file] = results
 
         return all_results

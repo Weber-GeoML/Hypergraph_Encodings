@@ -17,7 +17,7 @@ import warnings
 from typing import Any, Dict, List
 
 import torch
-from base_class import EncodingsSaverBase
+from compute_encodings.base_class import EncodingsSaverBase
 
 warnings.simplefilter("ignore")
 
