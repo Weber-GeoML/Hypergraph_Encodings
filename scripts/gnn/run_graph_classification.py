@@ -115,7 +115,7 @@ for key in datasets:
     train_accuracies = []
     validation_accuracies = []
     test_accuracies = []
-    energies = []
+    energies: list[float] = []
     print(f"TESTING: {key} ({args.rewiring} - layer {args.layer_type})")
 
     dataset = datasets[key]

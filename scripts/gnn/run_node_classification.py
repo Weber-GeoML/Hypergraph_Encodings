@@ -263,7 +263,7 @@ for key in datasets:
     results_df = pd.DataFrame(results)
     with open(
         f"results/node_classification_{args.layer_type}_{args.rewiring}.csv", "a"
-    ) as f:
+    ) as f:  # type: ignore
         results_df.to_csv(f, mode="a", header=f.tell() == 0)
 
 
