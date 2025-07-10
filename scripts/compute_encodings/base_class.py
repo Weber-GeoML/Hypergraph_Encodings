@@ -10,6 +10,7 @@ import pickle
 import warnings
 
 import numpy as np
+
 from encodings_hnns.encodings import HypergraphEncodings
 from encodings_hnns.laplacians import DisconnectedError
 

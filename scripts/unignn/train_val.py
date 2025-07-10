@@ -82,7 +82,7 @@ print("=" * 80)
 # Check if CUDA is available and move tensors to GPU if possible
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-test_accs: list[float] = []
+test_accs_global: list[float] = []
 best_val_accs: list[float] = []
 best_test_accs: list[float] = []
 
@@ -235,9 +235,9 @@ for seed in range(1, 9):
         test_acc: float = 0
         Z: torch.Tensor | None = None
         bad_counter: int = 0
-        test_accs_for_best_val: list[
-            float
-        ] = []  # List to store test accuracy for the best validation accuracy
+        test_accs_for_best_val: list[float] = (
+            []
+        )  # List to store test accuracy for the best validation accuracy
         train_accs: list[float] = []
         val_accs: list[float] = []
         test_accs: list[float] = []
@@ -263,13 +263,13 @@ for seed in range(1, 9):
 
             # gets the trains, test and val accuracy
             train_acc: float = accuracy(Z[train_idx], Y[train_idx])
-            test_acc: float = accuracy(Z[test_idx], Y[test_idx])
+            test_acc_current: float = accuracy(Z[test_idx], Y[test_idx])
             val_acc: float = accuracy(Z[val_idx], Y[val_idx])
 
             # Store accuracies
             train_accs.append(train_acc)
             val_accs.append(val_acc)
-            test_accs.append(test_acc)
+            test_accs.append(test_acc_current)
 
             # log acc
             if best_val_acc < val_acc:

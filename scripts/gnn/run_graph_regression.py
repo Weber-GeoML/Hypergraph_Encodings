@@ -1,6 +1,7 @@
 import os
 import pickle
 import time
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -11,7 +12,7 @@ from torch_geometric.data import Data
 
 from gnns.custom_encodings import LocalCurvatureProfile
 from gnns.experiments.graph_regression import Experiment
-from scripts.gnn.hyperparams import get_args_from_config, get_args_from_input
+from scripts.gnn.hyperparams import get_args_from_input
 
 # import custom encodings
 
@@ -75,8 +76,8 @@ all_datasets = {
     "min_regular": min_regular,
     "min_tree": min_tree,
 }
-train_datasets = []
-test_datasets = []
+train_datasets: list[tuple[str, Any]] = []
+test_datasets: list[tuple[str, Any]] = []
 
 
 def log_to_file(message, filename="results/graph_regression.txt"):
@@ -141,7 +142,7 @@ train_datasets = []
 test_datasets = []
 
 if hasattr(args, "config_path"):
-    args += get_args_from_config(config=args.config_path)
+    args += get_args_from_input(config=args.config_path)
 
 if args.train_datasets and args.test_datasets:
     datasets = []
@@ -170,7 +171,7 @@ for i in range(len(train_datasets)):
     train_accuracies = []
     validation_accuracies = []
     test_accuracies = []
-    energies = []
+    energies: list[float] = []
 
     args.train_name = train_name
     args.test_name = test_name

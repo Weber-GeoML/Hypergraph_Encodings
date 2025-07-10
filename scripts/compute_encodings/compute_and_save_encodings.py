@@ -5,17 +5,13 @@ And now the "features" field of every dict will have been updated with the featu
 
 """
 
-import inspect
 import os
 import pickle
 import warnings
-from typing import Any, Callable, Dict, List
 
-import torch
+
 from scripts.compute_encodings.encoding_saver_hgraphs import EncodingsSaver
 from scripts.compute_encodings.encoding_saver_lrgb import EncodingsSaverLRGB
-
-from base_class import EncodingsSaverBase
 
 warnings.simplefilter("ignore")
 
