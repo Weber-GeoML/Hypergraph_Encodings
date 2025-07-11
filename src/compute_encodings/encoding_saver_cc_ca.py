@@ -103,13 +103,14 @@ class EncodingsSaverForCCCA(EncodingsSaverBase):
         return sparse_matrix.toarray()
 
     def _process_single_dataset(
-        self, dataset_name: str, verbose: bool = False
+        self, dataset_name: str, verbose: bool = False, test_mode: bool = False
     ) -> Dict[str, Any]:
         """Process a single dataset and compute encodings for all splits.
 
         Args:
             dataset_name: Name of the dataset
             verbose: Whether to print verbose output
+            test_mode: If True, process only first 2 splits and limit hyperedges
 
         Returns:
             Dictionary containing all computed encodings
@@ -124,6 +125,11 @@ class EncodingsSaverForCCCA(EncodingsSaverBase):
         hypergraph = dataset_data["hypergraph"]
         labels = dataset_data["labels"]
         splits = dataset_data["splits"]
+
+        if test_mode:
+            # Limit hyperedges for testing (take first 50 hyperedges)
+            hypergraph = dict(list(hypergraph.items())[:5])
+            print(f"TEST MODE: Limited to {len(hypergraph)} hyperedges")
 
         if verbose:
             print(f"Features shape: {features.shape}")
@@ -141,7 +147,14 @@ class EncodingsSaverForCCCA(EncodingsSaverBase):
 
         # Process each split
         all_results = {}
-        for split_name, split_data in splits.items():
+        split_items = list(splits.items())
+
+        if test_mode:
+            # Only process first 2 splits in test mode
+            split_items = split_items[:2]
+            print(f"TEST MODE: Processing only {len(split_items)} splits")
+
+        for split_name, split_data in split_items:
             print(f"Processing split: {split_name}")
 
             # Create dataset for this split
@@ -159,11 +172,14 @@ class EncodingsSaverForCCCA(EncodingsSaverBase):
 
         return all_results
 
-    def compute_encodings(self, verbose: bool = False) -> Dict[str, Any]:
+    def compute_encodings(
+        self, verbose: bool = False, test_mode: bool = False
+    ) -> Dict[str, Any]:
         """Compute encodings for all datasets of the specified type.
 
         Args:
             verbose: Whether to print verbose output
+            test_mode: If True, process only first 2 splits and limit hyperedges
 
         Returns:
             Dictionary containing all computed encodings
@@ -177,7 +193,9 @@ class EncodingsSaverForCCCA(EncodingsSaverBase):
         all_results = {}
         for dataset_name in available_datasets:
             try:
-                dataset_results = self._process_single_dataset(dataset_name, verbose)
+                dataset_results = self._process_single_dataset(
+                    dataset_name, verbose, test_mode
+                )
                 all_results[dataset_name] = dataset_results
                 print(f"Completed processing {dataset_name}")
             except Exception as e:
@@ -187,13 +205,14 @@ class EncodingsSaverForCCCA(EncodingsSaverBase):
         return all_results
 
     def compute_encodings_for_dataset(
-        self, dataset_name: str, verbose: bool = False
+        self, dataset_name: str, verbose: bool = False, test_mode: bool = False
     ) -> Dict[str, Any]:
         """Compute encodings for a specific dataset.
 
         Args:
             dataset_name: Name of the specific dataset
             verbose: Whether to print verbose output
+            test_mode: If True, process only first 2 splits and limit hyperedges
 
         Returns:
             Dictionary containing computed encodings for the dataset
@@ -206,7 +225,7 @@ class EncodingsSaverForCCCA(EncodingsSaverBase):
                 f"Available: {available_datasets}"
             )
 
-        return self._process_single_dataset(dataset_name, verbose)
+        return self._process_single_dataset(dataset_name, verbose, test_mode)
 
     def save_encodings_for_split(
         self,
@@ -218,10 +237,17 @@ class EncodingsSaverForCCCA(EncodingsSaverBase):
         """Save encodings for a specific dataset and split.
 
         Args:
-            dataset_name: Name of the dataset
-            split_name: Name of the split
-            encodings: Tuple of encoding lists
-            encoding_types: List of encoding type names
+            dataset_name:
+                Name of the dataset
+            split_name:
+                Name of the split
+            encodings:
+                Tuple of encoding lists
+            encoding_types:
+                sList of encoding type names
+
+        Returns:
+            None
         """
         # Create directory for this dataset
         dataset_dir = os.path.join(self.d, f"{dataset_name}_encodings")

@@ -40,7 +40,9 @@ def test_coauthorship_datasets() -> None:
         # Test processing a single dataset (smaller one first)
         print("\nTesting single dataset processing...")
         try:
-            results = encoder.compute_encodings_for_dataset("cora", verbose=True)
+            results = encoder.compute_encodings_for_dataset(
+                "cora", verbose=True, test_mode=True
+            )
             print(f"Successfully processed cora dataset")
             print(f"Number of splits processed: {len(results)}")
         except Exception as e:
@@ -71,7 +73,9 @@ def test_cocitation_datasets() -> None:
         # Test processing a single dataset (smaller one first)
         print("\nTesting single dataset processing...")
         try:
-            results = encoder.compute_encodings_for_dataset("citeseer", verbose=True)
+            results = encoder.compute_encodings_for_dataset(
+                "citeseer", verbose=True, test_mode=True
+            )
             print(f"Successfully processed citeseer dataset")
             print(f"Number of splits processed: {len(results)}")
         except Exception as e:

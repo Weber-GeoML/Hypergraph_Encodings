@@ -1,17 +1,21 @@
-"""File used to save the encodings for lukas.
+"""File used to save the encodings.
 
 Will just save in the same format Lukas provided to me.ie a list of dict
-And now the "features" field of every dict will have been updated with the features
-
+And now the "features" field of every dict will have been updated with the
+features.
 """
 
 import os
+import sys
 import pickle
 import warnings
 
+# Add src directory to path for imports
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 from compute_encodings.encoding_saver_hgraphs import EncodingsSaver
 from compute_encodings.encoding_saver_lrgb import EncodingsSaverLRGB
+from compute_encodings.encoding_saver_cc_ca import EncodingsSaverForCCCA
 
 warnings.simplefilter("ignore")
 
@@ -20,9 +24,17 @@ if __name__ == "__main__":
     LOCAL = True
     if LOCAL:
         print("Running locally")
+
+        # Process hypergraph classification datasets
+        print("Processing hypergraph classification datasets...")
         DATA_TYPE = "hypergraph_classification_datasets"
         encodings_saver_instance = EncodingsSaver(DATA_TYPE)
         parsed_data = encodings_saver_instance.compute_encodings()
+
+        # Process Cocitation/Coauthorship datasets
+        print("Processing Cocitation/Coauthorship datasets...")
+        cc_ca_saver = EncodingsSaverForCCCA()
+        cc_ca_results = cc_ca_saver.compute_encodings()
 
     CLUSTER = False
     if CLUSTER:
