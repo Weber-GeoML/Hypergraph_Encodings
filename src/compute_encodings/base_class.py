@@ -33,7 +33,9 @@ class EncodingsSaverBase(object):
         )
         current = os.path.dirname(os.path.dirname(current))
         # Makes the paths
-        self.d: str = os.path.join(current, "data", data)
+        self.d: str = os.path.join(
+            current, "data", data
+        )  # Modify for where your data is!
         self.individual_files_dir = os.path.join(self.d, "individual_files")
 
         # Create individual_files directory if it doesn't exist
@@ -51,7 +53,7 @@ class EncodingsSaverBase(object):
     def _process_hypergraph(
         self,
         hg,
-        lukas_file: str,
+        file_to_process: str,
         count: int,
         verbose: bool = False,
     ) -> tuple[list, list, list, list, list, list, list, list]:
@@ -62,7 +64,7 @@ class EncodingsSaverBase(object):
         Args:
             hg:
                 the hypergraph
-            lukas_file:
+            file_to_process:
                 the name of the file
             count:
                 the count.
@@ -71,7 +73,7 @@ class EncodingsSaverBase(object):
 
         """
         if verbose:
-            print(f"The file is {lukas_file}")
+            print(f"The file is {file_to_process}")
             print(f"The count is {count}")
             print(f"Features shape: {hg['features'].shape}")
             print(f"Labels shape: {hg['labels'].shape}")
@@ -206,7 +208,7 @@ class EncodingsSaverBase(object):
 
         for encoding_type, encoding_list in encoding_map.items():
             save_file = (
-                f"{lukas_file}_with_encodings_{encoding_type}_count_{count}.pickle"
+                f"{file_to_process}_with_encodings_{encoding_type}_count_{count}.pickle"
             )
             with open(
                 os.path.join(self.individual_files_dir, save_file), "wb"
@@ -229,7 +231,7 @@ class EncodingsSaverBase(object):
     ############################################################################
 
     def _process_file(
-        self, lukas_file: str
+        self, file_to_process: str
     ) -> tuple[list, list, list, list, list, list, list, list]:
         """Processes one file at a time.
 
@@ -237,7 +239,7 @@ class EncodingsSaverBase(object):
         THe files are imdb, reddit and collab.
 
         Args:
-            lukas_file:
+            file_to_process:
                 the file
         """
         list_hgs_rw_EE: list[dict] = []
@@ -249,16 +251,16 @@ class EncodingsSaverBase(object):
         list_hgs_frc: list[dict] = []
         list_hgs_ldp: list[dict] = []
 
-        with open(os.path.join(self.d, f"{lukas_file}.pickle"), "rb") as handle:
+        with open(os.path.join(self.d, f"{file_to_process}.pickle"), "rb") as handle:
             # list of hypergraphs
             hypergraphs: list[dict] = pickle.load(handle)
-            print(f"The file {lukas_file} contains {len(hypergraphs)} hypergraphs")
+            print(f"The file {file_to_process} contains {len(hypergraphs)} hypergraphs")
             results = []
             with mp.Pool() as pool:
                 for count, hg in enumerate(hypergraphs):
                     result = pool.apply_async(
                         self._process_hypergraph,
-                        (hg, lukas_file, count),
+                        (hg, file_to_process, count),
                     )
                     results.append(result)
                 pool.close()
@@ -299,7 +301,7 @@ class EncodingsSaverBase(object):
         }
 
         for encoding_type, encoding_list in accumulated_encodings.items():
-            combined_file = f"{lukas_file}_with_encodings_{encoding_type}.pickle"
+            combined_file = f"{file_to_process}_with_encodings_{encoding_type}.pickle"
             with open(os.path.join(self.d, combined_file), "wb") as handle:
                 pickle.dump(encoding_list, handle)
                 print(f"Saved combined encodings to {combined_file}")

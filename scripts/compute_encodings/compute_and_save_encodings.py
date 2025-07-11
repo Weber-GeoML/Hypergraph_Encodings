@@ -26,6 +26,7 @@ if __name__ == "__main__":
 
     CLUSTER = False
     if CLUSTER:
+        # Change this to your path
         BASE_PATH = "/n/holyscratch01/mweber_lab/lrgb_datasets"
         DATASETS = [
             "peptidesstruct",
