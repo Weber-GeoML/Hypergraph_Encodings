@@ -38,18 +38,23 @@ if __name__ == "__main__":
     if LOCAL:
         print("Running locally")
 
-        # Process Cocitation/Coauthorship datasets
-        print("Processing Cocitation/Coauthorship datasets...")
+        # Actually CA and CC are now computed in
+        # scripts/compute_encodings/compute_and_save_encodings_cc_ca.py
+        # which means we do not need to compute them here and use
+        # the encodings_saver_cc_ca.py file. STILL NEED TO CHECK
+        # THEY PRODUCE THE SAME RESULTS!
+        # # Process Cocitation/Coauthorship datasets
+        # print("Processing Cocitation/Coauthorship datasets...")
 
-        # Process coauthorship datasets
-        print("Processing coauthorship datasets...")
-        coauthorship_saver = EncodingsSaverForCCCA("coauthorship")
-        coauthorship_results = coauthorship_saver.compute_encodings()
+        # # Process coauthorship datasets
+        # print("Processing coauthorship datasets...")
+        # coauthorship_saver = EncodingsSaverForCCCA("coauthorship")
+        # coauthorship_results = coauthorship_saver.compute_encodings()
 
-        # Process cocitation datasets
-        print("Processing cocitation datasets...")
-        cocitation_saver = EncodingsSaverForCCCA("cocitation")
-        cocitation_results = cocitation_saver.compute_encodings()
+        # # Process cocitation datasets
+        # print("Processing cocitation datasets...")
+        # cocitation_saver = EncodingsSaverForCCCA("cocitation")
+        # cocitation_results = cocitation_saver.compute_encodings()
 
         # Process hypergraph classification datasets
         print("Processing hypergraph classification datasets...")
