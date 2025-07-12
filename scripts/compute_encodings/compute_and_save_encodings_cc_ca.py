@@ -8,7 +8,6 @@ import os
 import sys
 import pickle
 import warnings
-from typing import Dict, Any
 
 # Add src directory to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
@@ -61,7 +60,7 @@ def compute_encodings_old_way(dataset_name: str, data_type: str) -> None:
     hgencodings = HypergraphEncodings()
 
     # Compute and save degree encodings
-    print(f"  Computing degree encodings...")
+    print("  Computing degree encodings...")
     try:
         degree_dataset = hgencodings.add_degree_encodings(
             dataset.copy(),
@@ -69,7 +68,7 @@ def compute_encodings_old_way(dataset_name: str, data_type: str) -> None:
             normalized=True,
             dataset_name=f"{data_type}_{dataset_name}",
         )
-        print(f"  ✓ Degree encodings saved")
+        print("  ✓ Degree encodings saved")
     except Exception as e:
         print(f"  ✗ Error with degree encodings: {e}")
 

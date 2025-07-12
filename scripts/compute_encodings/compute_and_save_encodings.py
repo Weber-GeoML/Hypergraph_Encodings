@@ -28,7 +28,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 from compute_encodings.encoding_saver_hgraphs import EncodingsSaver
 from compute_encodings.encoding_saver_lrgb import EncodingsSaverLRGB
-from compute_encodings.encoding_saver_cc_ca import EncodingsSaverForCCCA
 
 warnings.simplefilter("ignore")
 

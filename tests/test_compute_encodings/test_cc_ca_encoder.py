@@ -8,6 +8,7 @@ import sys
 import os
 import warnings
 from typing import Dict, Any
+from compute_encodings.encoding_saver_cc_ca import EncodingsSaverForCCCA
 
 # Add the src directory to the path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -15,7 +16,6 @@ project_root = os.path.dirname(os.path.dirname(current_dir))
 src_path = os.path.join(project_root, "src")
 sys.path.insert(0, src_path)
 
-from compute_encodings.encoding_saver_cc_ca import EncodingsSaverForCCCA
 
 warnings.simplefilter("ignore")
 
@@ -44,7 +44,7 @@ def test_coauthorship_datasets() -> None:
             results = encoder._process_single_dataset(
                 "cora", verbose=True, test_mode=True
             )
-            print(f"Successfully processed cora dataset")
+            print("Successfully processed cora dataset")
             print(f"Number of splits processed: {len(results)}")
 
             # Print some details about the results
@@ -81,7 +81,7 @@ def test_cocitation_datasets() -> None:
             results = encoder._process_single_dataset(
                 "citeseer", verbose=True, test_mode=True
             )
-            print(f"Successfully processed citeseer dataset")
+            print("Successfully processed citeseer dataset")
             print(f"Number of splits processed: {len(results)}")
 
             # Print some details about the results
@@ -131,7 +131,7 @@ def test_all_datasets() -> None:
             print(f"  ✗ Error processing {dataset_name}: {e}")
 
     # Summary
-    print(f"\n--- Summary ---")
+    print("\n--- Summary ---")
     print(
         f"Coauthorship datasets processed: {len(coauthorship_results)}/{len(coauthorship_encoder.available_datasets['coauthorship'])}"
     )
