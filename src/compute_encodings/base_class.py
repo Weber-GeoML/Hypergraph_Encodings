@@ -56,7 +56,16 @@ class EncodingsSaverBase(object):
         file_to_process: str,
         count: int,
         verbose: bool = False,
-    ) -> tuple[list, list, list, list, list, list, list, list]:
+    ) -> tuple[
+        list[dict],
+        list[dict],
+        list[dict],
+        list[dict],
+        list[dict],
+        list[dict],
+        list[dict],
+        list[dict],
+    ]:
         """Processes one hypergraph only.
 
         Used for multiprocessing.
@@ -70,6 +79,25 @@ class EncodingsSaverBase(object):
                 the count.
             verbose:
                 whether to print
+
+        Returns:
+            A tuple of lists of dictionaries, one for each encoding type.
+
+            Each dictionary has the following fields:
+                - hypergraph
+                - features
+                - labels
+                - n
+
+            The order of the lists is:
+                - rw_EE
+                - rw_EN
+                - rw_WE
+                - lape_hodge
+                - lape_normalized
+                - orc
+                - frc
+                - ldp
 
         """
         if verbose:

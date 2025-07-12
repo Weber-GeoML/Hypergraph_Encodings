@@ -1,8 +1,21 @@
 """File used to save the encodings.
 
-Will just save in the same format Lukas provided to me.ie a list of dict
+Saves the data in thesame format provided.
+
+ie either a dict with the following fields:
+
+- hypergraph
+- features
+- labels
+
+or a list of dicts with the following fields:
+
+- hypergraph
+- features
+- labels
+
 And now the "features" field of every dict will have been updated with the
-features.
+encodings.
 """
 
 import os
@@ -25,16 +38,24 @@ if __name__ == "__main__":
     if LOCAL:
         print("Running locally")
 
+        # Process Cocitation/Coauthorship datasets
+        print("Processing Cocitation/Coauthorship datasets...")
+
+        # Process coauthorship datasets
+        print("Processing coauthorship datasets...")
+        coauthorship_saver = EncodingsSaverForCCCA("coauthorship")
+        coauthorship_results = coauthorship_saver.compute_encodings()
+
+        # Process cocitation datasets
+        print("Processing cocitation datasets...")
+        cocitation_saver = EncodingsSaverForCCCA("cocitation")
+        cocitation_results = cocitation_saver.compute_encodings()
+
         # Process hypergraph classification datasets
         print("Processing hypergraph classification datasets...")
         DATA_TYPE = "hypergraph_classification_datasets"
         encodings_saver_instance = EncodingsSaver(DATA_TYPE)
         parsed_data = encodings_saver_instance.compute_encodings()
-
-        # Process Cocitation/Coauthorship datasets
-        print("Processing Cocitation/Coauthorship datasets...")
-        cc_ca_saver = EncodingsSaverForCCCA()
-        cc_ca_results = cc_ca_saver.compute_encodings()
 
     CLUSTER = False
     if CLUSTER:

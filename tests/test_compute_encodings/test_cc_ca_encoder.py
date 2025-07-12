@@ -7,6 +7,7 @@ This script tests the new class for processing coauthorship and cocitation datas
 import sys
 import os
 import warnings
+from typing import Dict, Any
 
 # Add the src directory to the path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -40,11 +41,15 @@ def test_coauthorship_datasets() -> None:
         # Test processing a single dataset (smaller one first)
         print("\nTesting single dataset processing...")
         try:
-            results = encoder.compute_encodings_for_dataset(
+            results = encoder._process_single_dataset(
                 "cora", verbose=True, test_mode=True
             )
             print(f"Successfully processed cora dataset")
             print(f"Number of splits processed: {len(results)}")
+
+            # Print some details about the results
+            for split_name, split_results in results.items():
+                print(f"  Split {split_name}: {len(split_results)} encoding types")
         except Exception as e:
             print(f"Error processing cora dataset: {e}")
 
@@ -73,11 +78,15 @@ def test_cocitation_datasets() -> None:
         # Test processing a single dataset (smaller one first)
         print("\nTesting single dataset processing...")
         try:
-            results = encoder.compute_encodings_for_dataset(
+            results = encoder._process_single_dataset(
                 "citeseer", verbose=True, test_mode=True
             )
             print(f"Successfully processed citeseer dataset")
             print(f"Number of splits processed: {len(results)}")
+
+            # Print some details about the results
+            for split_name, split_results in results.items():
+                print(f"  Split {split_name}: {len(split_results)} encoding types")
         except Exception as e:
             print(f"Error processing citeseer dataset: {e}")
 
@@ -85,16 +94,63 @@ def test_cocitation_datasets() -> None:
         print(f"Error initializing cocitation encoder: {e}")
 
 
+def test_all_datasets() -> None:
+    """Test processing all available datasets for both types."""
+    print("\nTesting all datasets processing...")
+
+    # Test coauthorship datasets
+    print("\n--- Coauthorship Datasets ---")
+    coauthorship_encoder = EncodingsSaverForCCCA("coauthorship")
+    coauthorship_results: Dict[str, Any] = {}
+
+    for dataset_name in coauthorship_encoder.available_datasets["coauthorship"]:
+        print(f"\nProcessing coauthorship dataset: {dataset_name}")
+        try:
+            results = coauthorship_encoder._process_single_dataset(
+                dataset_name, verbose=False, test_mode=True
+            )
+            coauthorship_results[dataset_name] = results
+            print(f"  ✓ Successfully processed {dataset_name} ({len(results)} splits)")
+        except Exception as e:
+            print(f"  ✗ Error processing {dataset_name}: {e}")
+
+    # Test cocitation datasets
+    print("\n--- Cocitation Datasets ---")
+    cocitation_encoder = EncodingsSaverForCCCA("cocitation")
+    cocitation_results: Dict[str, Any] = {}
+
+    for dataset_name in cocitation_encoder.available_datasets["cocitation"]:
+        print(f"\nProcessing cocitation dataset: {dataset_name}")
+        try:
+            results = cocitation_encoder._process_single_dataset(
+                dataset_name, verbose=False, test_mode=True
+            )
+            cocitation_results[dataset_name] = results
+            print(f"  ✓ Successfully processed {dataset_name} ({len(results)} splits)")
+        except Exception as e:
+            print(f"  ✗ Error processing {dataset_name}: {e}")
+
+    # Summary
+    print(f"\n--- Summary ---")
+    print(
+        f"Coauthorship datasets processed: {len(coauthorship_results)}/{len(coauthorship_encoder.available_datasets['coauthorship'])}"
+    )
+    print(
+        f"Cocitation datasets processed: {len(cocitation_results)}/{len(cocitation_encoder.available_datasets['cocitation'])}"
+    )
+
+
 def main() -> None:
     """Main test function."""
     print("TESTING ENCODINGSAVERFORCCCA CLASS")
     print("=" * 50)
 
-    # Test coauthorship datasets
+    # Test individual dataset types
     test_coauthorship_datasets()
-
-    # Test cocitation datasets
     test_cocitation_datasets()
+
+    # Test all datasets
+    test_all_datasets()
 
     print("\n" + "=" * 50)
     print("TESTING COMPLETED")

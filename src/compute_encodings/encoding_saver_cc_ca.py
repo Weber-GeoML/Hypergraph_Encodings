@@ -5,6 +5,26 @@ These datasets have a different structure than hypergraph classification dataset
 - Sparse feature matrices
 - Node-level classification task
 - Multiple train/test splits
+
+Eg:
+.
+├── features.pickle
+├── hypergraph.pickle
+├── labels.pickle
+└── splits
+    ├── 1.pickle
+    ├── 10.pickle
+    ├── 2.pickle
+    ├── 3.pickle
+    ├── 4.pickle
+    ├── 5.pickle
+    ├── 6.pickle
+    ├── 7.pickle
+    ├── 8.pickle
+    └── 9.pickle
+
+1 directory, 13 files
+
 """
 
 import os
@@ -105,15 +125,15 @@ class EncodingsSaverForCCCA(EncodingsSaverBase):
     def _process_single_dataset(
         self, dataset_name: str, verbose: bool = False, test_mode: bool = False
     ) -> Dict[str, Any]:
-        """Process a single dataset and compute encodings for all splits.
+        """Process a single dataset and compute encodings.
 
         Args:
             dataset_name: Name of the dataset
             verbose: Whether to print verbose output
-            test_mode: If True, process only first 2 splits and limit hyperedges
+            test_mode: If True, limit hyperedges for testing
 
         Returns:
-            Dictionary containing all computed encodings
+            Dictionary containing computed encodings
         """
         print(f"Processing dataset: {dataset_name}")
 
@@ -122,12 +142,14 @@ class EncodingsSaverForCCCA(EncodingsSaverBase):
 
         # Convert sparse features to dense
         features = self._convert_sparse_to_dense(dataset_data["features"])
+        print(f"Features shape: {features.shape}")
         hypergraph = dataset_data["hypergraph"]
+        print(f"Hypergraph has {len(hypergraph)} hyperedges")
         labels = dataset_data["labels"]
-        splits = dataset_data["splits"]
+        print(f"Labels shape: {labels.shape}")
 
         if test_mode:
-            # Limit hyperedges for testing (take first 50 hyperedges)
+            # Limit hyperedges for testing (take first 5 hyperedges)
             hypergraph = dict(list(hypergraph.items())[:5])
             print(f"TEST MODE: Limited to {len(hypergraph)} hyperedges")
 
@@ -135,42 +157,66 @@ class EncodingsSaverForCCCA(EncodingsSaverBase):
             print(f"Features shape: {features.shape}")
             print(f"Labels shape: {labels.shape}")
             print(f"Number of hyperedges: {len(hypergraph)}")
-            print(f"Number of splits: {len(splits)}")
 
-        # Create the base dataset structure
-        base_dataset = {
+        # Create the dataset structure (ONE hypergraph per dataset)
+        dataset = {
             "hypergraph": hypergraph,
             "features": features,
             "labels": labels,
             "n": features.shape[0],
         }
 
-        # Process each split
-        all_results = {}
-        split_items = list(splits.items())
+        # Compute ALL encodings using _process_hypergraph (like other encoders)
+        print(f"Computing encodings for {dataset_name}...")
+        encoded_results = self._process_hypergraph(
+            dataset,
+            f"{dataset_name}_with_encodings",
+            0,  # Single hypergraph per dataset
+            verbose=verbose,
+        )
 
-        if test_mode:
-            # Only process first 2 splits in test mode
-            split_items = split_items[:2]
-            print(f"TEST MODE: Processing only {len(split_items)} splits")
+        # Save the encoded features using the same naming convention
+        encoding_types = [
+            "rw_EE",
+            "rw_EN",
+            "rw_WE",
+            "lape_hodge",
+            "lape_normalized",
+            "orc",
+            "frc",
+            "ldp",
+        ]
 
-        for split_name, split_data in split_items:
-            print(f"Processing split: {split_name}")
+        for i, encoding_type in enumerate(encoding_types):
+            if encoded_results[i]:  # Check if encoding was computed successfully
+                # Get the encoded dataset (should be only one in the list)
+                encoded_dataset = encoded_results[i][
+                    0
+                ]  # Take the first (and only) dataset
 
-            # Create dataset for this split
-            split_dataset = base_dataset.copy()
+                # Save just the features with encodings
+                features_with_encodings = encoded_dataset["features"]
+                save_file = (
+                    f"{dataset_name}_features_with_encodings_{encoding_type}.npy"
+                )
+                save_path = os.path.join(self.d, save_file)
 
-            # Process the split dataset
-            split_results = self._process_hypergraph(
-                split_dataset,
-                f"{dataset_name}_{split_name}",
-                0,  # Single hypergraph per split
-                verbose=verbose,
-            )
+                np.save(save_path, features_with_encodings)
+                print(
+                    f"Saved encoded features to {save_file} (shape: {features_with_encodings.shape})"
+                )
 
-            all_results[split_name] = split_results
-
-        return all_results
+        # Return the encoded results (same format as other encoders)
+        return {
+            "rw_EE": encoded_results[0],
+            "rw_EN": encoded_results[1],
+            "rw_WE": encoded_results[2],
+            "lape_hodge": encoded_results[3],
+            "lape_normalized": encoded_results[4],
+            "orc": encoded_results[5],
+            "frc": encoded_results[6],
+            "ldp": encoded_results[7],
+        }
 
     def compute_encodings(
         self, verbose: bool = False, test_mode: bool = False
@@ -203,68 +249,6 @@ class EncodingsSaverForCCCA(EncodingsSaverBase):
                 continue
 
         return all_results
-
-    def compute_encodings_for_dataset(
-        self, dataset_name: str, verbose: bool = False, test_mode: bool = False
-    ) -> Dict[str, Any]:
-        """Compute encodings for a specific dataset.
-
-        Args:
-            dataset_name: Name of the specific dataset
-            verbose: Whether to print verbose output
-            test_mode: If True, process only first 2 splits and limit hyperedges
-
-        Returns:
-            Dictionary containing computed encodings for the dataset
-        """
-        available_datasets = self.available_datasets.get(self.data_type, [])
-
-        if dataset_name not in available_datasets:
-            raise ValueError(
-                f"Dataset {dataset_name} not available for {self.data_type}. "
-                f"Available: {available_datasets}"
-            )
-
-        return self._process_single_dataset(dataset_name, verbose, test_mode)
-
-    def save_encodings_for_split(
-        self,
-        dataset_name: str,
-        split_name: str,
-        encodings: Tuple[List, ...],
-        encoding_types: List[str],
-    ) -> None:
-        """Save encodings for a specific dataset and split.
-
-        Args:
-            dataset_name:
-                Name of the dataset
-            split_name:
-                Name of the split
-            encodings:
-                Tuple of encoding lists
-            encoding_types:
-                sList of encoding type names
-
-        Returns:
-            None
-        """
-        # Create directory for this dataset
-        dataset_dir = os.path.join(self.d, f"{dataset_name}_encodings")
-        os.makedirs(dataset_dir, exist_ok=True)
-
-        # Save each encoding type
-        for encoding_type, encoding_list in zip(encoding_types, encodings):
-            if encoding_list:  # Only save if we have encodings
-                save_file = (
-                    f"{dataset_name}_{split_name}_with_encodings_{encoding_type}.pickle"
-                )
-                save_path = os.path.join(dataset_dir, save_file)
-
-                with open(save_path, "wb") as handle:
-                    pickle.dump(encoding_list, handle)
-
-                print(f"Saved {save_file} with {len(encoding_list)} elements")
 
     def get_dataset_info(self, dataset_name: str) -> Dict[str, Any]:
         """Get information about a specific dataset.
