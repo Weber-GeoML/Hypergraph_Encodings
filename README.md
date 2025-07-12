@@ -40,6 +40,13 @@ compute_encodings/ contains the script to process the datasets and compute the e
 ```src/```
 
 contains backend functions for the package. 
+Specifically, this contains:
+`animations`
+`brec_analysis`
+`compute_encodings`
+`gnns` -> to be cleaned up still
+`orchid`
+`unignn_achitectures`
 
 ```tests/```
 
