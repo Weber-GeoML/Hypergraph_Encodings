@@ -62,7 +62,7 @@ def compute_encodings_old_way(dataset_name: str, data_type: str) -> None:
     # Compute and save degree encodings
     print("  Computing degree encodings...")
     try:
-        degree_dataset = hgencodings.add_degree_encodings(
+        _ = hgencodings.add_degree_encodings(
             dataset.copy(),
             verbose=False,
             normalized=True,
@@ -76,7 +76,7 @@ def compute_encodings_old_way(dataset_name: str, data_type: str) -> None:
     for rw_type in ["EE", "EN", "WE"]:
         print(f"  Computing random walk encodings ({rw_type})...")
         try:
-            rw_dataset = hgencodings.add_randowm_walks_encodings(
+            _ = hgencodings.add_randowm_walks_encodings(
                 dataset.copy(),
                 rw_type=rw_type,
                 k=20,
@@ -91,7 +91,7 @@ def compute_encodings_old_way(dataset_name: str, data_type: str) -> None:
     for laplacian_type in ["Hodge", "Normalized"]:
         print(f"  Computing Laplacian encodings ({laplacian_type})...")
         try:
-            laplacian_dataset = hgencodings.add_laplacian_encodings(
+            _ = hgencodings.add_laplacian_encodings(
                 dataset.copy(),
                 laplacian_type=laplacian_type,
                 normalized=True,
@@ -105,7 +105,7 @@ def compute_encodings_old_way(dataset_name: str, data_type: str) -> None:
     for curvature_type in ["ORC", "FRC"]:
         print(f"  Computing curvature encodings ({curvature_type})...")
         try:
-            curvature_dataset = hgencodings.add_curvature_encodings(
+            _ = hgencodings.add_curvature_encodings(
                 dataset.copy(),
                 curvature_type=curvature_type,
                 normalized=True,
