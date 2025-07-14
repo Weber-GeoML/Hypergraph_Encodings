@@ -122,7 +122,7 @@ def main() -> None:
     print("=" * 60)
 
     # Define datasets
-    coauthorship_datasets = ["cora", "dblp"]
+    coauthorship_datasets = ["dblp", "cora"]
     cocitation_datasets = ["citeseer", "cora", "pubmed"]
 
     # Process coauthorship datasets
