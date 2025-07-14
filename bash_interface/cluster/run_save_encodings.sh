@@ -28,8 +28,8 @@ source activate hgencodings_gpu_weber
 log_message "Conda environment activated: hgencodings_gpu_weber"
 
 # Run the first script and log its output
-log_message "Running: python scripts/compute_encodings/compute_and_save_encodings.py"
-python scripts/compute_encodings/compute_and_save_encodings.py 2>&1 | tee -a "$LOG_FILE"
+# log_message "Running: python scripts/compute_encodings/compute_and_save_encodings.py"
+# python scripts/compute_encodings/compute_and_save_encodings.py 2>&1 | tee -a "$LOG_FILE"
 
 # Run the second script and log its output
 log_message "Running: python scripts/compute_encodings/compute_and_save_encodings_cc_ca.py"
