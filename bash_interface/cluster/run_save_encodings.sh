@@ -3,7 +3,7 @@
 #SBATCH --ntasks=1               # Number of tasks
 #SBATCH --time=160:00:00         # Time limit (hh:mm:ss)
 #SBATCH --mem=48GB               # Memory required
-#SBATCH --output=lukas_file_new.log  # Standard output and error log (with job ID)
+#SBATCH --output=computing_encodings.log  # Standard output and error log (with job ID)
 #SBATCH --partition=mweber_gpu     # Specify the partition
 #SBATCH --gpus=4                   # Request 1 GPU
 
@@ -28,8 +28,8 @@ source activate hgencodings_gpu_weber
 log_message "Conda environment activated: hgencodings_gpu_weber"
 
 # Run the first script and log its output
-log_message "Running: python scripts/compute_encodings/compute_and_save_encodings.py"
-python scripts/compute_encodings/compute_and_save_encodings.py 2>&1 | tee -a "$LOG_FILE"
+# log_message "Running: python scripts/compute_encodings/compute_and_save_encodings.py"
+# python scripts/compute_encodings/compute_and_save_encodings.py 2>&1 | tee -a "$LOG_FILE"
 
 # Run the second script and log its output
 log_message "Running: python scripts/compute_encodings/compute_and_save_encodings_cc_ca.py"
