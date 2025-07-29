@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Script to compute encodings the old way and save to computed_encodings/
 
-This is dor CC and CA datasets!
+This is for CC and CA datasets!
 """
 
 import os
@@ -122,8 +122,8 @@ def main() -> None:
     print("=" * 60)
 
     # Define datasets
-    coauthorship_datasets = ["dblp", "cora"]
-    cocitation_datasets = ["citeseer", "cora", "pubmed"]
+    coauthorship_datasets = []  # ["dblp", "cora"]
+    cocitation_datasets = ["pubmed"]  # ["citeseer", "cora", "pubmed"]
 
     # Process coauthorship datasets
     print("\n--- Coauthorship Datasets ---")
