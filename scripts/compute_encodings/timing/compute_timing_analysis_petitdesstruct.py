@@ -478,6 +478,78 @@ def run_comprehensive_timing_analysis(
             # Load graph data
             graphs = load_peptidesstruct_data(data_path, subset, max_graphs_to_load)
 
+            # Analyze the first graph structure
+            print("\n🔍 ANALYZING GRAPH STRUCTURE:")
+            print("=" * 50)
+
+            graph = graphs[0]
+            print(f"Type of graph: {type(graph)}")
+            print(f"Number of elements in graph tuple: {len(graph)}")
+
+            for i, element in enumerate(graph):
+                print(f"\nElement {i}:")
+                print(f"  Type: {type(element)}")
+                print(
+                    f"  Shape: {element.shape if hasattr(element, 'shape') else 'N/A'}"
+                )
+                print(
+                    f"  Data type: {element.dtype if hasattr(element, 'dtype') else 'N/A'}"
+                )
+
+                if hasattr(element, "shape") and len(element.shape) == 2:
+                    print(f"  Dimensions: {element.shape[0]} x {element.shape[1]}")
+                    print(f"  Sample values (first 5 rows, first 5 cols):")
+                    print(f"    {element[:5, :5]}")
+                elif hasattr(element, "shape") and len(element.shape) == 1:
+                    print(f"  Length: {element.shape[0]}")
+                    print(f"  Sample values (first 10): {element[:10]}")
+                else:
+                    print(f"  Content preview: {str(element)[:100]}...")
+
+            # Identify what each element likely represents
+            print(f"\n📋 INTERPRETATION:")
+            print("=" * 50)
+            print(
+                "Based on the structure, this appears to be a PyTorch Geometric Data object with:"
+            )
+            print("  - Element 0: Edge index (source, target node pairs)")
+            print("  - Element 1: Edge features (3-dimensional)")
+            print("  - Element 2: Node features (2-dimensional)")
+            print("  - Element 3: Graph-level features (11-dimensional)")
+
+            # Extract key information
+            edge_index = graph[0]
+            edge_features = graph[1]
+            node_features = graph[2]
+            graph_features = graph[3]
+
+            print(f"\n📊 GRAPH STATISTICS:")
+            print("=" * 50)
+            print(f"Number of nodes: {node_features.shape[1]}")
+            print(f"Number of edges: {edge_index.shape[1]}")
+            print(f"Node feature dimension: {node_features.shape[0]}")
+            print(f"Edge feature dimension: {edge_features.shape[1]}")
+            print(f"Graph feature dimension: {graph_features.shape[1]}")
+
+            # Check for self-loops and isolated nodes
+            unique_nodes = set(edge_index[0].tolist() + edge_index[1].tolist())
+            print(f"Unique nodes in edges: {len(unique_nodes)}")
+            print(f"Self-loops: {sum(edge_index[0] == edge_index[1]).item()}")
+
+            # Node degree analysis
+            from collections import Counter
+
+            node_degrees = Counter(edge_index[0].tolist() + edge_index[1].tolist())
+            print(
+                f"Average node degree: {sum(node_degrees.values()) / len(node_degrees):.2f}"
+            )
+            print(f"Max node degree: {max(node_degrees.values())}")
+            print(f"Min node degree: {min(node_degrees.values())}")
+
+            print("\n" + "=" * 50)
+            print("Analysis complete. Continuing with timing...")
+            print("=" * 50)
+
             # Determine actual number of graphs to process
             actual_num_graphs = (
                 len(graphs) if num_graphs is None else min(num_graphs, len(graphs))

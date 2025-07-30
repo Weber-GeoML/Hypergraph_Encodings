@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Timing analysis for Rook and Shrikhande graphs encoding computations.
 
-This script loads the Rook and Shrikhande graphs from .g6 format, lifts them
-to hypergraphs using clique expansions, and then times only the computation
-of hypergraph encodings (lifting time is excluded from measurements).
+This script loads the Rook and Shrikhande graphs from .g6 format and times
+encoding computations. It supports both raw graphs (lifting=None) and
+clique-lifted hypergraphs (lifting='clique').
 """
 
 import argparse
@@ -61,6 +61,47 @@ def load_g6_graph(file_path: str) -> Data:
     print(f"Loaded graph from {file_path}: {num_nodes} nodes, {data.num_edges} edges")
 
     return data
+
+
+def convert_graph_to_hypergraph_raw(graph_data: Data) -> Dict[str, Any]:
+    """Convert PyTorch Geometric graph to hypergraph format using raw edges.
+
+    Args:
+        graph_data: PyTorch Geometric Data object
+
+    Returns:
+        Dictionary in hypergraph format expected by encoding functions
+    """
+    num_nodes = graph_data.num_nodes
+    edge_index = graph_data.edge_index.cpu().numpy()
+
+    # Convert edges to hypergraph format (each edge becomes a 2-node hyperedge)
+    hypergraph = {}
+    hyperedge_id = 0
+
+    # Process each edge (convert undirected edges properly)
+    edges_set = set()
+    for i in range(edge_index.shape[1]):
+        # Convert numpy integers to Python integers
+        edge = tuple(sorted([int(edge_index[0, i]), int(edge_index[1, i])]))
+        edges_set.add(edge)
+
+    for edge in edges_set:
+        hypergraph[f"he_{hyperedge_id}"] = list(edge)
+        hyperedge_id += 1
+
+    # Create features and labels (dummy values for timing)
+    features = np.ones((num_nodes, 1))  # Simple constant features
+    labels = np.zeros(num_nodes, dtype=int)  # Dummy labels
+
+    dataset = {
+        "hypergraph": hypergraph,
+        "n": num_nodes,
+        "features": features,
+        "labels": labels,
+    }
+
+    return dataset
 
 
 def convert_graph_to_hypergraph_clique(graph_data: Data) -> Dict[str, Any]:
@@ -166,61 +207,73 @@ def time_all_encodings_on_graph(
     graph_data: Data,
     encoding_types: List[str],
     timing_collector: TimingCollector,
+    lifting_method: Optional[str] = "clique",
 ) -> None:
-    """Time all encoding computations on a single graph using clique-lifted hypergraph.
+    """Time all encoding computations on a single graph.
 
     Args:
         graph_name: Name of the graph
         graph_data: PyTorch Geometric Data object
         encoding_types: List of encoding types to test
         timing_collector: Collector for timing statistics
+        lifting_method: Method for converting to hypergraph ('clique' or None for raw)
     """
     print(f"\n📊 Processing {graph_name.upper()} graph...")
     print(f"Graph stats: {graph_data.num_nodes} nodes, {graph_data.num_edges} edges")
 
-    # Pre-lift to hypergraph using clique expansions (NOT TIMED)
-    print("🔄 Pre-lifting to hypergraph using clique expansions...")
+    if lifting_method == "clique":
+        print("🔄 Pre-lifting to hypergraph using clique expansions...")
+        hypergraph_data = convert_graph_to_hypergraph_clique(graph_data)
+        method_name = "clique"
+    elif lifting_method is None:
+        print("🔄 Converting to hypergraph using raw edges...")
+        hypergraph_data = convert_graph_to_hypergraph_raw(graph_data)
+        method_name = "raw"
+    else:
+        raise ValueError(f"Unknown lifting method: {lifting_method}")
 
-    clique_hypergraph = convert_graph_to_hypergraph_clique(graph_data)
-    print(f"  🧠 Clique conversion completed - ready for encoding timing")
+    print(f"  🧠 Conversion completed - ready for encoding timing")
 
     # Count hyperedges for information
-    num_hyperedges = len(clique_hypergraph["hypergraph"])
-    print(
-        f"  📊 Hypergraph: {clique_hypergraph['n']} nodes, {num_hyperedges} hyperedges"
-    )
+    num_hyperedges = len(hypergraph_data["hypergraph"])
+    print(f"  📊 Hypergraph: {hypergraph_data['n']} nodes, {num_hyperedges} hyperedges")
 
     # NOW START TIMING - only for encoding computations
-    print(f"\n🔍 Timing encodings on clique-lifted {graph_name}...")
+    print(f"\n🔍 Timing encodings on {method_name}-converted {graph_name}...")
 
     for encoding_type in encoding_types:
         print(f"  ⏱️  Timing {encoding_type}...", end=" ", flush=True)
 
         try:
             time_single_encoding_run(
-                hypergraph=clique_hypergraph,
+                hypergraph=hypergraph_data,
                 encoding_type=encoding_type,
                 timing_collector=timing_collector,
                 graph_name=graph_name,
-                lifting_method="clique",
+                lifting_method=method_name,
             )
             print("✓")
         except Exception as e:
             print(f"✗ Error: {str(e)[:50]}...")
 
 
-def generate_rook_shrikhande_report(timing_collector: TimingCollector) -> str:
+def generate_rook_shrikhande_report(
+    timing_collector: TimingCollector, lifting_method: Optional[str] = "clique"
+) -> str:
     """Generate a comprehensive timing report for Rook and Shrikhande graphs.
 
     Args:
         timing_collector: Collector with timing data
+        lifting_method: Method used for lifting
 
     Returns:
         Formatted report string
     """
+    method_name = "CLIQUE-LIFTED" if lifting_method == "clique" else "RAW GRAPH"
+
     report = []
     report.append("🏆 ROOK & SHRIKHANDE GRAPHS ENCODING TIMING ANALYSIS")
-    report.append("📊 CLIQUE-LIFTED HYPERGRAPHS - ENCODING COMPUTATIONS ONLY")
+    report.append(f"📊 {method_name} HYPERGRAPHS - ENCODING COMPUTATIONS ONLY")
     report.append("=" * 80)
     report.append("")
 
@@ -241,10 +294,10 @@ def generate_rook_shrikhande_report(timing_collector: TimingCollector) -> str:
         if not times:
             continue
 
-        # Parse encoding type: encoding_clique_graphname
+        # Parse encoding type: encoding_method_graphname
         parts = encoding_type.split("_")
         graph_name = parts[-1]  # rook or shrikhande
-        # Remove _clique_graphname to get base encoding
+        # Remove _method_graphname to get base encoding
         base_encoding = "_".join(parts[:-2]) if len(parts) > 2 else parts[0]
 
         # Store in organized structure
@@ -359,14 +412,14 @@ def main() -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Time all encodings on both graphs
-  python compute_timing_analysis_rook_shrikhande.py
+  # Time all encodings on clique-lifted hypergraphs
+  python compute_timing_analysis_rook_shrikhande.py --lifting clique
   
-  # Time only specific encodings
-  python compute_timing_analysis_rook_shrikhande.py --encoding-types degree random_walk_EE
+  # Time all encodings on raw graphs
+  python compute_timing_analysis_rook_shrikhande.py --lifting None
   
-  # Time with custom output directory
-  python compute_timing_analysis_rook_shrikhande.py --output-dir my_results
+  # Time only specific encodings on raw graphs
+  python compute_timing_analysis_rook_shrikhande.py --lifting None --encoding-types degree random_walk_EE
         """,
     )
 
@@ -375,6 +428,14 @@ Examples:
         type=str,
         default="data/Rook_Shrikhande",
         help="Path to Rook and Shrikhande data directory (default: data/Rook_Shrikhande)",
+    )
+
+    parser.add_argument(
+        "--lifting",
+        type=str,
+        choices=["clique", "None"],
+        default="None",
+        help="Lifting method: 'clique' for clique expansions, 'None' for raw graphs (default: clique)",
     )
 
     parser.add_argument(
@@ -402,14 +463,19 @@ Examples:
 
     args = parser.parse_args()
 
+    # Convert 'None' string to None
+    lifting_method = None if args.lifting == "None" else args.lifting
+
+    method_name = "CLIQUE-LIFTED" if lifting_method == "clique" else "RAW GRAPH"
+
     print("⏱️  ROOK & SHRIKHANDE TIMING ANALYSIS")
-    print("📊 CLIQUE-LIFTED HYPERGRAPHS - ENCODING COMPUTATIONS ONLY")
+    print(f"📊 {method_name} HYPERGRAPHS - ENCODING COMPUTATIONS ONLY")
     print("=" * 70)
     print("Configuration:")
     print(f"  - Data path: {args.data_path}")
+    print(f"  - Lifting method: {lifting_method}")
     print(f"  - Encoding types: {', '.join(args.encoding_types)}")
     print(f"  - Output directory: {args.output_dir}")
-    print(f"  - Lifting method: Clique expansions (pre-computed)")
     print(f"  - Timing: Encoding computations only")
     print()
 
@@ -437,23 +503,30 @@ Examples:
 
         # Time encodings on both graphs
         time_all_encodings_on_graph(
-            "rook", rook_graph, args.encoding_types, timing_collector
+            "rook", rook_graph, args.encoding_types, timing_collector, lifting_method
         )
 
         time_all_encodings_on_graph(
-            "shrikhande", shrikhande_graph, args.encoding_types, timing_collector
+            "shrikhande",
+            shrikhande_graph,
+            args.encoding_types,
+            timing_collector,
+            lifting_method,
         )
+
+        # Create filename suffix based on lifting method
+        suffix = "raw" if lifting_method is None else lifting_method
 
         # Save timing data
         json_filename = os.path.join(
-            args.output_dir, "rook_shrikhande_timing_data.json"
+            args.output_dir, f"rook_shrikhande_timing_data_{suffix}.json"
         )
         timing_collector.save_timing_results(json_filename, format_type="json")
 
         # Generate and save report
-        report = generate_rook_shrikhande_report(timing_collector)
+        report = generate_rook_shrikhande_report(timing_collector, lifting_method)
         report_filename = os.path.join(
-            args.output_dir, "rook_shrikhande_timing_report.txt"
+            args.output_dir, f"rook_shrikhande_timing_report_{suffix}.txt"
         )
 
         with open(report_filename, "w") as f:

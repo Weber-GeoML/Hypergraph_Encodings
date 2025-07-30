@@ -4,6 +4,13 @@
 This script loads pre-existing hypergraph classification datasets and times only
 the computation of hypergraph encodings (no lifting required as datasets are
 already in hypergraph format).
+
+mutag_hypergraphs.pickle - MUTAG dataset (75KB)
+reddit_hypergraphs.pickle - Reddit dataset (17MB)
+imdb_hypergraphs.pickle - IMDB dataset (245KB)
+enzymes_hypergraphs.pickle - Enzymes dataset (392KB)
+proteins_hypergraphs.pickle - Proteins dataset (858KB)
+collab_hypergraphs.pickle - Collab dataset (9.2MB)
 """
 
 import os
