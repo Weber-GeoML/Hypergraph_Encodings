@@ -171,14 +171,39 @@ class HypergraphEncodings:
                         )
                     except Exception:
                         # print("Handling different dimensions.")
-                        stacked_features = np.hstack(
-                            (hypergraph["features"][node], ld_vals)
-                        )
+                        try:
+                            stacked_features = np.hstack(
+                                (hypergraph["features"][node], ld_vals)
+                            )
+                        except Exception:
+                            # Third attempt: Fix dimension mismatch
+                            # ld_vals shape (1, 6) -> (6, 1), then vstack with (3703, 1)
+                            node_features_col = hypergraph["features"][node].reshape(
+                                -1, 1
+                            )  # (3703, 1)
+                            ld_vals_col = ld_vals.T  # (1, 6) -> (6, 1)
+                            stacked_features = np.vstack(
+                                (node_features_col, ld_vals_col)
+                            )  # (3709, 1)
+                            stacked_features = (
+                                stacked_features.flatten()
+                            )  # Flatten to 1D
                 elif not normalized:
                     # hypergraph["features"][node].reshape(-1, 1)
-                    stacked_features = np.hstack(
-                        (hypergraph["features"][node].reshape(-1, 1), ld_vals)
-                    )
+                    try:
+                        stacked_features = np.hstack(
+                            (hypergraph["features"][node].reshape(-1, 1), ld_vals)
+                        )
+                    except Exception:
+                        # Same fix for non-normalized case
+                        node_features_col = hypergraph["features"][node].reshape(
+                            -1, 1
+                        )  # (3703, 1)
+                        ld_vals_col = ld_vals.T  # (1, 6) -> (6, 1)
+                        stacked_features = np.vstack(
+                            (node_features_col, ld_vals_col)
+                        )  # (3709, 1)
+                        stacked_features = stacked_features.flatten()  # Flatten to 1D
                 if verbose:
                     print(f"The stacked features are \n {stacked_features}")
                 padded_features[node] = stacked_features
@@ -444,6 +469,7 @@ class HypergraphEncodings:
 
         # Core computation logic
         def _compute_laplacian_encodings():
+            nonlocal k
             assert (
                 hypergraph["features"].shape[0] == hypergraph["n"]
             ), f"BEFORE: The shape is {hypergraph['features'].shape[0]} but n is {hypergraph['n']}"

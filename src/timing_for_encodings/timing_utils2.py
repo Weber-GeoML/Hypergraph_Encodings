@@ -10,7 +10,7 @@ import sys
 import time
 import pickle
 from copy import deepcopy
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import networkx as nx
 import numpy as np
@@ -187,38 +187,62 @@ def time_single_encoding_run(
 
 
 def save_hypergraphs_to_pickle(
-    hypergraphs: List[Dict[str, Any]], file_path: str
+    hypergraphs: List[Dict[str, Any]],
+    file_path: str,
+    lifting_times: Optional[List[float]] = None,
 ) -> None:
-    """Save hypergraphs to a pickle file.
+    """Save hypergraphs and optionally lifting times to a pickle file.
 
     Args:
         hypergraphs: List of hypergraph dictionaries
         file_path: Path to save the pickle file
+        lifting_times: Optional list of lifting times in seconds
     """
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
+    # Save as a dictionary to support both hypergraphs and lifting_times
+    data_to_save = {
+        "hypergraphs": hypergraphs,
+        "lifting_times": lifting_times if lifting_times is not None else [],
+    }
+
     with open(file_path, "wb") as f:
-        pickle.dump(hypergraphs, f)
+        pickle.dump(data_to_save, f)
 
     print(f"💾 Saved {len(hypergraphs)} hypergraphs to: {os.path.abspath(file_path)}")
 
 
-def load_hypergraphs_from_pickle(file_path: str) -> List[Dict[str, Any]]:
-    """Load hypergraphs from a pickle file.
+def load_hypergraphs_from_pickle(
+    file_path: str,
+) -> Tuple[List[Dict[str, Any]], List[float]]:
+    """Load hypergraphs and lifting times from a pickle file.
 
     Args:
         file_path: Path to the pickle file
 
     Returns:
-        List of hypergraph dictionaries
+        Tuple of (hypergraph dictionaries, lifting times)
     """
     with open(file_path, "rb") as f:
-        hypergraphs = pickle.load(f)
+        data = pickle.load(f)
 
-    print(
-        f"📂 Loaded {len(hypergraphs)} hypergraphs from: {os.path.abspath(file_path)}"
-    )
-    return hypergraphs
+    # Handle backward compatibility
+    if isinstance(data, list):
+        # Old format: just hypergraphs
+        hypergraphs = data
+        lifting_times = []
+        print(
+            f"📂 Loaded {len(hypergraphs)} hypergraphs from: {os.path.abspath(file_path)} (no lifting times)"
+        )
+    else:
+        # New format: dictionary with hypergraphs and lifting_times
+        hypergraphs = data.get("hypergraphs", [])
+        lifting_times = data.get("lifting_times", [])
+        print(
+            f"📂 Loaded {len(hypergraphs)} hypergraphs and {len(lifting_times)} lifting times from: {os.path.abspath(file_path)}"
+        )
+
+    return hypergraphs, lifting_times
 
 
 def compute_graph_statistics(graph_data: Data) -> Dict[str, Any]:

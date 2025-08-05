@@ -29,7 +29,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "..", "src")
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from encodings_hnns.encodings import HypergraphEncodings
-from timing_utils import TimingCollector, extract_hypergraph_stats
+from src.timing.timing_utils import TimingCollector, extract_hypergraph_stats
 
 warnings.simplefilter("ignore")
 
