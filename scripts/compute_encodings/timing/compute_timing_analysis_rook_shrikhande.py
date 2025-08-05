@@ -29,7 +29,10 @@ sys.path.append(compute_encodings_dir)
 try:
     from encodings_hnns.encodings import HypergraphEncodings
     from encodings_hnns.liftings_and_expansions import lift_to_hypergraph
-    from src.timing.timing_utils import TimingCollector, extract_hypergraph_stats
+    from src.timing_for_encodings.timing_utils import (
+        TimingCollector,
+        extract_hypergraph_stats,
+    )
 except ImportError as e:
     print(f"Import error: {e}")
     print("Please make sure you're running from the correct environment and directory.")

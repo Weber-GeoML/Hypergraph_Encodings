@@ -25,7 +25,10 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from encodings_hnns.encodings import HypergraphEncodings
 from compute_encodings.encoding_saver_lrgb import EncodingsSaverLRGB
 from encodings_hnns.liftings_and_expansions import lift_to_hypergraph
-from src.timing.timing_utils import TimingCollector, extract_hypergraph_stats
+from src.timing_for_encodings.timing_utils import (
+    TimingCollector,
+    extract_hypergraph_stats,
+)
 
 warnings.simplefilter("ignore")
 
