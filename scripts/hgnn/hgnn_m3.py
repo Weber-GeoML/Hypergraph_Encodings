@@ -537,8 +537,12 @@ def main():
     encoding_types = [
         "none",
         "degree",
-        # "random_walk_EE",
-        # "laplacian_Hodge",
+        "random_walk_EE",
+        "random_walk_EN",
+        "random_walk_WE",
+        "laplacian_Hodge",
+        "laplacian_Normalized",
+        "curvature_ORC",
         "curvature_FRC",
     ]
 
