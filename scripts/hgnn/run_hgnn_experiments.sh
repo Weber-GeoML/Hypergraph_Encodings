@@ -16,23 +16,6 @@ source activate hgencodings_gpu_weber
 # Create logs directory
 mkdir -p logs_hgnn
 
-# Define datasets for each type
-coauthorship_datasets=("cora" "dblp")
-cocitation_datasets=("citeseer" "cora" "pubmed")
-
-# Define encoding types to test
-encoding_types=(
-    "none"
-    "degree"
-    "random_walk_EE"
-    "random_walk_EN"
-    "random_walk_WE"
-    "laplacian_Hodge"
-    "laplacian_Normalized"
-    "curvature_ORC"
-    "curvature_FRC"
-)
-
 # Function to run experiments for a single dataset
 run_dataset_experiments() {
     local data_type=$1
@@ -46,29 +29,18 @@ run_dataset_experiments() {
     echo "Start time: $(date)" | tee -a "$log_file"
     echo "" | tee -a "$log_file"
     
-    # Run experiments for each encoding type
-    for encoding_type in "${encoding_types[@]}"; do
-        echo "Running experiment: ${data_type}/${dataset_name} with encoding: ${encoding_type}" | tee -a "$log_file"
-        echo "Experiment start time: $(date)" | tee -a "$log_file"
-        
-        # Run the HGNN script with proper logging
-        python scripts/hgnn/hgnn_m3.py \
-            --data "$data_type" \
-            --dataset "$dataset_name" \
-            --encoding "$encoding_type" \
-            --n_runs 80 \
-            --epochs 500 \
-            --patience 50 \
-            --gpu 0 \
-            --normalize_features \
-            --normalize_encodings 2>&1 | tee -a "$log_file"
-        
-        echo "Experiment end time: $(date)" | tee -a "$log_file"
-        echo "--------------------------------------------" | tee -a "$log_file"
-        echo "" | tee -a "$log_file"
-    done
+    # Run the HGNN script with proper logging
+    python scripts/hgnn/hgnn_m3.py \
+        --data "$data_type" \
+        --dataset "$dataset_name" \
+        --n_runs 80 \
+        --epochs 500 \
+        --patience 50 \
+        --gpu 0 \
+        --normalize_features \
+        --normalize_encodings 2>&1 | tee -a "$log_file"
     
-    echo "Completed all experiments for ${data_type}/${dataset_name}" | tee -a "$log_file"
+    echo "Completed experiments for ${data_type}/${dataset_name}" | tee -a "$log_file"
     echo "End time: $(date)" | tee -a "$log_file"
     echo "============================================" | tee -a "$log_file"
     echo "" | tee -a "$log_file"
@@ -81,13 +53,13 @@ echo "============================================" | tee logs_hgnn/main_$(date 
 
 # Run experiments for coauthorship datasets
 echo "Running coauthorship datasets..." | tee logs_hgnn/main_$(date +%Y%m%d_%H%M%S).log
-for dataset in "${coauthorship_datasets[@]}"; do
+for dataset in "cora" "dblp"; do
     run_dataset_experiments "coauthorship" "$dataset"
 done
 
 # Run experiments for cocitation datasets
 echo "Running cocitation datasets..." | tee logs_hgnn/main_$(date +%Y%m%d_%H%M%S).log
-for dataset in "${cocitation_datasets[@]}"; do
+for dataset in "citeseer" "cora" "pubmed"; do
     run_dataset_experiments "cocitation" "$dataset"
 done
 

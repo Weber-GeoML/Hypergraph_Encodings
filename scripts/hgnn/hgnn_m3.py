@@ -24,6 +24,15 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 # Import only the modules that don't depend on torch_sparse
 from encodings_hnns.data_handling import load
 
+# Import configuration
+from hgnn_config import (
+    HGNNConfig,
+    get_default_config,
+    get_dataset_specific_configs,
+    ENCODING_TYPES,
+    DATASET_CONFIGS,
+)
+
 warnings.filterwarnings("ignore")
 os.environ["TORCH"] = torch.__version__
 
@@ -192,30 +201,30 @@ def get_split_m3_compatible(
 class SimpleArgs:
     """Simple args class for M3 compatibility."""
 
-    def __init__(self):
+    def __init__(self, config: HGNNConfig):
         self.data = "cocitation"
         self.dataset = "cora"
-        self.gpu = 0
+        self.gpu = config.gpu_id
         self.split = 1
-        self.epochs = 500
-        self.patience = 50
-        self.n_runs = 10  # 10 runs per seed
+        self.epochs = config.epochs
+        self.patience = config.patience
+        self.n_runs = config.n_runs
         self.add_encodings = False
         self.encodings = None
-        self.normalize_features = False
-        self.normalize_encodings = False
+        self.normalize_features = config.normalize_features
+        self.normalize_encodings = config.normalize_encodings
 
 
 class HGNN(nn.Module):
     def __init__(
-        self, H: torch.Tensor, in_size: int, out_size: int, hidden_dims: int = 16
+        self, H: torch.Tensor, in_size: int, out_size: int, config: HGNNConfig
     ):
         """Hypergraph Neural Network model compatible with M3."""
         super().__init__()
 
-        self.W1 = nn.Linear(in_size, hidden_dims)
-        self.W2 = nn.Linear(hidden_dims, out_size)
-        self.dropout = nn.Dropout(0.5)
+        self.W1 = nn.Linear(in_size, config.hidden_dims)
+        self.W2 = nn.Linear(config.hidden_dims, out_size)
+        self.dropout = nn.Dropout(config.dropout_rate)
 
         # Convert to dense for M3 compatibility
         H_dense = H.to_dense() if H.is_sparse else H
@@ -290,7 +299,7 @@ def train_single_run(
     train_idx: torch.Tensor,
     val_idx: torch.Tensor,
     test_idx: torch.Tensor,
-    args: Any,
+    config: HGNNConfig,
     device: torch.device,
 ) -> Tuple[float, float, float]:
     """
@@ -311,17 +320,19 @@ def train_single_run(
 
     # Create model
     num_classes = G["num_classes"]
-    model = HGNN(H, X.shape[1], num_classes, hidden_dims=16)
+    model = HGNN(H, X.shape[1], num_classes, config)
     model = model.to(device)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
+    optimizer = torch.optim.Adam(
+        model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay
+    )
 
     # Training loop
     best_val_acc = 0.0
     best_test_acc = 0.0
     bad_counter = 0
-    patience = args.patience
-    epochs = args.epochs
+    patience = config.patience
+    epochs = config.epochs
 
     # Create progress bar
     pbar = tqdm(range(epochs), desc="Training", leave=False)
@@ -366,9 +377,10 @@ def train_single_run(
             )
 
     final_test_acc = test_acc
-    print(f"Final test accuracy: {final_test_acc}")
-    print(f"Best test accuracy: {best_test_acc}")
-    print(f"Best validation accuracy: {best_val_acc}")
+    # Always print the key results, regardless of verbose setting
+    print(f"Final test accuracy: {final_test_acc:.2f}%")
+    print(f"Best test accuracy: {best_test_acc:.2f}%")
+    print(f"Best validation accuracy: {best_val_acc:.2f}%")
 
     # Clean up
     del model, optimizer
@@ -377,16 +389,21 @@ def train_single_run(
     return best_val_acc, best_test_acc, final_test_acc
 
 
-def run_80_experiments_for_encoding(
-    data_type: str, dataset_name: str, encoding_type: str, device: torch.device
+def run_experiments_for_encoding(
+    data_type: str,
+    dataset_name: str,
+    encoding_type: str,
+    config: HGNNConfig,
+    device: torch.device,
 ) -> Dict[str, Any]:
     """
-    Run 80 experiments (8 seeds × 10 runs) for a specific encoding.
+    Run experiments for a specific encoding using the provided configuration.
 
     Returns:
         Dictionary with results and statistics
     """
     print(f"\n--- Encoding: {encoding_type} ---")
+    print(f"Config: {config.to_dict()}")
 
     # Results storage
     all_best_test_accs = []
@@ -398,16 +415,16 @@ def run_80_experiments_for_encoding(
         encoding_type, f"{data_type}_{dataset_name}"
     )
 
-    # 8 seeds × 10 runs = 80 total experiments
-    for seed in range(2, 10):  # Seeds 2-9 (8 seeds)
+    # Run experiments based on config
+    for seed in range(2, 2 + config.n_seeds):  # Seeds 2-9 (8 seeds)
         print(f"  Seed {seed}:", end=" ")
 
         set_seed(seed)
 
-        for run in range(1, 11):  # 10 runs per seed
+        for run in range(1, 1 + config.runs_per_seed):  # 10 runs per seed
             try:
                 # Create args for this run
-                args = SimpleArgs()
+                args = SimpleArgs(config)
                 args.data = data_type
                 args.dataset = dataset_name
                 args.split = run
@@ -437,7 +454,9 @@ def run_80_experiments_for_encoding(
 
                 # Get data splits for this run
                 _, train_idx, test_idx = load(args)
-                val_idx, test_idx = get_split_m3_compatible(Y[test_idx], 0.2)
+                val_idx, test_idx = get_split_m3_compatible(
+                    Y[test_idx], config.val_ratio
+                )
 
                 # Convert to tensors and move to device
                 train_idx = torch.LongTensor(train_idx).to(device)
@@ -446,7 +465,7 @@ def run_80_experiments_for_encoding(
 
                 # Train single run
                 best_val_acc, best_test_acc, final_test_acc = train_single_run(
-                    X, Y, G, train_idx, val_idx, test_idx, args, device
+                    X, Y, G, train_idx, val_idx, test_idx, config, device
                 )
 
                 # Store results
@@ -462,9 +481,10 @@ def run_80_experiments_for_encoding(
 
             except Exception as e:
                 print(f"E", end="")  # Error marker
-                import traceback
+                if config.verbose:
+                    import traceback
 
-                traceback.print_exc()
+                    traceback.print_exc()
                 continue
 
         print()  # New line after each seed
@@ -485,6 +505,7 @@ def run_80_experiments_for_encoding(
         result = {
             "dataset": f"{data_type}_{dataset_name}",
             "encoding": encoding_type,
+            "config": config.to_dict(),
             "mean_test_acc_best_val": mean_best_test,  # PRIMARY METRIC
             "std_test_acc_best_val": std_best_test,
             "mean_final_test_acc": mean_final_test,
@@ -498,7 +519,7 @@ def run_80_experiments_for_encoding(
         }
 
         print(
-            f"  ✓ {encoding_type}: {mean_best_test:.4f} ± {std_best_test:.4f} ({len(all_best_test_accs)}/80 runs)"
+            f"  ✓ {encoding_type}: {mean_best_test:.4f} ± {std_best_test:.4f} ({len(all_best_test_accs)}/{config.n_runs} runs)"
         )
         return result
     else:
@@ -506,6 +527,7 @@ def run_80_experiments_for_encoding(
         return {
             "dataset": f"{data_type}_{dataset_name}",
             "encoding": encoding_type,
+            "config": config.to_dict(),
             "mean_test_acc_best_val": 0.0,
             "std_test_acc_best_val": 0.0,
             "mean_final_test_acc": 0.0,
@@ -520,37 +542,28 @@ def run_80_experiments_for_encoding(
 
 
 def main():
-    """Main function to run all 80-run experiments."""
+    """Main function to run all experiments with configurable hyperparameters."""
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
     print("=" * 80)
-    print("HGNN UniGNN-Compatible Experiments (80 runs per encoding)")
+    print("HGNN UniGNN-Compatible Experiments (Configurable)")
     print("=" * 80)
 
-    # Define datasets and encodings to test
-    datasets = {
-        "cocitation": ["cora"],  # Can expand to ['cora', 'citeseer', 'pubmed']
-        # 'coauthorship': ['cora', 'dblp']  # Add more datasets later
-    }
+    # Get configuration (can be modified for different experiments)
+    config = get_default_config()
 
-    encoding_types = [
-        "none",
-        "degree",
-        "random_walk_EE",
-        "random_walk_EN",
-        "random_walk_WE",
-        "laplacian_Hodge",
-        "laplacian_Normalized",
-        "curvature_ORC",
-        "curvature_FRC",
-    ]
+    # Optionally use dataset-specific configs
+    dataset_configs = get_dataset_specific_configs()
+
+    # Get datasets and encodings from config
+    datasets = DATASET_CONFIGS
+    encoding_types = ENCODING_TYPES
 
     print(
         f"Testing {len(encoding_types)} encodings on {sum(len(v) for v in datasets.values())} datasets"
     )
-    print("Each encoding: 8 seeds × 10 runs = 80 experiments")
-    print("Legend: . = run completed, X = run failed, E = error")
+    print(f"Configuration: {config.to_dict()}")
 
     # Run experiments
     all_results = []
@@ -561,23 +574,27 @@ def main():
             print(f"Dataset: {data_type}/{dataset_name}")
             print(f"{'='*60}")
 
+            # Use dataset-specific config if available
+            current_config = dataset_configs.get(dataset_name, config)
+
             for encoding_type in encoding_types:
                 try:
-                    result = run_80_experiments_for_encoding(
-                        data_type, dataset_name, encoding_type, device
+                    result = run_experiments_for_encoding(
+                        data_type, dataset_name, encoding_type, current_config, device
                     )
                     all_results.append(result)
 
                 except Exception as e:
                     print(f"  ✗ {encoding_type} failed completely: {e}")
-                    import traceback
+                    if config.verbose:
+                        import traceback
 
-                    traceback.print_exc()
+                        traceback.print_exc()
                     continue
 
     # Create summary table
     print("\n" + "=" * 100)
-    print("FINAL RESULTS SUMMARY (UniGNN Style - 80 runs per encoding)")
+    print("FINAL RESULTS SUMMARY")
     print("=" * 100)
 
     df = pd.DataFrame(all_results)
@@ -606,10 +623,11 @@ def main():
         )
 
     # Save detailed results
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    results_file = f"hgnn_unignn_80runs_results_{timestamp}.csv"
-    df.to_csv(results_file, index=False)
-    print(f"\nDetailed results saved to: {results_file}")
+    if config.save_results:
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        results_file = f"hgnn_results_{timestamp}.csv"
+        df.to_csv(results_file, index=False)
+        print(f"\nDetailed results saved to: {results_file}")
 
     # UniGNN-style statistical summary
     print("\n" + "=" * 80)

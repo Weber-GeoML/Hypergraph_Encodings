@@ -91,13 +91,7 @@ os.environ["DGLBACKEND"] = "pytorch"
 #!pip install dgl -f https://data.dgl.ai/wheels/cu118/repo.html > /dev/null
 #!pip install torchmetrics > /dev/null
 
-try:
-    import dgl
-
-    installed = True
-except ImportError:
-    installed = False
-print("DGL installed!" if installed else "Failed to install DGL!")
+installed = False
 
 
 class HGNN(nn.Module):
