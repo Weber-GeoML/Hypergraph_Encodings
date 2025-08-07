@@ -31,7 +31,7 @@ run_single_tuning() {
     echo "" | tee -a "$log_file"
     
     # Run hyperparameter tuning
-    python scripts/hgnn/run_hyperparameter_tuning.py \
+    python run_hyperparameter_tuning.py \
         --data_type "$data_type" \
         --dataset_name "$dataset_name" \
         --encoding_type "$encoding_type" 2>&1 | tee -a "$log_file"
