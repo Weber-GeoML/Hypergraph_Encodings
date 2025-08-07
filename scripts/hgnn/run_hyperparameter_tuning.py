@@ -13,9 +13,11 @@ from typing import List, Dict, Any
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "unignn"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from hgnn_config import (
+from hgnn.hgnn_config import (
     get_hyperparameter_tuning_configs,
+    get_dataset_specific_configs,
     ENCODING_TYPES,
+    DATASET_CONFIGS,
 )
 from hgnn_m3 import run_experiments_for_encoding
 import torch
@@ -110,7 +112,7 @@ def main():
             best_idx = df["mean_test_acc_best_val"].idxmax()
             best_result = df.loc[best_idx]
 
-            print("\n" + "=" * 60)
+            print(f"\n" + "=" * 60)
             print("BEST CONFIGURATION")
             print("=" * 60)
             print(f"Dataset: {args.data_type}/{args.dataset_name}")
