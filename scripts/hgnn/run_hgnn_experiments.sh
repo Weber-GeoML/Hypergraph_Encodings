@@ -7,10 +7,13 @@
 #SBATCH --partition=mweber_gpu          # Specify the partition
 #SBATCH --gpus=1                        # Request 1 GPU
 
-# Load required modules (adjust based on your cluster setup)
-# module load anaconda/2023.07  # Example, depending on your system
+# Weights & Biases configuration
+export WANDB_API_KEY="ea7c6eeb5a095b531ef60cc784bfeb87d47ea0b0"
+export WANDB_ENTITY="weber-geoml-harvard-university"
+export WANDB_PROJECT="hgnn-experiments"
 
 # Activate the Conda environment
+source activate hgencodings_gpu_weber
 
 # Create logs directory in lab space
 mkdir -p /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn_exps
@@ -28,16 +31,15 @@ run_dataset_experiments() {
     echo "Start time: $(date)" | tee -a "$log_file"
     echo "" | tee -a "$log_file"
     
-    # Run the HGNN script with proper logging
+    # Run the HGNN script with best hyperparameters and wandb logging
     python hgnn_m3.py \
         --data "$data_type" \
         --dataset "$dataset_name" \
         --n_runs 80 \
-        --epochs 500 \
-        --patience 50 \
-        --gpu 0 \
-        --normalize_features \
-        --normalize_encodings 2>&1 | tee -a "$log_file"
+        --use_best_params \
+        --wandb_enabled \
+        --wandb_project "hgnn-experiments" \
+        --wandb_entity "weber-geoml-harvard-university" 2>&1 | tee -a "$log_file"
     
     echo "Completed experiments for ${data_type}/${dataset_name}" | tee -a "$log_file"
     echo "End time: $(date)" | tee -a "$log_file"

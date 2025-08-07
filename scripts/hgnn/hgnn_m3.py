@@ -36,6 +36,9 @@ from hgnn.hgnn_config import (
 )
 from hgnn.hgnn_architecture import HGNN
 
+# Import best hyperparameters
+from best_hyperparameters import get_best_hyperparameters
+
 warnings.filterwarnings("ignore")
 os.environ["TORCH"] = torch.__version__
 
@@ -356,6 +359,9 @@ def run_experiments_for_encoding(
     encoding_type: str,
     config: HGNNConfig,
     device: torch.device,
+    n_runs: int = 80,
+    use_best_params: bool = True,
+    **kwargs,
 ) -> Dict[str, Any]:
     """
     Run experiments for a specific encoding type.
@@ -375,6 +381,28 @@ def run_experiments_for_encoding(
     precomputed_data = load_precomputed_encoding(
         encoding_type, f"{data_type}_{dataset_name}"
     )
+
+    # Get best hyperparameters if requested
+    if use_best_params:
+        best_params = get_best_hyperparameters(data_type, dataset_name, encoding_type)
+        print(
+            f"Using best hyperparameters: accuracy={best_params.accuracy:.4f} ± {best_params.std:.4f}"
+        )
+
+        # Override default parameters with best ones
+        kwargs.update(
+            {
+                "hidden_dims": best_params.hidden_dims,
+                "dropout_rate": best_params.dropout_rate,
+                "learning_rate": best_params.learning_rate,
+                "weight_decay": best_params.weight_decay,
+                "epochs": best_params.epochs,
+                "patience": best_params.patience,
+                "val_ratio": best_params.val_ratio,
+                "normalize_features": best_params.normalize_features,
+                "normalize_encodings": best_params.normalize_encodings,
+            }
+        )
 
     # Run experiments based on config
     for seed in range(2, 2 + config.n_seeds):  # Seeds 2-9 (8 seeds)
