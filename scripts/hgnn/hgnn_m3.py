@@ -14,6 +14,14 @@ from typing import Dict, Tuple, Any, Optional
 from tqdm import tqdm
 import traceback
 
+# Import wandb
+try:
+    import wandb
+
+    WANDB_AVAILABLE = True
+except ImportError:
+    WANDB_AVAILABLE = False
+    print("Warning: wandb not available. Install with: pip install wandb")
 
 # Import only the modules that don't depend on torch_sparse
 from encodings_hnns.data_handling import load
@@ -350,10 +358,10 @@ def run_experiments_for_encoding(
     device: torch.device,
 ) -> Dict[str, Any]:
     """
-    Run experiments for a specific encoding using the provided configuration.
+    Run experiments for a specific encoding type.
 
     Returns:
-        Dictionary with results and statistics
+        Dictionary with results including accuracies and hyperparameters
     """
     print(f"\n--- Encoding: {encoding_type} ---")
     print(f"Config: {config.to_dict()}")
@@ -472,9 +480,60 @@ def run_experiments_for_encoding(
         print(
             f"  ✓ {encoding_type}: {mean_best_test:.4f} ± {std_best_test:.4f} ({len(all_best_test_accs)}/{config.n_runs} runs)"
         )
+
+        # Log to wandb if available
+        if WANDB_AVAILABLE and wandb.run is not None:
+            wandb.log(
+                {
+                    "test/mean_acc_best_val": mean_best_test,  # PRIMARY METRIC
+                    "test/std_acc_best_val": std_best_test,
+                    "test/mean_acc_final": mean_final_test,
+                    "test/std_acc_final": std_final_test,
+                    "val/mean_acc_best": mean_best_val,
+                    "val/std_acc_best": std_best_val,
+                    "hyperparams/learning_rate": config.learning_rate,
+                    "hyperparams/hidden_dims": config.hidden_dims,
+                    "hyperparams/dropout_rate": config.dropout_rate,
+                    "hyperparams/weight_decay": config.weight_decay,
+                    "hyperparams/epochs": config.epochs,
+                    "hyperparams/patience": config.patience,
+                    "data/dataset": f"{data_type}_{dataset_name}",
+                    "data/encoding": encoding_type,
+                    "runs/successful": len(all_best_test_accs),
+                    "runs/total": config.n_runs,
+                    "runs/success_rate": len(all_best_test_accs) / config.n_runs,
+                }
+            )
+
         return result
     else:
         print(f"  ✗ {encoding_type}: No successful runs")
+
+        # Log failure to wandb
+        if WANDB_AVAILABLE and wandb.run is not None:
+            wandb.log(
+                {
+                    "test/mean_acc_best_val": 0.0,
+                    "test/std_acc_best_val": 0.0,
+                    "test/mean_acc_final": 0.0,
+                    "test/std_acc_final": 0.0,
+                    "val/mean_acc_best": 0.0,
+                    "val/std_acc_best": 0.0,
+                    "hyperparams/learning_rate": config.learning_rate,
+                    "hyperparams/hidden_dims": config.hidden_dims,
+                    "hyperparams/dropout_rate": config.dropout_rate,
+                    "hyperparams/weight_decay": config.weight_decay,
+                    "hyperparams/epochs": config.epochs,
+                    "hyperparams/patience": config.patience,
+                    "data/dataset": f"{data_type}_{dataset_name}",
+                    "data/encoding": encoding_type,
+                    "runs/successful": 0,
+                    "runs/total": config.n_runs,
+                    "runs/success_rate": 0.0,
+                    "error": "No successful runs",
+                }
+            )
+
         return {
             "dataset": f"{data_type}_{dataset_name}",
             "encoding": encoding_type,

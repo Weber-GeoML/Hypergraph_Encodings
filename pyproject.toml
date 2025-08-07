@@ -36,6 +36,8 @@ dependencies = [
     # Deep Graph Library
     "dgl",
     "torchmetrics",
+    # Weights & Biases for experiment tracking
+    "wandb",
 ]
 
 [project.optional-dependencies]

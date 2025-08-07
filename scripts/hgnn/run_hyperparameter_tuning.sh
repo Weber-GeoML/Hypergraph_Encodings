@@ -7,6 +7,11 @@
 #SBATCH --partition=mweber_gpu       # Specify the partition
 #SBATCH --gpus=1                     # Request 1 GPU
 
+# Weights & Biases configuration
+export WANDB_API_KEY="ea7c6eeb5a095b531ef60cc784bfeb87d47ea0b0"
+export WANDB_ENTITY="weber-geoml-harvard-university"
+export WANDB_PROJECT="hgnn-hyperparameter-tuning"
+
 # Load required modules (adjust based on your cluster setup)
 
 
@@ -30,11 +35,14 @@ run_single_tuning() {
     echo "Start time: $(date)" | tee -a "$log_file"
     echo "" | tee -a "$log_file"
     
-    # Run hyperparameter tuning
+    # Run hyperparameter tuning with wandb enabled
     python run_hyperparameter_tuning.py \
         --data_type "$data_type" \
         --dataset_name "$dataset_name" \
-        --encoding_type "$encoding_type" 2>&1 | tee -a "$log_file"
+        --encoding_type "$encoding_type" \
+        --wandb_enabled \
+        --wandb_project "hgnn-hyperparameter-tuning" \
+        --wandb_entity "weber-geoml-harvard-university" 2>&1 | tee -a "$log_file"
     
     echo "Completed tuning for ${data_type}/${dataset_name} with ${encoding_type}" | tee -a "$log_file"
     echo "End time: $(date)" | tee -a "$log_file"
