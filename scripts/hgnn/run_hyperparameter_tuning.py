@@ -22,6 +22,11 @@ from hgnn.hgnn_config import (
 from hgnn_m3 import run_experiments_for_encoding
 import torch
 
+# Force CPU usage to avoid CUDA issues
+torch.cuda.is_available = lambda: False
+device = torch.device("cpu")
+print(f"Using device: {device}")
+
 
 def run_hyperparameter_tuning(
     data_type: str = "cocitation",
@@ -39,7 +44,6 @@ def run_hyperparameter_tuning(
     Returns:
         List of results for each hyperparameter configuration
     """
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Running hyperparameter tuning on {device}")
     print(f"Dataset: {data_type}/{dataset_name}")
     print(f"Encoding: {encoding_type}")
