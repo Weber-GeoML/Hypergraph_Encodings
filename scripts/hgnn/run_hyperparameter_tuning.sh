@@ -3,7 +3,7 @@
 #SBATCH --ntasks=1                    # Number of tasks
 #SBATCH --time=72:00:00              # Time limit (hh:mm:ss) - 3 days
 #SBATCH --mem=32GB                   # Memory required
-#SBATCH --output=/n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn/tuning_%j.log  # Standard output and error log (with job ID)
+#SBATCH --output=/n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn_tuning/tuning_%j.log  # Standard output and error log (with job ID)
 #SBATCH --partition=mweber_gpu       # Specify the partition
 #SBATCH --gpus=1                     # Request 1 GPU
 
@@ -19,14 +19,14 @@ export WANDB_PROJECT="hgnn-hyperparameter-tuning"
 source activate hgencodings_gpu_weber
 
 # Create logs directory in lab space
-mkdir -p /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn
+mkdir -p /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn_tuning
 
 # Function to run hyperparameter tuning for a single dataset/encoding combination
 run_single_tuning() {
     local data_type=$1
     local dataset_name=$2
     local encoding_type=$3
-    local log_file="/n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn/tuning_${data_type}_${dataset_name}_${encoding_type}_$(date +%Y%m%d_%H%M%S).log"
+    local log_file="/n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn_tuning/tuning_${data_type}_${dataset_name}_${encoding_type}_$(date +%Y%m%d_%H%M%S).log"
     
     echo "============================================" | tee -a "$log_file"
     echo "Hyperparameter tuning: ${data_type}/${dataset_name} with ${encoding_type}" | tee -a "$log_file"
@@ -51,15 +51,15 @@ run_single_tuning() {
 }
 
 # Main execution
-echo "Starting HGNN Hyperparameter Tuning" | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn/tuning_main_$(date +%Y%m%d_%H%M%S).log
-echo "Total start time: $(date)" | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn/tuning_main_$(date +%Y%m%d_%H%M%S).log
-echo "============================================" | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn/tuning_main_$(date +%Y%m%d_%H%M%S).log
+echo "Starting HGNN Hyperparameter Tuning" | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn_tuning/tuning_main_$(date +%Y%m%d_%H%M%S).log
+echo "Total start time: $(date)" | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn_tuning/tuning_main_$(date +%Y%m%d_%H%M%S).log
+echo "============================================" | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn_tuning/tuning_main_$(date +%Y%m%d_%H%M%S).log
 
 # Define key encodings to tune (most important ones)
 key_encodings=("none" "degree" "random_walk_EE" "curvature_ORC")
 
 # Run hyperparameter tuning for coauthorship datasets
-echo "Running hyperparameter tuning for coauthorship datasets..." | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn/tuning_main_$(date +%Y%m%d_%H%M%S).log
+echo "Running hyperparameter tuning for coauthorship datasets..." | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn_tuning/tuning_main_$(date +%Y%m%d_%H%M%S).log
 for dataset in "cora" "dblp"; do
     for encoding in "${key_encodings[@]}"; do
         run_single_tuning "coauthorship" "$dataset" "$encoding"
@@ -67,13 +67,13 @@ for dataset in "cora" "dblp"; do
 done
 
 # Run hyperparameter tuning for cocitation datasets
-echo "Running hyperparameter tuning for cocitation datasets..." | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn/tuning_main_$(date +%Y%m%d_%H%M%S).log
+echo "Running hyperparameter tuning for cocitation datasets..." | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn_tuning/tuning_main_$(date +%Y%m%d_%H%M%S).log
 for dataset in "citeseer" "cora" "pubmed"; do
     for encoding in "${key_encodings[@]}"; do
         run_single_tuning "cocitation" "$dataset" "$encoding"
     done
 done
 
-echo "All hyperparameter tuning completed!" | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn/tuning_main_$(date +%Y%m%d_%H%M%S).log
-echo "Total end time: $(date)" | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn/tuning_main_$(date +%Y%m%d_%H%M%S).log
-echo "Check the results files to find optimal hyperparameters for each dataset/encoding combination." | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn/tuning_main_$(date +%Y%m%d_%H%M%S).log
+echo "All hyperparameter tuning completed!" | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn_tuning/tuning_main_$(date +%Y%m%d_%H%M%S).log
+echo "Total end time: $(date)" | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn_tuning/tuning_main_$(date +%Y%m%d_%H%M%S).log
+echo "Check the results files to find optimal hyperparameters for each dataset/encoding combination." | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn_tuning/tuning_main_$(date +%Y%m%d_%H%M%S).log

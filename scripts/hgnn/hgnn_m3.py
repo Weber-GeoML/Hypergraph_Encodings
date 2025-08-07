@@ -187,7 +187,7 @@ def load_base_data(args) -> Tuple[torch.Tensor, torch.Tensor, Dict[str, Any]]:
     # Calculate average hyperedge size
     total_nodes_in_edges = sum(len(nodes) for nodes in G["hypergraph"].values())
     avg_size = total_nodes_in_edges / len(G["hypergraph"])
-    print(f"The average hyperedge contains {avg_size} nodes")
+    # print(f"The average hyperedge contains {avg_size} nodes")
 
     return X, Y, G
 

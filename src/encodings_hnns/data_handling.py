@@ -112,7 +112,7 @@ class parser(object):
         # loads the hypergraph (and only the hypergraph, as a dict)
         with open(os.path.join(self.d, "hypergraph.pickle"), "rb") as handle:
             hypergraph: dict = pickle.load(handle)
-            print("number of hyperedges is", len(hypergraph))
+            # print("number of hyperedges is", len(hypergraph))
 
         # loads the features, an np.matrix
         with open(os.path.join(self.d, "features.pickle"), "rb") as handle:
@@ -128,7 +128,7 @@ class parser(object):
             print(
                 f"The hypergraph {self.dataset}/{self.data} has {len(hypergraph)} hyperedges where authors are hyperedges"
             )
-            print(f"The average hyperedge contains {average_length} nodes")
+            # print(f"The average hyperedge contains {average_length} nodes")
 
         return {
             "hypergraph": hypergraph,
