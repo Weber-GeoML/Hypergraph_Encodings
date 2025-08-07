@@ -9,7 +9,6 @@ clique-lifted hypergraphs (lifting='clique').
 import argparse
 import os
 import sys
-import time
 from copy import deepcopy
 from typing import Any, Dict, List, Optional
 
@@ -235,7 +234,7 @@ def time_all_encodings_on_graph(
     else:
         raise ValueError(f"Unknown lifting method: {lifting_method}")
 
-    print(f"  🧠 Conversion completed - ready for encoding timing")
+    print("  🧠 Conversion completed - ready for encoding timing")
 
     # Count hyperedges for information
     num_hyperedges = len(hypergraph_data["hypergraph"])
@@ -479,7 +478,7 @@ Examples:
     print(f"  - Lifting method: {lifting_method}")
     print(f"  - Encoding types: {', '.join(args.encoding_types)}")
     print(f"  - Output directory: {args.output_dir}")
-    print(f"  - Timing: Encoding computations only")
+    print("  - Timing: Encoding computations only")
     print()
 
     try:

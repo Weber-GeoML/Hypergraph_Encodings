@@ -6,15 +6,13 @@ import os
 import sys
 import time
 import pickle
-from pathlib import Path
-import shutil
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import pandas as pd
 import warnings
-from typing import Dict, List, Tuple, Any, Optional
+from typing import Dict, Tuple, Any, Optional
 from tqdm import tqdm
 
 # Add necessary paths for imports
@@ -443,7 +441,7 @@ def run_experiments_for_encoding(
                     G["num_features"] = X.shape[1]
                 else:
                     # Skip if no pre-computed encoding available
-                    print(f"X", end="")
+                    print("X", end="")
                     continue
 
                 # Validate data after encoding
@@ -479,8 +477,8 @@ def run_experiments_for_encoding(
                 else:
                     print(".", end="")
 
-            except Exception as e:
-                print(f"E", end="")  # Error marker
+            except Exception:
+                print("E", end="")  # Error marker
                 if config.verbose:
                     import traceback
 
@@ -657,7 +655,7 @@ def main():
         best_idx = successful_results["mean_test_acc_best_val"].idxmax()
         best_result = successful_results.loc[best_idx]
 
-        print(f"\n" + "=" * 60)
+        print("\n" + "=" * 60)
         print("BEST PERFORMING ENCODING")
         print("=" * 60)
         print(f"Dataset: {best_result['dataset']}")

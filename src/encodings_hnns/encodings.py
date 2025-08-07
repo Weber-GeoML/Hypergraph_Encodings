@@ -11,7 +11,7 @@ to a dataset (curvature, laplacians, random walks).
 import os
 import pickle
 import random
-from typing import Optional, Any
+from typing import Any, Optional
 
 import numpy as np
 
@@ -112,9 +112,7 @@ class HypergraphEncodings:
         """
         # Skip caching when timing_collector is provided
         if timing_collector is None and dataset_name is not None:
-            filename: str = (
-                f"computed_encodings/{dataset_name}_degree_encodings_normalized_{normalized}.pkl"
-            )
+            filename: str = f"computed_encodings/{dataset_name}_degree_encodings_normalized_{normalized}.pkl"
             if os.path.exists(filename):
                 with open(filename, "rb") as f:
                     print(f"Loading hypergraph from {filename}")
@@ -272,9 +270,7 @@ class HypergraphEncodings:
         """
         # Skip caching when timing_collector is provided
         if timing_collector is None and dataset_name is not None:
-            filename: str = (
-                f"computed_encodings/{dataset_name}_curvature_encodings_{curvature_type}_normalized_{normalized}.pkl"
-            )
+            filename: str = f"computed_encodings/{dataset_name}_curvature_encodings_{curvature_type}_normalized_{normalized}.pkl"
             if os.path.exists(filename):
                 with open(filename, "rb") as f:
                     print(f"Loading hypergraph from {filename}")
@@ -674,9 +670,7 @@ class HypergraphEncodings:
         """
         # Skip caching when timing_collector is provided
         if timing_collector is None and dataset_name is not None:
-            filename: str = (
-                f"computed_encodings/{dataset_name}_rw_encodings_{rw_type}_k_{k}_normalized_{normalized}.pkl"
-            )
+            filename: str = f"computed_encodings/{dataset_name}_rw_encodings_{rw_type}_k_{k}_normalized_{normalized}.pkl"
             if os.path.exists(filename):
                 with open(filename, "rb") as f:
                     print(f"Loading hypergraph from {filename}")

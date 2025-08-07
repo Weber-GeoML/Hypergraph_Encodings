@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Configuration file for HGNN hyperparameters and experiment settings"""
 
-from typing import Dict, Any, List
 from dataclasses import dataclass
+from typing import Any, Dict, List
 
 
 @dataclass

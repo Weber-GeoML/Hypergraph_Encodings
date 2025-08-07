@@ -22,12 +22,7 @@ sys.path.append(current_dir)
 from encodings_hnns.encodings import HypergraphEncodings
 
 from timing_for_encodings.timing_utils2 import (
-    convert_graph_to_hypergraph_clique,
     time_single_encoding_run,
-    save_hypergraphs_to_pickle,
-    load_hypergraphs_from_pickle,
-    compute_graph_statistics,
-    compute_hypergraph_statistics,
 )
 from timing_for_encodings.timing_utils import (
     TimingCollector,
@@ -447,19 +442,19 @@ def main() -> None:
     print("⏱️  HYPERGRAPH ENCODING TIMING ANALYSIS")
     print("📊 PRE-EXISTING HYPERGRAPHS - ENCODING COMPUTATIONS ONLY")
     print("=" * 70)
-    print(f"Configuration:")
+    print("Configuration:")
     print(f"  - Runs per encoding: {args.num_runs}")
     print(f"  - Lifting method: {args.lifting_method} (no lifting needed)")
-    print(f"  - Timing: Encoding computations only")
+    print("  - Timing: Encoding computations only")
     if args.encoding_types:
         print(f"  - Encoding types: {', '.join(args.encoding_types)}")
     else:
-        print(f"  - Encoding types: all")
+        print("  - Encoding types: all")
     print(f"  - Output directory: {args.output_dir}")
     if args.dataset:
         print(f"  - Target dataset: {args.dataset}")
     else:
-        print(f"  - Target datasets: all available CC/CA datasets")
+        print("  - Target datasets: all available CC/CA datasets")
 
     try:
         if args.dataset:

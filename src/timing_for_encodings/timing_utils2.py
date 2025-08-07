@@ -6,8 +6,6 @@ for converting graphs to hypergraphs and timing encoding computations.
 """
 
 import os
-import sys
-import time
 import pickle
 from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple
@@ -17,7 +15,6 @@ import numpy as np
 import torch
 from torch_geometric.data import Data
 from torch_geometric.utils import from_networkx
-
 
 from encodings_hnns.encodings import HypergraphEncodings
 from encodings_hnns.liftings_and_expansions import lift_to_hypergraph

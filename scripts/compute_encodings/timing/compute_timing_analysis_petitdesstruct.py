@@ -8,14 +8,12 @@ hypergraph encodings (lifting time is excluded from measurements).
 
 import os
 import sys
-import pickle
 import warnings
 import argparse
 import time
 from typing import Dict, Any, List, Optional, Tuple
 
 import torch
-import numpy as np
 
 # Add src directory to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "..", "src"))
@@ -124,7 +122,7 @@ def time_graph_to_hypergraph_conversion(
     clique_hypergraphs = []
 
     # Time LRGB conversion
-    print(f"\n  📊 LRGB (Edge-based) Lifting:")
+    print("\n  📊 LRGB (Edge-based) Lifting:")
     lrgb_times = []
 
     for i in range(min(num_graphs, len(graphs))):
@@ -157,7 +155,7 @@ def time_graph_to_hypergraph_conversion(
             continue
 
     # Time Clique conversion
-    print(f"\n  🧠 Clique-based Lifting:")
+    print("\n  🧠 Clique-based Lifting:")
     clique_times = []
 
     for i in range(min(num_graphs, len(graphs))):
@@ -461,12 +459,12 @@ def run_comprehensive_timing_analysis(
     print("🚀 STARTING PEPTIDESSTRUCT TIMING ANALYSIS")
     print("📊 PRE-LIFTED HYPERGRAPHS - ENCODING COMPUTATIONS ONLY")
     print("=" * 70)
-    print(f"Configuration:")
+    print("Configuration:")
     print(f"  - Data path: {data_path}")
     print(f"  - Subsets: {', '.join(subsets)}")
     print(f"  - Graphs to process: {'all' if num_graphs is None else num_graphs}")
     print(f"  - Lifting method: {lifting_method} (pre-computed)")
-    print(f"  - Timing: Encoding computations only")
+    print("  - Timing: Encoding computations only")
     print(f"  - Encoding types: {', '.join(encoding_types)}")
 
     # Store results for all subsets
@@ -501,7 +499,7 @@ def run_comprehensive_timing_analysis(
 
                 if hasattr(element, "shape") and len(element.shape) == 2:
                     print(f"  Dimensions: {element.shape[0]} x {element.shape[1]}")
-                    print(f"  Sample values (first 5 rows, first 5 cols):")
+                    print("  Sample values (first 5 rows, first 5 cols):")
                     print(f"    {element[:5, :5]}")
                 elif hasattr(element, "shape") and len(element.shape) == 1:
                     print(f"  Length: {element.shape[0]}")
@@ -510,7 +508,7 @@ def run_comprehensive_timing_analysis(
                     print(f"  Content preview: {str(element)[:100]}...")
 
             # Identify what each element likely represents
-            print(f"\n📋 INTERPRETATION:")
+            print("\n📋 INTERPRETATION:")
             print("=" * 50)
             print(
                 "Based on the structure, this appears to be a PyTorch Geometric Data object with:"
@@ -526,7 +524,7 @@ def run_comprehensive_timing_analysis(
             node_features = graph[2]
             graph_features = graph[3]
 
-            print(f"\n📊 GRAPH STATISTICS:")
+            print("\n📊 GRAPH STATISTICS:")
             print("=" * 50)
             print(f"Number of nodes: {node_features.shape[1]}")
             print(f"Number of edges: {edge_index.shape[1]}")
@@ -805,7 +803,7 @@ def main() -> None:
     print("⏱️  PEPTIDESSTRUCT TIMING ANALYSIS")
     print("📊 PRE-LIFTED HYPERGRAPHS - ENCODING COMPUTATIONS ONLY")
     print("=" * 70)
-    print(f"Configuration:")
+    print("Configuration:")
     print(f"  - Data path: {args.data_path}")
     print(f"  - Subset: {args.subset}")
     print(
@@ -813,12 +811,12 @@ def main() -> None:
     )
     print(f"  - Max graphs to load: {args.max_graphs_to_load or 'all'}")
     print(f"  - Lifting method: {args.lifting_method} (pre-computed)")
-    print(f"  - Timing: Encoding computations only")
+    print("  - Timing: Encoding computations only")
     print(f"  - Output directory: {args.output_dir}")
     if args.encoding_types:
         print(f"  - Encoding types: {', '.join(args.encoding_types)}")
     else:
-        print(f"  - Encoding types: all (8 types)")
+        print("  - Encoding types: all (8 types)")
 
     try:
         # Run timing analysis

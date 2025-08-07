@@ -18,10 +18,8 @@ import sys
 import pickle
 import warnings
 import argparse
-import time
 from typing import Dict, Any, List, Optional
 
-import numpy as np
 
 # Add src directory to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "..", "src"))
@@ -270,7 +268,7 @@ def run_comprehensive_timing_analysis(
 
     print("🚀 STARTING HYPERGRAPH CLASSIFICATION DATASETS TIMING ANALYSIS")
     print("=" * 80)
-    print(f"Configuration:")
+    print("Configuration:")
     print(f"  - Data directory: {data_directory}")
     print(f"  - Datasets: {', '.join(datasets)}")
     print(
@@ -501,7 +499,7 @@ def main() -> None:
     print("⏱️  HYPERGRAPH CLASSIFICATION DATASETS TIMING ANALYSIS")
     print("📊 PRE-EXISTING HYPERGRAPHS - ENCODING COMPUTATIONS ONLY")
     print("=" * 70)
-    print(f"Configuration:")
+    print("Configuration:")
     print(f"  - Data directory: {args.data_directory}")
     print(f"  - Datasets: {args.datasets or 'all available'}")
     print(
@@ -509,12 +507,12 @@ def main() -> None:
     )
     print(f"  - Max hypergraphs to load: {args.max_hypergraphs_to_load or 'all'}")
     print(f"  - Lifting method: {args.lifting_method} (no lifting needed)")
-    print(f"  - Timing: Encoding computations only")
+    print("  - Timing: Encoding computations only")
     print(f"  - Output directory: {args.output_dir}")
     if args.encoding_types:
         print(f"  - Encoding types: {', '.join(args.encoding_types)}")
     else:
-        print(f"  - Encoding types: all (8 types)")
+        print("  - Encoding types: all (8 types)")
 
     try:
         # Run timing analysis

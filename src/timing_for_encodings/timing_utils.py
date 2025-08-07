@@ -7,11 +7,12 @@ for hypergraph encoding computations across different datasets.
 
 import json
 import pickle
+import statistics
 import time
 from collections import defaultdict
 from contextlib import contextmanager
-from typing import Any, Dict, List, Optional
-import statistics
+from typing import Any, Dict, List
+
 import numpy as np
 
 
