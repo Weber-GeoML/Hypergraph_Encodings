@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --job-name=hgnn_experiments     # Job name
 #SBATCH --ntasks=1                      # Number of tasks
-#SBATCH --time=168:00:00                # Time limit (hh:mm:ss) - 7 days
+#SBATCH --time=24:00:00                # Time limit (hh:mm:ss) - 7 days
 #SBATCH --mem=32GB                      # Memory required
-#SBATCH --output=logs_hgnn/hgnn_%j.log  # Standard output and error log (with job ID)
+#SBATCH --output=logs_hgnn_exps/hgnn_%j.log  # Standard output and error log (with job ID)
 #SBATCH --partition=mweber_gpu          # Specify the partition
 #SBATCH --gpus=1                        # Request 1 GPU
 
@@ -11,10 +11,9 @@
 # module load anaconda/2023.07  # Example, depending on your system
 
 # Activate the Conda environment
-source activate hgencodings_gpu_weber
 
 # Create logs directory
-mkdir -p logs_hgnn
+mkdir -p logs_hgnn_exps
 
 # Function to run experiments for a single dataset
 run_dataset_experiments() {
@@ -30,7 +29,7 @@ run_dataset_experiments() {
     echo "" | tee -a "$log_file"
     
     # Run the HGNN script with proper logging
-    python scripts/hgnn/hgnn_m3.py \
+    python hgnn_m3.py \
         --data "$data_type" \
         --dataset "$dataset_name" \
         --n_runs 80 \
