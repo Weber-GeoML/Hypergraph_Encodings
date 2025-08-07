@@ -31,6 +31,11 @@ from hgnn.hgnn_architecture import HGNN
 warnings.filterwarnings("ignore")
 os.environ["TORCH"] = torch.__version__
 
+# Force CPU usage to avoid CUDA issues
+torch.cuda.is_available = lambda: False
+device = torch.device("cpu")
+print(f"Using device: {device}")
+
 
 def set_seed(seed: int) -> None:
     """Set random seeds for reproducibility."""
