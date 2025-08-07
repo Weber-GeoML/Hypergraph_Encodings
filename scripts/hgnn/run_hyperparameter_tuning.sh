@@ -8,7 +8,7 @@
 #SBATCH --gpus=1                     # Request 1 GPU
 
 # Load required modules (adjust based on your cluster setup)
-module load anaconda/2023.07  # Example, depending on your system
+
 
 # Activate the Conda environment
 source activate hgencodings_gpu_weber
