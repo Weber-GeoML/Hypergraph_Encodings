@@ -22,7 +22,7 @@ mkdir -p /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn_exps
 run_dataset_experiments() {
     local data_type=$1
     local dataset_name=$2
-    local log_file="/n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn/${data_type}_${dataset_name}_hgnn_$(date +%Y%m%d_%H%M%S).log"
+    local log_file="/n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn_exps/${data_type}_${dataset_name}_hgnn_$(date +%Y%m%d_%H%M%S).log"
     
     echo "============================================" | tee -a "$log_file"
     echo "Starting HGNN experiments for ${data_type}/${dataset_name}" | tee -a "$log_file"
@@ -48,21 +48,21 @@ run_dataset_experiments() {
 }
 
 # Main execution
-echo "Starting HGNN UniGNN-Compatible Experiments" | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn/main_$(date +%Y%m%d_%H%M%S).log
-echo "Total start time: $(date)" | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn/main_$(date +%Y%m%d_%H%M%S).log
-echo "============================================" | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn/main_$(date +%Y%m%d_%H%M%S).log
+echo "Starting HGNN UniGNN-Compatible Experiments" | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn_exps/main_$(date +%Y%m%d_%H%M%S).log
+echo "Total start time: $(date)" | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn_exps/main_$(date +%Y%m%d_%H%M%S).log
+echo "============================================" | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn_exps/main_$(date +%Y%m%d_%H%M%S).log
 
 # Run experiments for coauthorship datasets
-echo "Running coauthorship datasets..." | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn/main_$(date +%Y%m%d_%H%M%S).log
+echo "Running coauthorship datasets..." | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn_exps/main_$(date +%Y%m%d_%H%M%S).log
 for dataset in "cora" "dblp"; do
     run_dataset_experiments "coauthorship" "$dataset"
 done
 
 # Run experiments for cocitation datasets
-echo "Running cocitation datasets..." | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn/main_$(date +%Y%m%d_%H%M%S).log
+echo "Running cocitation datasets..." | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn_exps/main_$(date +%Y%m%d_%H%M%S).log
 for dataset in "citeseer" "cora" "pubmed"; do
     run_dataset_experiments "cocitation" "$dataset"
 done
 
-echo "All experiments completed!" | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn/main_$(date +%Y%m%d_%H%M%S).log
-echo "Total end time: $(date)" | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn/main_$(date +%Y%m%d_%H%M%S).log 
+echo "All experiments completed!" | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn_exps/main_$(date +%Y%m%d_%H%M%S).log
+echo "Total end time: $(date)" | tee /n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/logs_hgnn_exps/main_$(date +%Y%m%d_%H%M%S).log 
