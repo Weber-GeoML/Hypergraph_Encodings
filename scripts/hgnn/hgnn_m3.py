@@ -266,14 +266,15 @@ def train_single_run(
     test_idx: torch.Tensor,
     config: HGNNConfig,
     device: torch.device,
+    wandb_run=None,  # Add this parameter
+    run_id: int = 0,  # Add run identifier
 ) -> Tuple[float, float, float]:
     """
     Train HGNN for a single run.
 
-    Returns:
-        best_val_acc: Best validation accuracy achieved
-        best_test_acc: Test accuracy when validation was best (KEY METRIC)
-        final_test_acc: Final test accuracy
+    Args:
+        wandb_run: Optional W&B run for logging during training
+        run_id: Identifier for this run (for W&B logging)
     """
     # Move to device
     X = X.to(device)
@@ -329,6 +330,26 @@ def train_single_run(
                 bad_counter += 1
                 if bad_counter >= patience:
                     break
+
+            # Log to W&B during training
+            if wandb_run is not None and WANDB_AVAILABLE:
+                try:
+                    wandb.log(
+                        {
+                            f"run_{run_id}/epoch": epoch,
+                            f"run_{run_id}/train_loss": loss.item(),
+                            f"run_{run_id}/train_acc": train_acc,
+                            f"run_{run_id}/val_acc": val_acc,
+                            f"run_{run_id}/test_acc": test_acc,
+                            f"run_{run_id}/best_val_acc": best_val_acc,
+                            f"run_{run_id}/best_test_acc": best_test_acc,
+                            f"run_{run_id}/learning_rate": config.learning_rate,
+                        },
+                        step=epoch,
+                    )
+                except Exception as e:
+                    # Don't fail training if W&B logging fails
+                    pass
 
             # Update progress bar with accuracies
             pbar.set_postfix(
@@ -516,7 +537,16 @@ def run_experiments_for_encoding(
 
                 # Train single run
                 best_val_acc, best_test_acc, final_test_acc = train_single_run(
-                    X, Y, G, train_idx, val_idx, test_idx, config, device
+                    X,
+                    Y,
+                    G,
+                    train_idx,
+                    val_idx,
+                    test_idx,
+                    config,
+                    device,
+                    wandb_run=wandb_run,  # Pass W&B run
+                    run_id=len(all_best_test_accs),  # Use current run count as ID
                 )
 
                 # Store results
@@ -574,30 +604,52 @@ def run_experiments_for_encoding(
         # Log to wandb if available
         if WANDB_AVAILABLE and wandb_run is not None:
             try:
+                # Log comprehensive results
                 wandb.log(
                     {
+                        # Primary metrics
                         "test/mean_acc_best_val": mean_best_test,  # PRIMARY METRIC
                         "test/std_acc_best_val": std_best_test,
                         "test/mean_acc_final": mean_final_test,
                         "test/std_acc_final": std_final_test,
                         "val/mean_acc_best": mean_best_val,
                         "val/std_acc_best": std_best_val,
+                        # Hyperparameters
                         "hyperparams/learning_rate": config.learning_rate,
                         "hyperparams/hidden_dims": config.hidden_dims,
                         "hyperparams/dropout_rate": config.dropout_rate,
                         "hyperparams/weight_decay": config.weight_decay,
                         "hyperparams/epochs": config.epochs,
                         "hyperparams/patience": config.patience,
+                        "hyperparams/val_ratio": config.val_ratio,
+                        # Dataset and encoding info
                         "data/dataset": f"{data_type}_{dataset_name}",
                         "data/encoding": encoding_type,
+                        "data/precomputed_available": precomputed_data is not None,
+                        # Run statistics
                         "runs/successful": len(all_best_test_accs),
                         "runs/total": config.n_runs,
                         "runs/success_rate": len(all_best_test_accs) / config.n_runs,
+                        # Additional metrics
+                        "metrics/best_test_acc": (
+                            max(all_best_test_accs) if all_best_test_accs else 0
+                        ),
+                        "metrics/worst_test_acc": (
+                            min(all_best_test_accs) if all_best_test_accs else 0
+                        ),
+                        "metrics/median_test_acc": (
+                            np.median(all_best_test_accs) if all_best_test_accs else 0
+                        ),
+                        # Individual run results (for detailed analysis)
+                        "runs/all_best_test_accs": all_best_test_accs,
+                        "runs/all_final_test_accs": all_final_test_accs,
+                        "runs/all_best_val_accs": all_best_val_accs,
                     }
                 )
-                print(f"  ✓ Logged results to W&B")
+                print(f"  ✓ Logged results to W&B: {wandb_run.get_url()}")
             except Exception as e:
                 print(f"  ✗ W&B logging failed: {e}")
+                traceback.print_exc()
 
     # Clean up W&B run
     if wandb_run is not None:
