@@ -121,6 +121,7 @@ def load_base_data(args) -> Tuple[torch.Tensor, torch.Tensor, Dict[str, Any]]:
     """
     # Load data using UniGNN's function - returns (dataset, train, test)
     dataset, train_idx, test_idx = load(args)
+    print(f"\n The split is {args.split}")
 
     # Extract data from dataset dictionary
     X = dataset["features"]
@@ -135,7 +136,7 @@ def load_base_data(args) -> Tuple[torch.Tensor, torch.Tensor, Dict[str, Any]]:
 
     # FIX: Handle 2D one-hot encoded labels
     if Y.dim() == 2:
-        print(f"  Converting 2D labels {Y.shape} to 1D")
+        # print(f"  Converting 2D labels {Y.shape} to 1D")
         Y = Y.argmax(dim=1)  # Convert one-hot to class indices
 
     # Validate labels are now 1D
@@ -353,6 +354,50 @@ def train_single_run(
     return best_val_acc, best_test_acc, final_test_acc
 
 
+def setup_wandb(
+    data_type: str, dataset_name: str, encoding_type: str, config: HGNNConfig
+):
+    """Initialize W&B run with proper configuration."""
+    if not WANDB_AVAILABLE:
+        print("W&B not available - skipping logging")
+        return None
+
+    try:
+        # Login if not already logged in
+        if not wandb.run:
+            wandb.login()
+
+        # Initialize run with project and config
+        run = wandb.init(
+            project="hgnn-experiments",  # Your project name
+            entity="weber-geoml-harvard-university",  # Your entity/team
+            config={
+                "data_type": data_type,
+                "dataset_name": dataset_name,
+                "encoding_type": encoding_type,
+                "hidden_dims": config.hidden_dims,
+                "dropout_rate": config.dropout_rate,
+                "learning_rate": config.learning_rate,
+                "weight_decay": config.weight_decay,
+                "epochs": config.epochs,
+                "patience": config.patience,
+                "val_ratio": config.val_ratio,
+                "n_runs": config.n_runs,
+                "n_seeds": config.n_seeds,
+                "runs_per_seed": config.runs_per_seed,
+                "normalize_features": config.normalize_features,
+                "normalize_encodings": config.normalize_encodings,
+            },
+            name=f"{data_type}_{dataset_name}_{encoding_type}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            tags=[data_type, dataset_name, encoding_type],
+        )
+        print(f"  W&B run initialized: {run.name}")
+        return run
+    except Exception as e:
+        print(f"  W&B initialization failed: {e}")
+        return None
+
+
 def run_experiments_for_encoding(
     data_type: str,
     dataset_name: str,
@@ -371,6 +416,9 @@ def run_experiments_for_encoding(
     """
     print(f"\n--- Encoding: {encoding_type} ---")
     print(f"Config: {config.to_dict()}")
+
+    # Initialize W&B run
+    wandb_run = setup_wandb(data_type, dataset_name, encoding_type, config)
 
     # Results storage
     all_best_test_accs = []
@@ -510,73 +558,38 @@ def run_experiments_for_encoding(
         )
 
         # Log to wandb if available
-        if WANDB_AVAILABLE and wandb.run is not None:
-            wandb.log(
-                {
-                    "test/mean_acc_best_val": mean_best_test,  # PRIMARY METRIC
-                    "test/std_acc_best_val": std_best_test,
-                    "test/mean_acc_final": mean_final_test,
-                    "test/std_acc_final": std_final_test,
-                    "val/mean_acc_best": mean_best_val,
-                    "val/std_acc_best": std_best_val,
-                    "hyperparams/learning_rate": config.learning_rate,
-                    "hyperparams/hidden_dims": config.hidden_dims,
-                    "hyperparams/dropout_rate": config.dropout_rate,
-                    "hyperparams/weight_decay": config.weight_decay,
-                    "hyperparams/epochs": config.epochs,
-                    "hyperparams/patience": config.patience,
-                    "data/dataset": f"{data_type}_{dataset_name}",
-                    "data/encoding": encoding_type,
-                    "runs/successful": len(all_best_test_accs),
-                    "runs/total": config.n_runs,
-                    "runs/success_rate": len(all_best_test_accs) / config.n_runs,
-                }
-            )
+        if WANDB_AVAILABLE and wandb_run is not None:
+            try:
+                wandb.log(
+                    {
+                        "test/mean_acc_best_val": mean_best_test,  # PRIMARY METRIC
+                        "test/std_acc_best_val": std_best_test,
+                        "test/mean_acc_final": mean_final_test,
+                        "test/std_acc_final": std_final_test,
+                        "val/mean_acc_best": mean_best_val,
+                        "val/std_acc_best": std_best_val,
+                        "hyperparams/learning_rate": config.learning_rate,
+                        "hyperparams/hidden_dims": config.hidden_dims,
+                        "hyperparams/dropout_rate": config.dropout_rate,
+                        "hyperparams/weight_decay": config.weight_decay,
+                        "hyperparams/epochs": config.epochs,
+                        "hyperparams/patience": config.patience,
+                        "data/dataset": f"{data_type}_{dataset_name}",
+                        "data/encoding": encoding_type,
+                        "runs/successful": len(all_best_test_accs),
+                        "runs/total": config.n_runs,
+                        "runs/success_rate": len(all_best_test_accs) / config.n_runs,
+                    }
+                )
+                print(f"  ✓ Logged results to W&B")
+            except Exception as e:
+                print(f"  ✗ W&B logging failed: {e}")
 
-        return result
-    else:
-        print(f"  ✗ {encoding_type}: No successful runs")
+    # Clean up W&B run
+    if wandb_run is not None:
+        wandb_run.finish()
 
-        # Log failure to wandb
-        if WANDB_AVAILABLE and wandb.run is not None:
-            wandb.log(
-                {
-                    "test/mean_acc_best_val": 0.0,
-                    "test/std_acc_best_val": 0.0,
-                    "test/mean_acc_final": 0.0,
-                    "test/std_acc_final": 0.0,
-                    "val/mean_acc_best": 0.0,
-                    "val/std_acc_best": 0.0,
-                    "hyperparams/learning_rate": config.learning_rate,
-                    "hyperparams/hidden_dims": config.hidden_dims,
-                    "hyperparams/dropout_rate": config.dropout_rate,
-                    "hyperparams/weight_decay": config.weight_decay,
-                    "hyperparams/epochs": config.epochs,
-                    "hyperparams/patience": config.patience,
-                    "data/dataset": f"{data_type}_{dataset_name}",
-                    "data/encoding": encoding_type,
-                    "runs/successful": 0,
-                    "runs/total": config.n_runs,
-                    "runs/success_rate": 0.0,
-                    "error": "No successful runs",
-                }
-            )
-
-        return {
-            "dataset": f"{data_type}_{dataset_name}",
-            "encoding": encoding_type,
-            "config": config.to_dict(),
-            "mean_test_acc_best_val": 0.0,
-            "std_test_acc_best_val": 0.0,
-            "mean_final_test_acc": 0.0,
-            "std_final_test_acc": 0.0,
-            "mean_best_val_acc": 0.0,
-            "std_best_val_acc": 0.0,
-            "num_runs": 0,
-            "all_best_test_accs": [],
-            "all_final_test_accs": [],
-            "precomputed_available": False,
-        }
+    return result
 
 
 def main():
