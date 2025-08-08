@@ -35,7 +35,6 @@ def load(args) -> tuple[dict[dict, np.matrix, np.ndarray, int], list, list]:
 
         the len of train and test sums to the number of nodes.
     """
-    print(f"\n The split is {args.split}")
     dataset = parser(args.data, args.dataset).parse()
 
     current: str = os.path.abspath(inspect.getfile(inspect.currentframe()))

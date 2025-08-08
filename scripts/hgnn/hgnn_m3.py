@@ -363,14 +363,24 @@ def setup_wandb(
         return None
 
     try:
+        # Set environment variables if not already set
+        if not os.environ.get("WANDB_ENTITY"):
+            os.environ["WANDB_ENTITY"] = "weber-geoml-harvard-university"
+        if not os.environ.get("WANDB_PROJECT"):
+            os.environ["WANDB_PROJECT"] = "hgnn-experiments"
+
         # Login if not already logged in
         if not wandb.run:
             wandb.login()
 
+        # Create a unique run name
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        run_name = f"{data_type}_{dataset_name}_{encoding_type}_{timestamp}"
+
         # Initialize run with project and config
         run = wandb.init(
-            project="hgnn-experiments",  # Your project name
-            entity="weber-geoml-harvard-university",  # Your entity/team
+            project=os.environ.get("WANDB_PROJECT", "hgnn-experiments"),
+            entity=os.environ.get("WANDB_ENTITY", "weber-geoml-harvard-university"),
             config={
                 "data_type": data_type,
                 "dataset_name": dataset_name,
@@ -387,14 +397,18 @@ def setup_wandb(
                 "runs_per_seed": config.runs_per_seed,
                 "normalize_features": config.normalize_features,
                 "normalize_encodings": config.normalize_encodings,
+                "timestamp": timestamp,
             },
-            name=f"{data_type}_{dataset_name}_{encoding_type}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}",
-            tags=[data_type, dataset_name, encoding_type],
+            name=run_name,
+            tags=[data_type, dataset_name, encoding_type, "hgnn"],
+            notes=f"HGNN experiment on {data_type}/{dataset_name} with {encoding_type} encoding",
         )
-        print(f"  W&B run initialized: {run.name}")
+        print(f"  ✓ W&B run initialized: {run.name}")
+        print(f"  ✓ W&B run URL: {run.get_url()}")
         return run
     except Exception as e:
-        print(f"  W&B initialization failed: {e}")
+        print(f"  ✗ W&B initialization failed: {e}")
+        traceback.print_exc()
         return None
 
 

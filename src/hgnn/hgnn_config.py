@@ -16,7 +16,7 @@ class HGNNConfig:
     # Training hyperparameters
     learning_rate: float = 0.01
     weight_decay: float = 5e-4
-    epochs: int = 5
+    epochs: int = 500
     patience: int = 50
     val_ratio: float = 0.2
 
