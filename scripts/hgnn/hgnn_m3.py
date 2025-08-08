@@ -101,7 +101,7 @@ def load_precomputed_encoding(
     rel_path = filename_map[encoding_type]
     abs_path = Path(rel_path).resolve()
     cluster_path = (
-        Path("/n/home04/rpellegrinext/Hypergraph_Encodings/computed_encodings")
+        Path("/n/holylabs/LABS/mweber_lab/Everyone/rpellegrin/computed_encodings")
         / abs_path.name
     )
 
