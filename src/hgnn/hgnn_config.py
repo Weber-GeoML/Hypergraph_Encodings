@@ -149,11 +149,11 @@ def get_dataset_specific_configs() -> Dict[str, HGNNConfig]:
 
 # Available encoding types
 ENCODING_TYPES = [
-    "none",
-    "degree",
     "random_walk_EE",
     "random_walk_EN",
     "random_walk_WE",
+    "none",
+    "degree",
     "laplacian_Hodge",
     "laplacian_Normalized",
     "curvature_ORC",
