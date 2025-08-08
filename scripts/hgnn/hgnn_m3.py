@@ -13,6 +13,7 @@ import warnings
 from typing import Dict, Tuple, Any, Optional
 from tqdm import tqdm
 import traceback
+from pathlib import Path
 
 # Import wandb
 try:
@@ -97,20 +98,35 @@ def load_precomputed_encoding(
         print(f"  Unknown encoding type: {encoding_type}")
         return None
 
-    filename = filename_map[encoding_type]
+    rel_path = filename_map[encoding_type]
+    abs_path = Path(rel_path).resolve()
+    cluster_path = (
+        Path("/n/home04/rpellegrinext/Hypergraph_Encodings/computed_encodings")
+        / abs_path.name
+    )
 
-    if os.path.exists(filename):
+    print("  [ENC DEBUG] __file__      :", Path(__file__).resolve())
+    print("  [ENC DEBUG] cwd           :", Path.cwd())
+    print("  [ENC DEBUG] rel_path      :", rel_path)
+    print("  [ENC DEBUG] abs_path      :", abs_path)
+    print("  [ENC DEBUG] abs exists?   :", abs_path.exists())
+    print("  [ENC DEBUG] cluster_path  :", cluster_path)
+    print("  [ENC DEBUG] cluster exist?:", cluster_path.exists())
+
+    target_path = abs_path if abs_path.exists() else cluster_path
+    if target_path.exists():
         try:
-            with open(filename, "rb") as f:
+            with open(target_path, "rb") as f:
                 dataset = pickle.load(f)
-            print(f"  Loaded pre-computed encoding from {filename}")
+            print(f"  Loaded pre-computed encoding from {target_path}")
             return dataset
         except Exception as e:
-            print(f"  Error loading {filename}: {e}")
+            print(f"  Error loading {target_path}: {e}")
             traceback.print_exc()
             return None
     else:
-        print(f"  Pre-computed encoding not found: {filename}")
+        print(f"  Pre-computed encoding not found at: {abs_path}")
+        print(f"  Also not found at: {cluster_path}")
         return None
 
 
@@ -469,6 +485,44 @@ def run_experiments_for_encoding(
     precomputed_data = load_precomputed_encoding(
         encoding_type, f"{data_type}_{dataset_name}"
     )
+
+    # Always start with a default result so return is safe
+    result = {
+        "dataset": f"{data_type}_{dataset_name}",
+        "encoding": encoding_type,
+        "config": config.to_dict(),
+        "mean_test_acc_best_val": 0.0,
+        "std_test_acc_best_val": 0.0,
+        "mean_final_test_acc": 0.0,
+        "std_final_test_acc": 0.0,
+        "mean_best_val_acc": 0.0,
+        "std_best_val_acc": 0.0,
+        "num_runs": 0,
+        "all_best_test_accs": [],
+        "all_final_test_accs": [],
+        "precomputed_available": precomputed_data is not None,
+    }
+
+    # If encoding requires a file and it’s missing, skip cleanly with debug info
+    if encoding_type != "none" and precomputed_data is None:
+        print(f"  [ENC DEBUG] Skipping {encoding_type}: precomputed not available")
+        if WANDB_AVAILABLE and wandb_run is not None:
+            try:
+                wandb.log(
+                    {
+                        "data/dataset": f"{data_type}_{dataset_name}",
+                        "data/encoding": encoding_type,
+                        "data/precomputed_available": False,
+                        "runs/successful": 0,
+                        "runs/total": config.n_runs,
+                        "runs/success_rate": 0.0,
+                        "error": "No precomputed encodings; skipped",
+                    }
+                )
+            except Exception:
+                pass
+            wandb_run.finish()
+        return result
 
     # Get best hyperparameters if requested
     if use_best_params:
