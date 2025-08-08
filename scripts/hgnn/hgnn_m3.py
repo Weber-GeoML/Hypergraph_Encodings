@@ -302,6 +302,11 @@ def train_single_run(
     patience = config.patience
     epochs = config.epochs
 
+    # Define a per-run step so steps can restart from 0 for each run
+    if wandb_run is not None and WANDB_AVAILABLE:
+        wandb.define_metric(f"run_{run_id}/step")
+        wandb.define_metric(f"run_{run_id}/*", step_metric=f"run_{run_id}/step")
+
     # Create progress bar
     pbar = tqdm(range(epochs), desc="Training", leave=False)
 
@@ -336,10 +341,9 @@ def train_single_run(
             # Log to W&B during training
             if wandb_run is not None and WANDB_AVAILABLE:
                 try:
-                    current_step = global_step + epoch
                     wandb.log(
                         {
-                            f"run_{run_id}/epoch": epoch,
+                            f"run_{run_id}/step": epoch,
                             f"run_{run_id}/train_loss": loss.item(),
                             f"run_{run_id}/train_acc": train_acc,
                             f"run_{run_id}/val_acc": val_acc,
@@ -347,11 +351,9 @@ def train_single_run(
                             f"run_{run_id}/best_val_acc": best_val_acc,
                             f"run_{run_id}/best_test_acc": best_test_acc,
                             f"run_{run_id}/learning_rate": config.learning_rate,
-                        },
-                        step=current_step,
+                        }
                     )
-                except Exception as e:
-                    # Don't fail training if W&B logging fails
+                except Exception:
                     pass
 
             # Update progress bar with accuracies
