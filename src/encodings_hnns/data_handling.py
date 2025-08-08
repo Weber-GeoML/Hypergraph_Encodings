@@ -125,9 +125,9 @@ class parser(object):
         if verbose:
             total_length: int = sum(len(value) for value in hypergraph.values())
             average_length: float = total_length / len(hypergraph)
-            print(
-                f"The hypergraph {self.dataset}/{self.data} has {len(hypergraph)} hyperedges where authors are hyperedges"
-            )
+            # print(
+            #     f"The hypergraph {self.dataset}/{self.data} has {len(hypergraph)} hyperedges where authors are hyperedges"
+            # )
             # print(f"The average hyperedge contains {average_length} nodes")
 
         return {
@@ -204,7 +204,7 @@ if __name__ == "__main__":
     print(f"Nodes in the complete set but not in all_nodes: {missing_nodes}")
     # Number of key-value pairs
     num_hyperedges = len(parsed_data["hypergraph"])
-    print(f"Number of hyperedges (key-value pairs): {num_hyperedges}")
+    # print(f"Number of hyperedges (key-value pairs): {num_hyperedges}")
 
     ###### Cora
     data_type = "coauthorship"

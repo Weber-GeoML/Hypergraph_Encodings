@@ -22,7 +22,7 @@ from torch_geometric.utils import to_networkx
 from encodings_hnns.laplacians import Laplacians
 
 
-def lift_to_hypergraph(graph, verbose=True, already_in_nx=False) -> dict:
+def lift_to_hypergraph(graph, verbose=False, already_in_nx=False) -> dict:
     """
     Constructs a hypergraph from a given graph by identifying maximal cliques of size >=3
     and including remaining edges as hyperedges of size 2.

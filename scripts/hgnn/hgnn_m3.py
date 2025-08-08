@@ -179,10 +179,10 @@ def load_base_data(args) -> Tuple[torch.Tensor, torch.Tensor, Dict[str, Any]]:
     G["num_features"] = X.shape[1]
     G["num_classes"] = num_classes
 
-    print(f"number of hyperedges is {len(G['hypergraph'])}")
-    print(
-        f"The hypergraph {args.data}/{args.dataset} has {len(G['hypergraph'])} hyperedges where authors are hyperedges"
-    )
+    # print(f"number of hyperedges is {len(G['hypergraph'])}")
+    # print(
+    #     f"The hypergraph {args.data}/{args.dataset} has {len(G['hypergraph'])} hyperedges where authors are hyperedges"
+    # )
 
     # Calculate average hyperedge size
     total_nodes_in_edges = sum(len(nodes) for nodes in G["hypergraph"].values())
