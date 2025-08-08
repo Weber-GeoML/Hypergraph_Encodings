@@ -268,6 +268,7 @@ def train_single_run(
     device: torch.device,
     wandb_run=None,  # Add this parameter
     run_id: int = 0,  # Add run identifier
+    global_step: int = 0,  # Add global step counter
 ) -> Tuple[float, float, float]:
     """
     Train HGNN for a single run.
@@ -275,6 +276,7 @@ def train_single_run(
     Args:
         wandb_run: Optional W&B run for logging during training
         run_id: Identifier for this run (for W&B logging)
+        global_step: Global step counter for W&B logging
     """
     # Move to device
     X = X.to(device)
@@ -334,6 +336,7 @@ def train_single_run(
             # Log to W&B during training
             if wandb_run is not None and WANDB_AVAILABLE:
                 try:
+                    current_step = global_step + epoch
                     wandb.log(
                         {
                             f"run_{run_id}/epoch": epoch,
@@ -345,7 +348,7 @@ def train_single_run(
                             f"run_{run_id}/best_test_acc": best_test_acc,
                             f"run_{run_id}/learning_rate": config.learning_rate,
                         },
-                        step=epoch,
+                        step=current_step,
                     )
                 except Exception as e:
                     # Don't fail training if W&B logging fails
@@ -488,6 +491,8 @@ def run_experiments_for_encoding(
         )
 
     # Run experiments based on config
+    global_step = 0  # Initialize global step counter
+
     for seed in range(2, 2 + config.n_seeds):  # Seeds 2-9 (8 seeds)
         print(f"  Seed {seed}:", end=" ")
 
@@ -547,6 +552,7 @@ def run_experiments_for_encoding(
                     device,
                     wandb_run=wandb_run,  # Pass W&B run
                     run_id=len(all_best_test_accs),  # Use current run count as ID
+                    global_step=global_step,  # Use global step counter
                 )
 
                 # Store results
