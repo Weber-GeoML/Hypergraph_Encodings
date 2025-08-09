@@ -10,7 +10,7 @@ class HGNNConfig:
     """Configuration class for HGNN experiments."""
 
     # Model hyperparameters
-    hidden_dims: int = 16
+    hidden_dims: int = 128
     dropout_rate: float = 0.5
 
     # Training hyperparameters
@@ -118,15 +118,15 @@ def get_dataset_specific_configs() -> Dict[str, HGNNConfig]:
 
     # Cora-specific config
     cora_config = HGNNConfig()
-    cora_config.hidden_dims = 32
+    cora_config.hidden_dims = 128
     cora_config.learning_rate = 0.01
     cora_config.weight_decay = 5e-4
     configs["cora"] = cora_config
 
     # Citeseer-specific config
     citeseer_config = HGNNConfig()
-    citeseer_config.hidden_dims = 64
-    citeseer_config.learning_rate = 0.005
+    citeseer_config.hidden_dims = 128
+    citeseer_config.learning_rate = 0.01
     citeseer_config.weight_decay = 1e-4
     configs["citeseer"] = citeseer_config
 
@@ -139,7 +139,7 @@ def get_dataset_specific_configs() -> Dict[str, HGNNConfig]:
 
     # DBLP-specific config
     dblp_config = HGNNConfig()
-    dblp_config.hidden_dims = 64
+    dblp_config.hidden_dims = 128
     dblp_config.learning_rate = 0.01
     dblp_config.weight_decay = 1e-4
     configs["dblp"] = dblp_config
