@@ -14,6 +14,8 @@ from typing import Dict, Tuple, Any, Optional
 from tqdm import tqdm
 import traceback
 from pathlib import Path
+import argparse
+from dataclasses import dataclass
 
 # Import wandb
 try:
@@ -205,6 +207,11 @@ def load_base_data(args) -> Tuple[torch.Tensor, torch.Tensor, Dict[str, Any]]:
     total_nodes_in_edges = sum(len(nodes) for nodes in G["hypergraph"].values())
     avg_size = total_nodes_in_edges / len(G["hypergraph"])
     # print(f"The average hyperedge contains {avg_size} nodes")
+
+    print(
+        f"Loaded {args.data}/{args.dataset} | X={X.shape} | Y={Y.shape} "
+        f"| num_classes={G['num_classes']} | split={args.split}"
+    )
 
     return X, Y, G
 
@@ -720,7 +727,46 @@ def run_experiments_for_encoding(
     return result
 
 
-def main():
+@dataclass
+class CLIOptions:
+    """CLI options to control what runs."""
+
+    data: Optional[str] = None  # 'coauthorship' or 'cocitation'
+    dataset: Optional[str] = None  # e.g., 'cora', 'dblp', 'citeseer', 'pubmed'
+    encoding: Optional[str] = None  # one of ENCODING_TYPES
+    n_runs: Optional[int] = None  # total runs per (dataset, encoding)
+    use_best_params: bool = False
+    wandb_enabled: bool = False
+    wandb_project: Optional[str] = None
+    wandb_entity: Optional[str] = None
+
+
+def parse_cli_options() -> CLIOptions:
+    """Parse command-line arguments and return structured options."""
+    parser = argparse.ArgumentParser(description="HGNN UniGNN-Compatible Runner")
+    parser.add_argument("--data", choices=list(DATASET_CONFIGS.keys()))
+    parser.add_argument("--dataset")
+    parser.add_argument("--encoding", choices=ENCODING_TYPES)
+    parser.add_argument("--n_runs", type=int)
+    parser.add_argument("--use_best_params", action="store_true")
+    parser.add_argument("--wandb_enabled", action="store_true")
+    parser.add_argument("--wandb_project")
+    parser.add_argument("--wandb_entity")
+
+    args = parser.parse_args()
+    return CLIOptions(
+        data=args.data,
+        dataset=args.dataset,
+        encoding=args.encoding,
+        n_runs=args.n_runs,
+        use_best_params=args.use_best_params,
+        wandb_enabled=args.wandb_enabled,
+        wandb_project=args.wandb_project,
+        wandb_entity=args.wandb_entity,
+    )
+
+
+def main() -> None:
     """Main function to run all experiments with configurable hyperparameters."""
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
@@ -729,20 +775,54 @@ def main():
     print("HGNN UniGNN-Compatible Experiments (Configurable)")
     print("=" * 80)
 
-    # Get configuration (can be modified for different experiments)
+    # Parse CLI
+    opts = parse_cli_options()
+
+    # Configure W&B env from CLI
+    if not opts.wandb_enabled:
+        os.environ["WANDB_DISABLED"] = "true"
+    else:
+        if opts.wandb_project:
+            os.environ["WANDB_PROJECT"] = opts.wandb_project
+        if opts.wandb_entity:
+            os.environ["WANDB_ENTITY"] = opts.wandb_entity
+
+    # Base configuration
     config = get_default_config()
 
-    # Optionally use dataset-specific configs
+    # If user specifies total runs, collapse to single seed and set runs_per_seed
+    if opts.n_runs is not None:
+        config.n_runs = opts.n_runs
+        config.n_seeds = 1
+        config.runs_per_seed = opts.n_runs
+
+    # Optionally use dataset-specific configs (by dataset name)
     dataset_configs = get_dataset_specific_configs()
 
-    # Get datasets and encodings from config
+    # Select datasets from CLI
     datasets = DATASET_CONFIGS
-    encoding_types = ENCODING_TYPES
+    if opts.data is not None:
+        if opts.dataset is not None:
+            datasets = {opts.data: [opts.dataset]}
+        else:
+            datasets = {opts.data: datasets[opts.data]}
 
-    print(
-        f"Testing {len(encoding_types)} encodings on {sum(len(v) for v in datasets.values())} datasets"
-    )
+    # Select encodings from CLI
+    encoding_types = [opts.encoding] if opts.encoding else ENCODING_TYPES
+
+    # Print plan: datasets and encodings
+    total_datasets = sum(len(v) for v in datasets.values())
+    print(f"Testing {len(encoding_types)} encodings on {total_datasets} datasets")
     print(f"Configuration: {config.to_dict()}")
+
+    print("Datasets to run:")
+    for data_type, names in datasets.items():
+        print(f"  - {data_type}: {', '.join(names)}")
+    print(f"Encodings to run: {', '.join(encoding_types)}")
+    print(
+        f"Runs per (dataset, encoding): {config.n_runs}  "
+        f"(n_seeds={config.n_seeds}, runs_per_seed={config.runs_per_seed})"
+    )
 
     # Run experiments
     all_results = []
@@ -759,7 +839,13 @@ def main():
             for encoding_type in encoding_types:
                 try:
                     result = run_experiments_for_encoding(
-                        data_type, dataset_name, encoding_type, current_config, device
+                        data_type=data_type,
+                        dataset_name=dataset_name,
+                        encoding_type=encoding_type,
+                        config=current_config,
+                        device=device,
+                        n_runs=current_config.n_runs,
+                        use_best_params=opts.use_best_params,
                     )
                     all_results.append(result)
 
