@@ -11,7 +11,7 @@ import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from functools import partial
 import multiprocessing
 
@@ -49,12 +49,19 @@ from hgnn.hgnn_config import (
 warnings.filterwarnings("ignore")
 os.environ["TORCH"] = torch.__version__
 
-# Use GPU if available
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"Using device: {device}")
-if torch.cuda.is_available():
-    print(f"GPU: {torch.cuda.get_device_name(0)}")
-    print(f"CUDA version: {torch.version.cuda}")
+# Use GPU if available with better error handling
+try:
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Using device: {device}")
+    if torch.cuda.is_available():
+        print(f"GPU: {torch.cuda.get_device_name(0)}")
+        print(f"CUDA version: {torch.version.cuda}")
+        # Clear any existing CUDA cache
+        torch.cuda.empty_cache()
+except Exception as e:
+    print(f"CUDA initialization warning: {e}")
+    device = torch.device("cpu")
+    print("Falling back to CPU")
 
 
 def set_seed(seed: int) -> None:
@@ -478,7 +485,7 @@ def run_single_seed_run(
     dataset_name: str,
     encoding_type: str,
     config: HGNNConfig,
-    device_type: str,  # Pass device type as string instead of device object
+    device_or_device_type,  # Can be torch.device (threads) or str (processes)
     precomputed_data: Optional[Dict[str, Any]],
     wandb_run=None,
     run_id: int = 0,
@@ -490,8 +497,11 @@ def run_single_seed_run(
         Tuple of (best_val_acc, best_test_acc, final_test_acc)
     """
     try:
-        # Create device in worker process for CUDA compatibility
-        device = torch.device(device_type)
+        # Handle device - can be torch.device (for threads) or str (for processes)
+        if isinstance(device_or_device_type, str):
+            device = torch.device(device_or_device_type)
+        else:
+            device = device_or_device_type
 
         set_seed(seed)
 
@@ -628,9 +638,7 @@ def run_experiments_for_encoding(
     # Get best hyperparameters if requested
     if use_best_params:
         best_params = get_best_hyperparameters(data_type, dataset_name, encoding_type)
-        print(
-            f"Using best hyperparameters: accuracy={best_params.accuracy:.4f} ± {best_params.std:.4f}"
-        )
+        print(f"Using default hyperparameters:")
 
         # Override default parameters with best ones
         kwargs.update(
@@ -659,53 +667,84 @@ def run_experiments_for_encoding(
     )
 
     # Create partial function for parallel execution
+    if device.type == "cuda":
+        # For ThreadPoolExecutor, pass device object directly (shared context)
+        device_arg = device
+        wandb_arg = wandb_run  # Can pass wandb object with threads
+    else:
+        # For ProcessPoolExecutor, pass device as string (separate processes)
+        device_arg = str(device)
+        wandb_arg = None  # Can't pass CUDA-bound wandb objects across processes
+
     run_func = partial(
         run_single_seed_run,
         data_type=data_type,
         dataset_name=dataset_name,
         encoding_type=encoding_type,
         config=config,
-        device_type=str(device),  # Pass device as string for spawn compatibility
+        device_or_device_type=device_arg,
         precomputed_data=precomputed_data,
-        wandb_run=None,  # Can't pass CUDA-bound wandb objects across processes
+        wandb_run=wandb_arg,
     )
 
-    # Execute in parallel with spawn method for CUDA compatibility
-    max_workers = min(8, len(seed_run_combinations))  # Limit to 8 workers
-
-    # Set multiprocessing start method to 'spawn' for CUDA compatibility
-    mp_context = multiprocessing.get_context("spawn")
-    with ProcessPoolExecutor(
-        max_workers=max_workers, mp_context=mp_context
-    ) as executor:
-        # Submit all jobs
-        future_to_params = {
-            executor.submit(run_func, seed, run, run_id=idx): (seed, run, idx)
-            for idx, (seed, run) in enumerate(seed_run_combinations)
-        }
-
-        # Collect results as they complete
-        completed = 0
-        for future in as_completed(future_to_params):
-            seed, run, run_id = future_to_params[future]
+    # SIMPLIFIED: Use sequential execution for CUDA to avoid all multiprocessing issues
+    # Parallel execution causes too many CUDA context and memory issues
+    if device.type == "cuda":
+        print(f"  Using sequential execution (CUDA - avoids context issues)")
+        # Sequential execution for CUDA
+        all_results = []
+        for idx, (seed, run) in enumerate(seed_run_combinations):
             try:
-                best_val_acc, best_test_acc, final_test_acc = future.result()
-
-                # Store results
-                all_best_val_accs.append(best_val_acc)
-                all_best_test_accs.append(best_test_acc)
-                all_final_test_accs.append(final_test_acc)
-
-                completed += 1
                 print(
-                    f"  Completed {completed}/{len(seed_run_combinations)} runs (seed={seed}, run={run})"
+                    f"    Run {idx+1}/{len(seed_run_combinations)}: seed={seed}, run={run}"
                 )
-
+                result = run_func(seed, run, run_id=idx)
+                all_results.append((result, seed, run, idx))
             except Exception as e:
-                print(f"  Error in seed {seed}, run {run}: {e}")
-                if config.verbose:
-                    traceback.print_exc()
-                continue
+                print(f"    ✗ Error in seed {seed}, run {run}: {e}")
+                all_results.append((None, seed, run, idx))
+    else:
+        # Use ProcessPoolExecutor for CPU only
+        max_workers = min(8, len(seed_run_combinations))
+        print(f"  Using ProcessPoolExecutor with {max_workers} workers (CPU)")
+        mp_context = multiprocessing.get_context("spawn")
+        with ProcessPoolExecutor(
+            max_workers=max_workers, mp_context=mp_context
+        ) as executor:
+            # Submit all jobs
+            future_to_params = {
+                executor.submit(run_func, seed, run, run_id=idx): (seed, run, idx)
+                for idx, (seed, run) in enumerate(seed_run_combinations)
+            }
+
+            # Collect results
+            all_results = []
+            for future in as_completed(future_to_params):
+                seed, run, idx = future_to_params[future]
+                try:
+                    result = future.result()
+                    all_results.append((result, seed, run, idx))
+                except Exception as e:
+                    print(f"    ✗ Error in seed {seed}, run {run}: {e}")
+                    all_results.append((None, seed, run, idx))
+
+    # Process all results (both sequential CUDA and parallel CPU paths end up here)
+    completed = 0
+    for result_tuple in all_results:
+        result, seed, run, idx = result_tuple
+        if result is not None:
+            best_val_acc, best_test_acc, final_test_acc = result
+            # Store results
+            all_best_val_accs.append(best_val_acc)
+            all_best_test_accs.append(best_test_acc)
+            all_final_test_accs.append(final_test_acc)
+            completed += 1
+            print(
+                f"    ✓ Completed {completed}/{len(seed_run_combinations)}: seed={seed}, run={run}"
+            )
+        else:
+            print(f"    ✗ Failed: seed={seed}, run={run}")
+            completed += 1
 
     # Calculate statistics
     if len(all_best_test_accs) > 0:
@@ -744,47 +783,57 @@ def run_experiments_for_encoding(
         if WANDB_AVAILABLE and wandb_run is not None:
             try:
                 # Log comprehensive results
-                wandb.log(
-                    {
-                        # Primary metrics
-                        "test/mean_acc_best_val": mean_best_test,  # PRIMARY METRIC
-                        "test/std_acc_best_val": std_best_test,
-                        "test/mean_acc_final": mean_final_test,
-                        "test/std_acc_final": std_final_test,
-                        "val/mean_acc_best": mean_best_val,
-                        "val/std_acc_best": std_best_val,
-                        # Hyperparameters
-                        "hyperparams/learning_rate": config.learning_rate,
-                        "hyperparams/hidden_dims": config.hidden_dims,
-                        "hyperparams/dropout_rate": config.dropout_rate,
-                        "hyperparams/weight_decay": config.weight_decay,
-                        "hyperparams/epochs": config.epochs,
-                        "hyperparams/patience": config.patience,
-                        "hyperparams/val_ratio": config.val_ratio,
-                        # Dataset and encoding info
-                        "data/dataset": f"{data_type}_{dataset_name}",
-                        "data/encoding": encoding_type,
-                        "data/precomputed_available": precomputed_data is not None,
-                        # Run statistics
-                        "runs/successful": len(all_best_test_accs),
-                        "runs/total": config.n_runs,
-                        "runs/success_rate": len(all_best_test_accs) / config.n_runs,
-                        # Additional metrics
-                        "metrics/best_test_acc": (
-                            max(all_best_test_accs) if all_best_test_accs else 0
-                        ),
-                        "metrics/worst_test_acc": (
-                            min(all_best_test_accs) if all_best_test_accs else 0
-                        ),
-                        "metrics/median_test_acc": (
-                            np.median(all_best_test_accs) if all_best_test_accs else 0
-                        ),
-                        # Individual run results (for detailed analysis)
-                        "runs/all_best_test_accs": all_best_test_accs,
-                        "runs/all_final_test_accs": all_final_test_accs,
-                        "runs/all_best_val_accs": all_best_val_accs,
-                    }
-                )
+                log_data = {
+                    # Primary metrics
+                    "test/mean_acc_best_val": mean_best_test,  # PRIMARY METRIC
+                    "test/std_acc_best_val": std_best_test,
+                    "test/mean_acc_final": mean_final_test,
+                    "test/std_acc_final": std_final_test,
+                    "val/mean_acc_best": mean_best_val,
+                    "val/std_acc_best": std_best_val,
+                    # Hyperparameters
+                    "hyperparams/learning_rate": config.learning_rate,
+                    "hyperparams/hidden_dims": config.hidden_dims,
+                    "hyperparams/dropout_rate": config.dropout_rate,
+                    "hyperparams/weight_decay": config.weight_decay,
+                    "hyperparams/epochs": config.epochs,
+                    "hyperparams/patience": config.patience,
+                    "hyperparams/val_ratio": config.val_ratio,
+                    # Dataset and encoding info
+                    "data/dataset": f"{data_type}_{dataset_name}",
+                    "data/encoding": encoding_type,
+                    "data/precomputed_available": precomputed_data is not None,
+                    # Run statistics
+                    "runs/successful": len(all_best_test_accs),
+                    "runs/total": config.n_runs,
+                    "runs/success_rate": len(all_best_test_accs) / config.n_runs,
+                    # Additional metrics
+                    "metrics/best_test_acc": (
+                        max(all_best_test_accs) if all_best_test_accs else 0
+                    ),
+                    "metrics/worst_test_acc": (
+                        min(all_best_test_accs) if all_best_test_accs else 0
+                    ),
+                    "metrics/median_test_acc": (
+                        np.median(all_best_test_accs) if all_best_test_accs else 0
+                    ),
+                    # Individual run results as scalar metrics to avoid media warnings
+                    "runs/num_successful": len(all_best_test_accs),
+                    "runs/total_attempted": len(seed_run_combinations),
+                    "runs/success_rate": (
+                        len(all_best_test_accs) / len(seed_run_combinations)
+                        if seed_run_combinations
+                        else 0
+                    ),
+                }
+
+                # Add histogram only if we have data
+                if all_best_test_accs:
+                    log_data["histograms/best_test_acc_distribution"] = wandb.Histogram(
+                        all_best_test_accs
+                    )
+
+                wandb.log(log_data)
                 print(f"  ✓ Logged results to W&B: {wandb_run.get_url()}")
             except Exception as e:
                 print(f"  ✗ W&B logging failed: {e}")
