@@ -670,11 +670,11 @@ def run_experiments_for_encoding(
     if device.type == "cuda":
         # For ThreadPoolExecutor, pass device object directly (shared context)
         device_arg = device
-        wandb_arg = wandb_run  # Can pass wandb object with threads
+        wandb_arg = None  # Individual W&B runs are created per seed+run
     else:
         # For ProcessPoolExecutor, pass device as string (separate processes)
         device_arg = str(device)
-        wandb_arg = None  # Can't pass CUDA-bound wandb objects across processes
+        wandb_arg = None  # Individual W&B runs are created per seed+run
 
     run_func = partial(
         run_single_seed_run,
@@ -955,7 +955,9 @@ def main() -> None:
     print("STATISTICAL SUMMARY (UniGNN Style)")
     print("=" * 80)
 
-    successful_results = df[df["num_runs"] > 0]
+    successful_results = (
+        df[df["num_runs"] > 0] if "num_runs" in df.columns else pd.DataFrame()
+    )
     if len(successful_results) > 0:
         for _, row in successful_results.iterrows():
             encoding = row["encoding"]
