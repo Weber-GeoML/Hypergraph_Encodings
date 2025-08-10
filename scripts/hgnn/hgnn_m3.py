@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from functools import partial
+import multiprocessing
 
 import numpy as np
 import pandas as pd
@@ -477,7 +478,7 @@ def run_single_seed_run(
     dataset_name: str,
     encoding_type: str,
     config: HGNNConfig,
-    device: torch.device,
+    device_type: str,  # Pass device type as string instead of device object
     precomputed_data: Optional[Dict[str, Any]],
     wandb_run=None,
     run_id: int = 0,
@@ -489,6 +490,9 @@ def run_single_seed_run(
         Tuple of (best_val_acc, best_test_acc, final_test_acc)
     """
     try:
+        # Create device in worker process for CUDA compatibility
+        device = torch.device(device_type)
+
         set_seed(seed)
 
         # Create args for this run
@@ -661,14 +665,19 @@ def run_experiments_for_encoding(
         dataset_name=dataset_name,
         encoding_type=encoding_type,
         config=config,
-        device=device,
+        device_type=str(device),  # Pass device as string for spawn compatibility
         precomputed_data=precomputed_data,
-        wandb_run=wandb_run,
+        wandb_run=None,  # Can't pass CUDA-bound wandb objects across processes
     )
 
-    # Execute in parallel
+    # Execute in parallel with spawn method for CUDA compatibility
     max_workers = min(8, len(seed_run_combinations))  # Limit to 8 workers
-    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+
+    # Set multiprocessing start method to 'spawn' for CUDA compatibility
+    mp_context = multiprocessing.get_context("spawn")
+    with ProcessPoolExecutor(
+        max_workers=max_workers, mp_context=mp_context
+    ) as executor:
         # Submit all jobs
         future_to_params = {
             executor.submit(run_func, seed, run, run_id=idx): (seed, run, idx)
