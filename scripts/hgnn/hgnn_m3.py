@@ -378,19 +378,23 @@ def train_single_run(
             # Log to W&B during training
             if wandb_run is not None and WANDB_AVAILABLE:
                 try:
+                    # Calculate global step: unique across ALL runs (run_id * epochs + epoch)
+                    global_step = run_id * config.epochs + epoch
+
                     wandb.log(
                         {
-                            "step": epoch,
-                            "train_loss": loss.item(),
-                            "train_acc": train_acc,
-                            "val_acc": val_acc,
-                            "test_acc": test_acc,
-                            "best_val_acc": best_val_acc,
-                            "best_test_acc": best_test_acc,
-                            "learning_rate": config.learning_rate,
-                            # Optional: keep context info without creating new charts
+                            "global_step": global_step,  # Unified step counter
+                            "train/loss": loss.item(),  # Use train/ prefix
+                            "train/acc": train_acc,
+                            "val/acc": val_acc,
+                            "test/acc": test_acc,
+                            "test/best_acc": best_test_acc,
+                            "val/best_acc": best_val_acc,
+                            "train/learning_rate": config.learning_rate,
+                            # Context metadata
                             "meta/run_id": run_id,
                             "meta/seed": seed,
+                            "meta/epoch": epoch,
                         }
                     )
                 except Exception:
@@ -461,6 +465,7 @@ def setup_wandb(
                 "n_runs": config.n_runs,
                 "n_seeds": config.n_seeds,
                 "runs_per_seed": config.runs_per_seed,
+                "total_runs": config.n_seeds * config.runs_per_seed,
                 "normalize_features": config.normalize_features,
                 "normalize_encodings": config.normalize_encodings,
                 "timestamp": timestamp,
@@ -469,6 +474,14 @@ def setup_wandb(
             tags=[data_type, dataset_name, encoding_type, "hgnn"],
             notes=f"HGNN experiment on {data_type}/{dataset_name} with {encoding_type} encoding",
         )
+
+        # Define metrics for aggregated view - all runs on same plot
+        wandb.define_metric("global_step")  # Single unified step counter
+        wandb.define_metric("train/*", step_metric="global_step")
+        wandb.define_metric("val/*", step_metric="global_step")
+        wandb.define_metric("test/*", step_metric="global_step")
+        wandb.define_metric("run/*", step_metric="global_step")
+        wandb.define_metric("meta/*", step_metric="global_step")
         print(f"  ✓ W&B run initialized: {run.name}")
         print(f"  ✓ W&B run URL: {run.get_url()}")
         return run
@@ -782,8 +795,12 @@ def run_experiments_for_encoding(
         # Log to wandb if available
         if WANDB_AVAILABLE and wandb_run is not None:
             try:
-                # Log comprehensive results
+                # Log comprehensive results with final global step
+                final_global_step = (
+                    len(seed_run_combinations) * config.epochs
+                )  # Final step across all runs
                 log_data = {
+                    "global_step": final_global_step,  # Final unified step
                     # Primary metrics
                     "test/mean_acc_best_val": mean_best_test,  # PRIMARY METRIC
                     "test/std_acc_best_val": std_best_test,
@@ -806,7 +823,6 @@ def run_experiments_for_encoding(
                     # Run statistics
                     "runs/successful": len(all_best_test_accs),
                     "runs/total": config.n_runs,
-                    "runs/success_rate": len(all_best_test_accs) / config.n_runs,
                     # Additional metrics
                     "metrics/best_test_acc": (
                         max(all_best_test_accs) if all_best_test_accs else 0
