@@ -1,26 +1,26 @@
 # -*- coding: utf-8 -*-
 """Script for running hyperparameter tuning experiments"""
 
+import argparse
+import datetime
 import os
 import sys
 import time
-import datetime
+from typing import Any, Dict, List
+
 import pandas as pd
-import argparse
-from typing import List, Dict, Any
 
 # Add necessary paths for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "unignn"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from hgnn.hgnn_config import (
-    get_hyperparameter_tuning_configs,
-    get_dataset_specific_configs,
-    ENCODING_TYPES,
-    DATASET_CONFIGS,
-)
-from hgnn_m3 import run_experiments_for_encoding
 import torch
+from hgnn_m3 import run_experiments_for_encoding
+
+from hgnn.hgnn_config import (
+    ENCODING_TYPES,
+    get_hyperparameter_tuning_configs,
+)
 
 # Force CPU usage to avoid CUDA issues
 torch.cuda.is_available = lambda: False
@@ -210,7 +210,7 @@ def main():
             best_idx = df["mean_test_acc_best_val"].idxmax()
             best_result = df.loc[best_idx]
 
-            print(f"\n" + "=" * 60)
+            print("\n" + "=" * 60)
             print("BEST CONFIGURATION")
             print("=" * 60)
             print(f"Dataset: {args.data_type}/{args.dataset_name}")

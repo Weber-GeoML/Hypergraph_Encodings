@@ -4,12 +4,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# Import only the modules that don't depend on torch_sparse
-
 # Import configuration
-from hgnn.hgnn_config import (
-    HGNNConfig,
-)
+from hgnn.hgnn_config import HGNNConfig
+
+# Import only the modules that don't depend on torch_sparse
 
 
 class HGNN(nn.Module):

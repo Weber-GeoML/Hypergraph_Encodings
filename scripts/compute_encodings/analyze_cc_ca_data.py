@@ -19,9 +19,10 @@ Splits: Dictionary with 'train' and 'test' splits (10 different splits)
 
 import os
 import pickle
-import numpy as np
-from typing import Any
 import warnings
+from typing import Any
+
+import numpy as np
 
 warnings.simplefilter("ignore")
 

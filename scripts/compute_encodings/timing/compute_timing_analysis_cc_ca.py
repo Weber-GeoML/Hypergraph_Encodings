@@ -6,12 +6,12 @@ the computation of hypergraph encodings (no lifting required as datasets are
 already in hypergraph format).
 """
 
-import os
-import sys
-import pickle
-import warnings
 import argparse
-from typing import Dict, Any, List, Optional
+import os
+import pickle
+import sys
+import warnings
+from typing import Any, Dict, List, Optional
 
 # Add src directory to path for imports
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -20,15 +20,8 @@ sys.path.append(os.path.join(current_dir, "..", "..", "src"))
 sys.path.append(current_dir)
 
 from encodings_hnns.encodings import HypergraphEncodings
-
-from timing_for_encodings.timing_utils2 import (
-    time_single_encoding_run,
-)
-from timing_for_encodings.timing_utils import (
-    TimingCollector,
-    extract_hypergraph_stats,
-)
-
+from timing_for_encodings.timing_utils import TimingCollector, extract_hypergraph_stats
+from timing_for_encodings.timing_utils2 import time_single_encoding_run
 
 warnings.simplefilter("ignore")
 

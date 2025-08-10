@@ -1,21 +1,22 @@
 # -*- coding: utf-8 -*-
 """UniGNN-Compatible HGNN with 80 runs and pre-computed encodings"""
 
+import argparse
 import datetime
 import os
-import time
 import pickle
-import torch
-import torch.nn.functional as F
+import time
+import traceback
+import warnings
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, Optional, Tuple
+
 import numpy as np
 import pandas as pd
-import warnings
-from typing import Dict, Tuple, Any, Optional
+import torch
+import torch.nn.functional as F
 from tqdm import tqdm
-import traceback
-from pathlib import Path
-import argparse
-from dataclasses import dataclass
 
 # Import wandb
 try:
@@ -26,21 +27,21 @@ except ImportError:
     WANDB_AVAILABLE = False
     print("Warning: wandb not available. Install with: pip install wandb")
 
+# Import best hyperparameters
+from best_hyperparameters import get_best_hyperparameters
+
 # Import only the modules that don't depend on torch_sparse
 from encodings_hnns.data_handling import load
+from hgnn.hgnn_architecture import HGNN
 
 # Import configuration
 from hgnn.hgnn_config import (
-    HGNNConfig,
-    get_default_config,
-    get_dataset_specific_configs,
-    ENCODING_TYPES,
     DATASET_CONFIGS,
+    ENCODING_TYPES,
+    HGNNConfig,
+    get_dataset_specific_configs,
+    get_default_config,
 )
-from hgnn.hgnn_architecture import HGNN
-
-# Import best hyperparameters
-from best_hyperparameters import get_best_hyperparameters
 
 warnings.filterwarnings("ignore")
 os.environ["TORCH"] = torch.__version__

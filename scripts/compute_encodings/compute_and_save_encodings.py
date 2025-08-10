@@ -21,8 +21,8 @@ NOTE: The files are already in hypergraph format (ie have already been lifted!)
 """
 
 import os
-import sys
 import pickle
+import sys
 import warnings
 
 # Add src directory to path for imports

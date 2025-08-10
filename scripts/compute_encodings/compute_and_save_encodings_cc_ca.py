@@ -5,8 +5,8 @@ This is for CC and CA datasets!
 """
 
 import os
-import sys
 import pickle
+import sys
 import warnings
 
 # Add src directory to path for imports

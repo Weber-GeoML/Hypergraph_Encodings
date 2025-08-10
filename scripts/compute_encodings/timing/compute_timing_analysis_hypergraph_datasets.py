@@ -13,13 +13,12 @@ proteins_hypergraphs.pickle - Proteins dataset (858KB)
 collab_hypergraphs.pickle - Collab dataset (9.2MB)
 """
 
-import os
-import sys
-import pickle
-import warnings
 import argparse
-from typing import Dict, Any, List, Optional
-
+import os
+import pickle
+import sys
+import warnings
+from typing import Any, Dict, List, Optional
 
 # Add src directory to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "..", "src"))

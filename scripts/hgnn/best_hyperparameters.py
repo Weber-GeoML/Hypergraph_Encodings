@@ -1,7 +1,7 @@
 """Best hyperparameters for each dataset/encoding combination from tuning results."""
 
-from typing import Dict, Any
 from dataclasses import dataclass
+from typing import Dict
 
 
 @dataclass

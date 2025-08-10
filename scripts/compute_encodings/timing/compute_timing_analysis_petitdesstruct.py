@@ -6,12 +6,12 @@ using the chosen method (clique or LRGB), and then times only the computation of
 hypergraph encodings (lifting time is excluded from measurements).
 """
 
+import argparse
 import os
 import sys
-import warnings
-import argparse
 import time
-from typing import Dict, Any, List, Optional, Tuple
+import warnings
+from typing import Any, Dict, List, Optional, Tuple
 
 import torch
 
@@ -20,8 +20,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "..", "src")
 # Add compute_encodings directory to path for timing_utils
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from encodings_hnns.encodings import HypergraphEncodings
 from compute_encodings.encoding_saver_lrgb import EncodingsSaverLRGB
+from encodings_hnns.encodings import HypergraphEncodings
 from encodings_hnns.liftings_and_expansions import lift_to_hypergraph
 from src.timing_for_encodings.timing_utils import (
     TimingCollector,
