@@ -24,27 +24,19 @@ class HGNN(nn.Module):
         # Convert to dense for M3 compatibility
         H_dense = H.to_dense() if H.is_sparse else H
 
-        # Force CPU for the problematic operation to avoid CUDA errors
-        H_dense_cpu = H_dense.cpu()
-
-        # Handle edge cases (on CPU to avoid CUDA issues)
-        if H_dense_cpu.numel() == 0 or H_dense_cpu.sum() == 0:
+        # Handle edge cases
+        if H_dense.numel() == 0 or H_dense.sum() == 0:
             num_nodes = in_size
-            H_dense_cpu = torch.eye(num_nodes)
-            H_dense_cpu = torch.cat([H_dense_cpu, torch.eye(num_nodes)], dim=1)
+            identity = torch.eye(num_nodes, device=H.device)
+            H_dense = torch.cat([identity, identity], dim=1)
 
-        # Compute node degree (on CPU)
-        d_V = H_dense_cpu.sum(1)
+        # Compute node degree
+        d_V = H_dense.sum(1)
         d_V = torch.where(d_V == 0, torch.ones_like(d_V), d_V)
 
-        # Compute edge degree (on CPU)
-        d_E = H_dense_cpu.sum(0)
+        # Compute edge degree
+        d_E = H_dense.sum(0)
         d_E = torch.where(d_E == 0, torch.ones_like(d_E), d_E)
-
-        # Move back to original device for the rest of the computation
-        H_dense = H_dense_cpu.to(H.device)
-        d_V = d_V.to(H.device)
-        d_E = d_E.to(H.device)
 
         # Compute Laplacian matrices
         D_v_invsqrt = torch.diag(d_V**-0.5)

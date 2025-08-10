@@ -48,10 +48,12 @@ from hgnn.hgnn_config import (
 warnings.filterwarnings("ignore")
 os.environ["TORCH"] = torch.__version__
 
-# Force CPU usage to avoid CUDA issues
-torch.cuda.is_available = lambda: False
-device = torch.device("cpu")
+# Use GPU if available
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
+if torch.cuda.is_available():
+    print(f"GPU: {torch.cuda.get_device_name(0)}")
+    print(f"CUDA version: {torch.version.cuda}")
 
 
 def set_seed(seed: int) -> None:
@@ -176,7 +178,7 @@ def load_base_data(args) -> Tuple[torch.Tensor, torch.Tensor, Dict[str, Any]]:
     if "edge_index" in G:
         edge_index = G["edge_index"]
         if isinstance(edge_index, torch.Tensor):
-            edge_index = edge_index.cpu().numpy()
+            edge_index = edge_index.detach().cpu().numpy()
 
         # Group nodes by edges to create hyperedges
         hyperedges = {}
