@@ -378,24 +378,18 @@ def train_single_run(
             # Log to W&B during training
             if wandb_run is not None and WANDB_AVAILABLE:
                 try:
-                    # Calculate global step: unique across ALL runs (run_id * epochs + epoch)
-                    global_step = run_id * config.epochs + epoch
-
                     wandb.log(
                         {
-                            "global_step": global_step,  # Unified step counter
-                            "train/loss": loss.item(),  # Use train/ prefix
+                            "train/loss": loss.item(),
                             "train/acc": train_acc,
                             "val/acc": val_acc,
                             "test/acc": test_acc,
                             "test/best_acc": best_test_acc,
                             "val/best_acc": best_val_acc,
                             "train/learning_rate": config.learning_rate,
-                            # Context metadata
-                            "meta/run_id": run_id,
-                            "meta/seed": seed,
-                            "meta/epoch": epoch,
-                        }
+                            "epoch": epoch,
+                        },
+                        step=epoch,  # Use normal epoch-based step counter
                     )
                 except Exception:
                     pass
@@ -425,9 +419,14 @@ def train_single_run(
 
 
 def setup_wandb(
-    data_type: str, dataset_name: str, encoding_type: str, config: HGNNConfig
+    data_type: str,
+    dataset_name: str,
+    encoding_type: str,
+    config: HGNNConfig,
+    seed: int,
+    run: int,
 ):
-    """Initialize W&B run with proper configuration."""
+    """Initialize W&B run for a single seed+run combination."""
     if not WANDB_AVAILABLE:
         print("W&B not available - skipping logging")
         return None
@@ -443,18 +442,20 @@ def setup_wandb(
         if not wandb.run:
             wandb.login()
 
-        # Create a unique run name
+        # Create a unique run name for this specific seed+run
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        run_name = f"{data_type}_{dataset_name}_{encoding_type}_{timestamp}"
+        run_name = f"{data_type}_{dataset_name}_{encoding_type}_seed{seed}_run{run}"
 
         # Initialize run with project and config
-        run = wandb.init(
+        wandb_run = wandb.init(
             project=os.environ.get("WANDB_PROJECT", "hgnn-experiments-2"),
             entity=os.environ.get("WANDB_ENTITY", "weber-geoml-harvard-university"),
             config={
                 "data_type": data_type,
                 "dataset_name": dataset_name,
                 "encoding_type": encoding_type,
+                "seed": seed,
+                "run": run,
                 "hidden_dims": config.hidden_dims,
                 "dropout_rate": config.dropout_rate,
                 "learning_rate": config.learning_rate,
@@ -462,32 +463,26 @@ def setup_wandb(
                 "epochs": config.epochs,
                 "patience": config.patience,
                 "val_ratio": config.val_ratio,
-                "n_runs": config.n_runs,
-                "n_seeds": config.n_seeds,
-                "runs_per_seed": config.runs_per_seed,
-                "total_runs": config.n_seeds * config.runs_per_seed,
                 "normalize_features": config.normalize_features,
                 "normalize_encodings": config.normalize_encodings,
                 "timestamp": timestamp,
             },
             name=run_name,
-            tags=[data_type, dataset_name, encoding_type, "hgnn"],
-            notes=f"HGNN experiment on {data_type}/{dataset_name} with {encoding_type} encoding",
+            tags=[
+                data_type,
+                dataset_name,
+                encoding_type,
+                "hgnn",
+                f"seed_{seed}",
+                f"run_{run}",
+            ],
+            notes=f"HGNN {data_type}/{dataset_name} {encoding_type} seed={seed} run={run}",
+            reinit=True,  # Allow multiple runs in same script
         )
 
-        # Define metrics for aggregated view - all runs on same plot
-        wandb.define_metric("global_step")  # Single unified step counter
-        wandb.define_metric("train/*", step_metric="global_step")
-        wandb.define_metric("val/*", step_metric="global_step")
-        wandb.define_metric("test/*", step_metric="global_step")
-        wandb.define_metric("run/*", step_metric="global_step")
-        wandb.define_metric("meta/*", step_metric="global_step")
-        print(f"  ✓ W&B run initialized: {run.name}")
-        print(f"  ✓ W&B run URL: {run.get_url()}")
-        return run
+        return wandb_run
     except Exception as e:
         print(f"  ✗ W&B initialization failed: {e}")
-        traceback.print_exc()
         return None
 
 
@@ -555,6 +550,11 @@ def run_single_seed_run(
         val_idx = torch.LongTensor(val_idx).to(device)
         test_idx = torch.LongTensor(test_idx).to(device)
 
+        # Initialize W&B for this specific run
+        individual_wandb_run = setup_wandb(
+            data_type, dataset_name, encoding_type, config, seed, run
+        )
+
         # Train single run
         best_val_acc, best_test_acc, final_test_acc = train_single_run(
             X,
@@ -565,11 +565,15 @@ def run_single_seed_run(
             test_idx,
             config,
             device,
-            wandb_run=wandb_run,
+            wandb_run=individual_wandb_run,
             run_id=run_id,
             global_step=0,
             seed=seed,
         )
+
+        # Finish W&B run
+        if individual_wandb_run is not None:
+            individual_wandb_run.finish()
 
         return best_val_acc, best_test_acc, final_test_acc
 
@@ -597,8 +601,7 @@ def run_experiments_for_encoding(
     print(f"\n--- Encoding: {encoding_type} ---")
     print(f"Config: {config.to_dict()}")
 
-    # Initialize W&B run
-    wandb_run = setup_wandb(data_type, dataset_name, encoding_type, config)
+    # Note: W&B runs are now initialized per individual seed+run
 
     # Results storage
     all_best_test_accs = []
@@ -627,25 +630,9 @@ def run_experiments_for_encoding(
         "precomputed_available": precomputed_data is not None,
     }
 
-    # If encoding requires a file and it’s missing, skip cleanly with debug info
+    # If encoding requires a file and it's missing, skip cleanly with debug info
     if encoding_type != "none" and precomputed_data is None:
         print(f"  [ENC DEBUG] Skipping {encoding_type}: precomputed not available")
-        if WANDB_AVAILABLE and wandb_run is not None:
-            try:
-                wandb.log(
-                    {
-                        "data/dataset": f"{data_type}_{dataset_name}",
-                        "data/encoding": encoding_type,
-                        "data/precomputed_available": False,
-                        "runs/successful": 0,
-                        "runs/total": config.n_runs,
-                        "runs/success_rate": 0.0,
-                        "error": "No precomputed encodings; skipped",
-                    }
-                )
-            except Exception:
-                pass
-            wandb_run.finish()
         return result
 
     # Get best hyperparameters if requested
@@ -792,72 +779,8 @@ def run_experiments_for_encoding(
             f"  ✓ {encoding_type}: {mean_best_test:.4f} ± {std_best_test:.4f} ({len(all_best_test_accs)}/{config.n_runs} runs)"
         )
 
-        # Log to wandb if available
-        if WANDB_AVAILABLE and wandb_run is not None:
-            try:
-                # Log comprehensive results with final global step
-                final_global_step = (
-                    len(seed_run_combinations) * config.epochs
-                )  # Final step across all runs
-                log_data = {
-                    "global_step": final_global_step,  # Final unified step
-                    # Primary metrics
-                    "test/mean_acc_best_val": mean_best_test,  # PRIMARY METRIC
-                    "test/std_acc_best_val": std_best_test,
-                    "test/mean_acc_final": mean_final_test,
-                    "test/std_acc_final": std_final_test,
-                    "val/mean_acc_best": mean_best_val,
-                    "val/std_acc_best": std_best_val,
-                    # Hyperparameters
-                    "hyperparams/learning_rate": config.learning_rate,
-                    "hyperparams/hidden_dims": config.hidden_dims,
-                    "hyperparams/dropout_rate": config.dropout_rate,
-                    "hyperparams/weight_decay": config.weight_decay,
-                    "hyperparams/epochs": config.epochs,
-                    "hyperparams/patience": config.patience,
-                    "hyperparams/val_ratio": config.val_ratio,
-                    # Dataset and encoding info
-                    "data/dataset": f"{data_type}_{dataset_name}",
-                    "data/encoding": encoding_type,
-                    "data/precomputed_available": precomputed_data is not None,
-                    # Run statistics
-                    "runs/successful": len(all_best_test_accs),
-                    "runs/total": config.n_runs,
-                    # Additional metrics
-                    "metrics/best_test_acc": (
-                        max(all_best_test_accs) if all_best_test_accs else 0
-                    ),
-                    "metrics/worst_test_acc": (
-                        min(all_best_test_accs) if all_best_test_accs else 0
-                    ),
-                    "metrics/median_test_acc": (
-                        np.median(all_best_test_accs) if all_best_test_accs else 0
-                    ),
-                    # Individual run results as scalar metrics to avoid media warnings
-                    "runs/num_successful": len(all_best_test_accs),
-                    "runs/total_attempted": len(seed_run_combinations),
-                    "runs/success_rate": (
-                        len(all_best_test_accs) / len(seed_run_combinations)
-                        if seed_run_combinations
-                        else 0
-                    ),
-                }
-
-                # Add histogram only if we have data
-                if all_best_test_accs:
-                    log_data["histograms/best_test_acc_distribution"] = wandb.Histogram(
-                        all_best_test_accs
-                    )
-
-                wandb.log(log_data)
-                print(f"  ✓ Logged results to W&B: {wandb_run.get_url()}")
-            except Exception as e:
-                print(f"  ✗ W&B logging failed: {e}")
-                traceback.print_exc()
-
-    # Clean up W&B run
-    if wandb_run is not None:
-        wandb_run.finish()
+        # Individual W&B runs are handled per seed+run combination
+        print(f"  ✓ All {len(all_best_test_accs)} runs logged to individual W&B runs")
 
     return result
 
