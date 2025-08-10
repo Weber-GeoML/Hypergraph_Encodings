@@ -10,7 +10,7 @@
 # Weights & Biases configuration
 export WANDB_API_KEY="ea7c6eeb5a095b531ef60cc784bfeb87d47ea0b0"
 export WANDB_ENTITY="weber-geoml-harvard-university"
-export WANDB_PROJECT="hgnn-experiments"
+export WANDB_PROJECT="hgnn-experiments-2"
 
 # Activate the Conda environment
 source activate hgencodings_gpu_weber
@@ -38,7 +38,7 @@ run_dataset_experiments() {
         --n_runs 80 \
         --use_best_params \
         --wandb_enabled \
-        --wandb_project "hgnn-experiments" \
+        --wandb_project "hgnn-experiments-2" \
         --wandb_entity "weber-geoml-harvard-university" 2>&1 | tee -a "$log_file"
     
     echo "Completed experiments for ${data_type}/${dataset_name}" | tee -a "$log_file"

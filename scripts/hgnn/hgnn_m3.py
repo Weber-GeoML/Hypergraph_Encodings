@@ -11,6 +11,8 @@ import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from functools import partial
 
 import numpy as np
 import pandas as pd
@@ -293,6 +295,7 @@ def train_single_run(
     wandb_run=None,  # Add this parameter
     run_id: int = 0,  # Add run identifier
     global_step: int = 0,  # Add global step counter
+    seed: int = 0,  # Add seed for logging
 ) -> Tuple[float, float, float]:
     """
     Train HGNN for a single run.
@@ -326,10 +329,10 @@ def train_single_run(
     patience = config.patience
     epochs = config.epochs
 
-    # Define a per-run step so steps can restart from 0 for each run
+    # Use shared step and metric keys across all runs (no run_id prefixes)
     if wandb_run is not None and WANDB_AVAILABLE:
-        wandb.define_metric(f"run_{run_id}/step")
-        wandb.define_metric(f"run_{run_id}/*", step_metric=f"run_{run_id}/step")
+        wandb.define_metric("step")
+        wandb.define_metric("*", step_metric="step")
 
     # Create progress bar
     pbar = tqdm(range(epochs), desc="Training", leave=False)
@@ -367,14 +370,17 @@ def train_single_run(
                 try:
                     wandb.log(
                         {
-                            f"run_{run_id}/step": epoch,
-                            f"run_{run_id}/train_loss": loss.item(),
-                            f"run_{run_id}/train_acc": train_acc,
-                            f"run_{run_id}/val_acc": val_acc,
-                            f"run_{run_id}/test_acc": test_acc,
-                            f"run_{run_id}/best_val_acc": best_val_acc,
-                            f"run_{run_id}/best_test_acc": best_test_acc,
-                            f"run_{run_id}/learning_rate": config.learning_rate,
+                            "step": epoch,
+                            "train_loss": loss.item(),
+                            "train_acc": train_acc,
+                            "val_acc": val_acc,
+                            "test_acc": test_acc,
+                            "best_val_acc": best_val_acc,
+                            "best_test_acc": best_test_acc,
+                            "learning_rate": config.learning_rate,
+                            # Optional: keep context info without creating new charts
+                            "meta/run_id": run_id,
+                            "meta/seed": seed,
                         }
                     )
                 except Exception:
@@ -417,7 +423,7 @@ def setup_wandb(
         if not os.environ.get("WANDB_ENTITY"):
             os.environ["WANDB_ENTITY"] = "weber-geoml-harvard-university"
         if not os.environ.get("WANDB_PROJECT"):
-            os.environ["WANDB_PROJECT"] = "hgnn-experiments"
+            os.environ["WANDB_PROJECT"] = "hgnn-experiments-2"
 
         # Login if not already logged in
         if not wandb.run:
@@ -429,7 +435,7 @@ def setup_wandb(
 
         # Initialize run with project and config
         run = wandb.init(
-            project=os.environ.get("WANDB_PROJECT", "hgnn-experiments"),
+            project=os.environ.get("WANDB_PROJECT", "hgnn-experiments-2"),
             entity=os.environ.get("WANDB_ENTITY", "weber-geoml-harvard-university"),
             config={
                 "data_type": data_type,
@@ -460,6 +466,87 @@ def setup_wandb(
         print(f"  ✗ W&B initialization failed: {e}")
         traceback.print_exc()
         return None
+
+
+def run_single_seed_run(
+    seed: int,
+    run: int,
+    data_type: str,
+    dataset_name: str,
+    encoding_type: str,
+    config: HGNNConfig,
+    device: torch.device,
+    precomputed_data: Optional[Dict[str, Any]],
+    wandb_run=None,
+    run_id: int = 0,
+) -> Tuple[float, float, float]:
+    """
+    Run a single seed+run combination for parallel execution.
+
+    Returns:
+        Tuple of (best_val_acc, best_test_acc, final_test_acc)
+    """
+    try:
+        set_seed(seed)
+
+        # Create args for this run
+        args = SimpleArgs(config)
+        args.data = data_type
+        args.dataset = dataset_name
+        args.split = run
+
+        # Load base data
+        X_base, Y, G_base = load_base_data(args)
+
+        # Apply encoding if needed
+        if encoding_type == "none":
+            X = X_base.clone()
+            G = G_base.copy()
+        elif precomputed_data is not None:
+            # Use pre-computed encoding
+            X = torch.tensor(precomputed_data["features"], dtype=torch.float32)
+            G = G_base.copy()  # Keep same hypergraph structure
+            G["num_features"] = X.shape[1]
+        else:
+            # Skip if no pre-computed encoding available
+            raise ValueError("No precomputed encoding available")
+
+        # Validate data after encoding
+        assert Y.dim() == 1, f"Y must be 1D, got {Y.shape}"
+        assert (
+            X.shape[0] == Y.shape[0]
+        ), f"X and Y size mismatch: {X.shape[0]} vs {Y.shape[0]}"
+
+        # Get data splits for this run
+        _, train_idx, test_idx = load(args)
+        val_idx, test_idx = get_split_m3_compatible(Y[test_idx], config.val_ratio)
+
+        # Convert to tensors and move to device
+        train_idx = torch.LongTensor(train_idx).to(device)
+        val_idx = torch.LongTensor(val_idx).to(device)
+        test_idx = torch.LongTensor(test_idx).to(device)
+
+        # Train single run
+        best_val_acc, best_test_acc, final_test_acc = train_single_run(
+            X,
+            Y,
+            G,
+            train_idx,
+            val_idx,
+            test_idx,
+            config,
+            device,
+            wandb_run=wandb_run,
+            run_id=run_id,
+            global_step=0,
+            seed=seed,
+        )
+
+        return best_val_acc, best_test_acc, final_test_acc
+
+    except Exception as e:
+        print(f"Error in seed {seed}, run {run}: {e}")
+        return 0.0, 0.0, 0.0
 
 
 def run_experiments_for_encoding(
@@ -554,89 +641,60 @@ def run_experiments_for_encoding(
             }
         )
 
-    # Run experiments based on config
-    global_step = 0  # Initialize global step counter
+    # Create list of all (seed, run) combinations for parallel execution
+    seed_run_combinations = [
+        (seed, run)
+        for seed in range(2, 2 + config.n_seeds)
+        for run in range(1, 1 + config.runs_per_seed)
+    ]
 
-    for seed in range(2, 2 + config.n_seeds):  # Seeds 2-9 (8 seeds)
-        print(f"  Seed {seed}:", end=" ")
+    print(
+        f"  Running {len(seed_run_combinations)} seed+run combinations in parallel..."
+    )
 
-        set_seed(seed)
+    # Create partial function for parallel execution
+    run_func = partial(
+        run_single_seed_run,
+        data_type=data_type,
+        dataset_name=dataset_name,
+        encoding_type=encoding_type,
+        config=config,
+        device=device,
+        precomputed_data=precomputed_data,
+        wandb_run=wandb_run,
+    )
 
-        for run in range(1, 1 + config.runs_per_seed):  # 10 runs per seed
+    # Execute in parallel
+    max_workers = min(8, len(seed_run_combinations))  # Limit to 8 workers
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        # Submit all jobs
+        future_to_params = {
+            executor.submit(run_func, seed, run, run_id=idx): (seed, run, idx)
+            for idx, (seed, run) in enumerate(seed_run_combinations)
+        }
+
+        # Collect results as they complete
+        completed = 0
+        for future in as_completed(future_to_params):
+            seed, run, run_id = future_to_params[future]
             try:
-                # Create args for this run
-                args = SimpleArgs(config)
-                args.data = data_type
-                args.dataset = dataset_name
-                args.split = run
-
-                # Load base data
-                X_base, Y, G_base = load_base_data(args)
-
-                # Apply encoding if needed
-                if encoding_type == "none":
-                    X = X_base.clone()
-                    G = G_base.copy()
-                elif precomputed_data is not None:
-                    # Use pre-computed encoding
-                    X = torch.tensor(precomputed_data["features"], dtype=torch.float32)
-                    G = G_base.copy()  # Keep same hypergraph structure
-                    G["num_features"] = X.shape[1]
-                else:
-                    # Skip if no pre-computed encoding available
-                    print("X", end="")
-                    continue
-
-                # Validate data after encoding
-                assert Y.dim() == 1, f"Y must be 1D, got {Y.shape}"
-                assert (
-                    X.shape[0] == Y.shape[0]
-                ), f"X and Y size mismatch: {X.shape[0]} vs {Y.shape[0]}"
-
-                # Get data splits for this run
-                _, train_idx, test_idx = load(args)
-                val_idx, test_idx = get_split_m3_compatible(
-                    Y[test_idx], config.val_ratio
-                )
-
-                # Convert to tensors and move to device
-                train_idx = torch.LongTensor(train_idx).to(device)
-                val_idx = torch.LongTensor(val_idx).to(device)
-                test_idx = torch.LongTensor(test_idx).to(device)
-
-                # Train single run
-                best_val_acc, best_test_acc, final_test_acc = train_single_run(
-                    X,
-                    Y,
-                    G,
-                    train_idx,
-                    val_idx,
-                    test_idx,
-                    config,
-                    device,
-                    wandb_run=wandb_run,  # Pass W&B run
-                    run_id=len(all_best_test_accs),  # Use current run count as ID
-                    global_step=global_step,  # Use global step counter
-                )
+                best_val_acc, best_test_acc, final_test_acc = future.result()
 
                 # Store results
                 all_best_val_accs.append(best_val_acc)
-                all_best_test_accs.append(best_test_acc)  # KEY METRIC (UniGNN style)
+                all_best_test_accs.append(best_test_acc)
                 all_final_test_accs.append(final_test_acc)
 
-                # Print progress
-                if run % 2 == 0:
-                    print(f"{run}", end="")
-                else:
-                    print(".", end="")
+                completed += 1
+                print(
+                    f"  Completed {completed}/{len(seed_run_combinations)} runs (seed={seed}, run={run})"
+                )
 
-            except Exception:
-                print("E", end="")  # Error marker
+            except Exception as e:
+                print(f"  Error in seed {seed}, run {run}: {e}")
                 if config.verbose:
                     traceback.print_exc()
                 continue
-
-        print()  # New line after each seed
 
     # Calculate statistics
     if len(all_best_test_accs) > 0:
