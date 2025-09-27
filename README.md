@@ -10,6 +10,10 @@
   </a>
 </div>
 
+Code for the paper Higher-Order Learning with Graph Neural Networks via Hypergraph Encodings - accepted at NeurIPS 2025 (https://neurips.cc/virtual/2025/poster/116020)
+
+arxiv: https://arxiv.org/pdf/2502.09570 (camera-ready version coming soon).
+
 
 <p align="center">
   <img src="gifs/random_walk.gif" width="400" alt="Random Walk on Graph" loop="infinite"/>
