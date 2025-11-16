@@ -1,6 +1,6 @@
 """File used to save the encodings.
 
-Saves the data in thesame format provided.
+Saves the data in the same format provided.
 
 ie either a dict with the following fields:
 
@@ -16,6 +16,8 @@ or a list of dicts with the following fields:
 
 And now the "features" field of every dict will have been updated with the
 encodings.
+
+NOTE: The files are already in hypergraph format (ie have already been lifted!)
 """
 
 import os

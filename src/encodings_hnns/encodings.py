@@ -11,6 +11,7 @@ to a dataset (curvature, laplacians, random walks).
 import os
 import pickle
 import random
+from typing import Any, Optional
 
 import numpy as np
 
@@ -88,6 +89,7 @@ class HypergraphEncodings:
         verbose: bool = False,
         normalized: bool = True,
         dataset_name: str | None = None,
+        timing_collector: Optional[Any] = None,
     ) -> dict:
         """Computes the LDP. This is the degree profile.
 
@@ -100,22 +102,24 @@ class HypergraphEncodings:
                 technical detail about needeing [] when we normalize in some cases
             dataset_name:
                 the name of the dataset. Used for savings the encodings
+            timing_collector:
+                Optional TimingCollector for measuring computation time
         Returns:
             the hypergraph with the degree profile encodings added to the featuress
 
         I am adding tht ability to save the encodings. Ie, we only compute them once.
         dataset["features"]
         """
-        filename: str = (
-            f"computed_encodings/{dataset_name}_degree_encodings_normalized_{normalized}.pkl"
-        )
-        if os.path.exists(filename):
-            with open(filename, "rb") as f:
-                print(f"Loading hypergraph from {filename}")
-                return pickle.load(f)
+        # Skip caching when timing_collector is provided
+        if timing_collector is None and dataset_name is not None:
+            filename: str = f"computed_encodings/{dataset_name}_degree_encodings_normalized_{normalized}.pkl"
+            if os.path.exists(filename):
+                with open(filename, "rb") as f:
+                    print(f"Loading hypergraph from {filename}")
+                    return pickle.load(f)
 
-        else:
-            # compute the encodings and save
+        # Core computation logic
+        def _compute_degree_encodings():
             assert (
                 hypergraph["features"].shape[0] == hypergraph["n"]
             ), f"BEFORE: The shape is {hypergraph['features'].shape[0]} but n is {hypergraph['n']}"
@@ -165,14 +169,39 @@ class HypergraphEncodings:
                         )
                     except Exception:
                         # print("Handling different dimensions.")
-                        stacked_features = np.hstack(
-                            (hypergraph["features"][node], ld_vals)
-                        )
+                        try:
+                            stacked_features = np.hstack(
+                                (hypergraph["features"][node], ld_vals)
+                            )
+                        except Exception:
+                            # Third attempt: Fix dimension mismatch
+                            # ld_vals shape (1, 6) -> (6, 1), then vstack with (3703, 1)
+                            node_features_col = hypergraph["features"][node].reshape(
+                                -1, 1
+                            )  # (3703, 1)
+                            ld_vals_col = ld_vals.T  # (1, 6) -> (6, 1)
+                            stacked_features = np.vstack(
+                                (node_features_col, ld_vals_col)
+                            )  # (3709, 1)
+                            stacked_features = (
+                                stacked_features.flatten()
+                            )  # Flatten to 1D
                 elif not normalized:
                     # hypergraph["features"][node].reshape(-1, 1)
-                    stacked_features = np.hstack(
-                        (hypergraph["features"][node].reshape(-1, 1), ld_vals)
-                    )
+                    try:
+                        stacked_features = np.hstack(
+                            (hypergraph["features"][node].reshape(-1, 1), ld_vals)
+                        )
+                    except Exception:
+                        # Same fix for non-normalized case
+                        node_features_col = hypergraph["features"][node].reshape(
+                            -1, 1
+                        )  # (3703, 1)
+                        ld_vals_col = ld_vals.T  # (1, 6) -> (6, 1)
+                        stacked_features = np.vstack(
+                            (node_features_col, ld_vals_col)
+                        )  # (3709, 1)
+                        stacked_features = stacked_features.flatten()  # Flatten to 1D
                 if verbose:
                     print(f"The stacked features are \n {stacked_features}")
                 padded_features[node] = stacked_features
@@ -181,11 +210,33 @@ class HypergraphEncodings:
                 hypergraph["features"].shape[0] == hypergraph["n"]
             ), f"The shape is {hypergraph['features'].shape[0]} but n is {hypergraph['n']}"
 
-            if dataset_name is not None:
-                with open(filename, "wb") as f:
-                    pickle.dump(hypergraph, f)
-                print(f"Hypergraph saved as {filename}")
-            return hypergraph
+        # Execute with or without timing
+        if timing_collector is not None:
+            # Import here to avoid circular imports
+            try:
+                from scripts.compute_encodings.timing_utils import (
+                    extract_hypergraph_stats,
+                )
+
+                hypergraph_stats = extract_hypergraph_stats(
+                    hypergraph, dataset_name or "unknown"
+                )
+                with timing_collector.time_encoding("degree", hypergraph_stats):
+                    _compute_degree_encodings()
+            except ImportError:
+                # Fallback if timing_utils not available
+                _compute_degree_encodings()
+        else:
+            _compute_degree_encodings()
+
+        # Save if dataset_name is provided and not in timing mode
+        if dataset_name is not None and timing_collector is None:
+            filename = f"computed_encodings/{dataset_name}_degree_encodings_normalized_{normalized}.pkl"
+            with open(filename, "wb") as f:
+                pickle.dump(hypergraph, f)
+            print(f"Hypergraph saved as {filename}")
+
+        return hypergraph
 
     def add_curvature_encodings(
         self,
@@ -194,6 +245,7 @@ class HypergraphEncodings:
         curvature_type: str = "FRC",
         normalized: bool = True,
         dataset_name: str | None = None,
+        timing_collector: Optional[Any] = None,
     ) -> dict:
         """Computes the LCP based on the FRC or ORC.
 
@@ -209,19 +261,23 @@ class HypergraphEncodings:
                 when false, need to slight\ly modify the code
             dataset_name:
                 the name of the dataset. Used for savings the encodings
+            timing_collector:
+                Optional TimingCollector for measuring computation time
 
         Returns:
             the hypergraph with the frc or orc encodings added to the featuress
 
         """
-        filename: str = (
-            f"computed_encodings/{dataset_name}_curvature_encodings_{curvature_type}_normalized_{normalized}.pkl"
-        )
-        if os.path.exists(filename):
-            with open(filename, "rb") as f:
-                print(f"Loading hypergraph from {filename}")
-                return pickle.load(f)
-        else:
+        # Skip caching when timing_collector is provided
+        if timing_collector is None and dataset_name is not None:
+            filename: str = f"computed_encodings/{dataset_name}_curvature_encodings_{curvature_type}_normalized_{normalized}.pkl"
+            if os.path.exists(filename):
+                with open(filename, "rb") as f:
+                    print(f"Loading hypergraph from {filename}")
+                    return pickle.load(f)
+
+        # Core computation logic
+        def _compute_curvature_encodings():
             assert (
                 hypergraph["features"].shape[0] == hypergraph["n"]
             ), f"BEFORE: The shape is {hypergraph['features'].shape[0]} but n is {hypergraph['n']}"
@@ -249,6 +305,7 @@ class HypergraphEncodings:
             rc_profile: dict[int, list[float]] = {}
             assert self.hyperedges is not None
             for node in self.hyperedges.keys():
+                rc_values: list[float] = []
                 if curvature_type == "FRC":
                     assert isinstance(rc, FormanRicci)
                     rc_values = [
@@ -262,6 +319,13 @@ class HypergraphEncodings:
                         rc.edge_curvature[hyperedge]  # type: ignore
                         for hyperedge in self.hyperedges[node]
                     ]
+                else:
+                    raise ValueError(f"Unknown curvature type: {curvature_type}")
+
+                # Handle empty rc_values list (node not in any hyperedges)
+                if not rc_values:
+                    rc_values = [0.0]  # Default value for isolated nodes
+
                 rc_profile[node] = [
                     min(rc_values),
                     max(rc_values),
@@ -314,11 +378,36 @@ class HypergraphEncodings:
             assert (
                 hypergraph["features"].shape[0] == hypergraph["n"]
             ), f"The shape is {hypergraph['features'].shape[0]} but n is {hypergraph['n']}"
-            if dataset_name is not None:
-                with open(filename, "wb") as f:
-                    pickle.dump(hypergraph, f)
-                print(f"Hypergraph saved as {filename}")
-            return hypergraph
+
+        # Execute with or without timing
+        if timing_collector is not None:
+            # Import here to avoid circular imports
+            try:
+                from scripts.compute_encodings.timing_utils import (
+                    extract_hypergraph_stats,
+                )
+
+                hypergraph_stats = extract_hypergraph_stats(
+                    hypergraph, dataset_name or "unknown"
+                )
+                with timing_collector.time_encoding(
+                    f"curvature_{curvature_type}", hypergraph_stats
+                ):
+                    _compute_curvature_encodings()
+            except ImportError:
+                # Fallback if timing_utils not available
+                _compute_curvature_encodings()
+        else:
+            _compute_curvature_encodings()
+
+        # Save if dataset_name is provided and not in timing mode
+        if dataset_name is not None and timing_collector is None:
+            filename = f"computed_encodings/{dataset_name}_curvature_encodings_{curvature_type}_normalized_{normalized}.pkl"
+            with open(filename, "wb") as f:
+                pickle.dump(hypergraph, f)
+            print(f"Hypergraph saved as {filename}")
+
+        return hypergraph
 
     # def add_laplacian_encodings()
     # pick the eignevectors corresponding to the k largest eigenvalues
@@ -334,6 +423,7 @@ class HypergraphEncodings:
         dataset_name: str | None = None,
         k: int = 20,  # to vary!
         use_same_sign: bool = False,
+        timing_collector: Optional[Any] = None,
     ) -> dict:
         """Adds encodings based on Laplacians.
 
@@ -355,21 +445,27 @@ class HypergraphEncodings:
                 the name of the dataset. Used for savings the encodings
             k:
                 Defines k (the number of eigenvectors to use)
+            timing_collector:
+                Optional TimingCollector for measuring computation time
 
         Returns:
             the hypergraph with the Laplacian encodings added to the featuress
         """
-        filename: str
-        if laplacian_type in ("Hodge", "Normalized"):
-            filename = f"computed_encodings/{dataset_name}_laplacian_encodings_{laplacian_type}_normalized_{normalized}.pkl"
-        elif laplacian_type == "RW":
-            filename = f"computed_encodings/{dataset_name}_laplacian_encodings_{laplacian_type}_rw_{rw_type}_normalized_{normalized}.pkl"
-        if os.path.exists(filename):
-            with open(filename, "rb") as f:
-                print(f"Loading hypergraph from {filename}")
-                return pickle.load(f)
+        # Skip caching when timing_collector is provided
+        if timing_collector is None and dataset_name is not None:
+            filename: str
+            if laplacian_type in ("Hodge", "Normalized"):
+                filename = f"computed_encodings/{dataset_name}_laplacian_encodings_{laplacian_type}_normalized_{normalized}.pkl"
+            elif laplacian_type == "RW":
+                filename = f"computed_encodings/{dataset_name}_laplacian_encodings_{laplacian_type}_rw_{rw_type}_normalized_{normalized}.pkl"
+            if os.path.exists(filename):
+                with open(filename, "rb") as f:
+                    print(f"Loading hypergraph from {filename}")
+                    return pickle.load(f)
 
-        else:
+        # Core computation logic
+        def _compute_laplacian_encodings():
+            nonlocal k
             assert (
                 hypergraph["features"].shape[0] == hypergraph["n"]
             ), f"BEFORE: The shape is {hypergraph['features'].shape[0]} but n is {hypergraph['n']}"
@@ -427,21 +523,6 @@ class HypergraphEncodings:
                 print(eigenvalues)
                 print("Eigenvectors:")
                 print(eigenvectors)
-
-            # That was true for Hodge
-            # if type == "Normalized" or type == "Hodge":
-            #     # Creates a diagonal matrix from the eigenvalues
-            #     diagonal_matrix = np.diag(eigenvalues)
-
-            #     # Reconstructs the original matrix
-            #     reconstructed_matrix = eigenvectors @ diagonal_matrix @ eigenvectors.T
-
-            #     # Compare reconstructed matrix to the original matrix
-            #     if np.allclose(reconstructed_matrix, laplacian.hodge_laplacian_down):
-            #         print("Reconstructed matrix is close to the original matrix.")
-            #         print("Symmetric matrix. Expected for Hodge, normalized")
-            #     else:
-            #         print("Reconstructed matrix differs from the original matrix.")
 
             # We randonly flip the sign of the eigenvectors
             # this means that if we use k eigenvectors, we have
@@ -516,11 +597,39 @@ class HypergraphEncodings:
             assert (
                 hypergraph["features"].shape[0] == hypergraph["n"]
             ), f"The shape is {hypergraph['features'].shape[0]} but n is {hypergraph['n']}"
-            if dataset_name is not None:
-                with open(filename, "wb") as f:
-                    pickle.dump(hypergraph, f)
-                print(f"Hypergraph saved as {filename}")
-            return hypergraph
+
+        # Execute with or without timing
+        if timing_collector is not None:
+            # Import here to avoid circular imports
+            try:
+                from scripts.compute_encodings.timing_utils import (
+                    extract_hypergraph_stats,
+                )
+
+                hypergraph_stats = extract_hypergraph_stats(
+                    hypergraph, dataset_name or "unknown"
+                )
+                with timing_collector.time_encoding(
+                    f"laplacian_{laplacian_type}", hypergraph_stats
+                ):
+                    _compute_laplacian_encodings()
+            except ImportError:
+                # Fallback if timing_utils not available
+                _compute_laplacian_encodings()
+        else:
+            _compute_laplacian_encodings()
+
+        # Save if dataset_name is provided and not in timing mode
+        if dataset_name is not None and timing_collector is None:
+            if laplacian_type in ("Hodge", "Normalized"):
+                filename = f"computed_encodings/{dataset_name}_laplacian_encodings_{laplacian_type}_normalized_{normalized}.pkl"
+            elif laplacian_type == "RW":
+                filename = f"computed_encodings/{dataset_name}_laplacian_encodings_{laplacian_type}_rw_{rw_type}_normalized_{normalized}.pkl"
+            with open(filename, "wb") as f:
+                pickle.dump(hypergraph, f)
+            print(f"Hypergraph saved as {filename}")
+
+        return hypergraph
 
     def add_randowm_walks_encodings(
         self,
@@ -530,6 +639,7 @@ class HypergraphEncodings:
         k: int = 20,
         normalized: bool = True,
         dataset_name: str | None = None,
+        timing_collector: Optional[Any] = None,
     ) -> dict[str, dict | int]:
         """Adds encodings based on RW.
 
@@ -548,6 +658,8 @@ class HypergraphEncodings:
                 when false, need to slight\ly modify the code
             dataset_name:
                 the name of the dataset. Used for savings the encodings
+            timing_collector:
+                Optional TimingCollector for measuring computation time
 
         Returns:
             the hypergraph with the RW encodings added to the featuress
@@ -556,15 +668,16 @@ class HypergraphEncodings:
         # Write checks for this!
 
         """
-        filename: str = (
-            f"computed_encodings/{dataset_name}_rw_encodings_{rw_type}_k_{k}_normalized_{normalized}.pkl"
-        )
-        if os.path.exists(filename):
-            with open(filename, "rb") as f:
-                print(f"Loading hypergraph from {filename}")
-                return pickle.load(f)
+        # Skip caching when timing_collector is provided
+        if timing_collector is None and dataset_name is not None:
+            filename: str = f"computed_encodings/{dataset_name}_rw_encodings_{rw_type}_k_{k}_normalized_{normalized}.pkl"
+            if os.path.exists(filename):
+                with open(filename, "rb") as f:
+                    print(f"Loading hypergraph from {filename}")
+                    return pickle.load(f)
 
-        else:
+        # Core computation logic
+        def _compute_random_walk_encodings():
             assert (
                 hypergraph["features"].shape[0] == hypergraph["n"]
             ), f"BEFORE: The shape is {hypergraph['features'].shape[0]} but n is {hypergraph['n']}"
@@ -665,8 +778,33 @@ class HypergraphEncodings:
             assert (
                 hypergraph["features"].shape[0] == hypergraph["n"]
             ), f"The shape is {hypergraph['features'].shape[0]} but n is {hypergraph['n']}"
-            if dataset_name is not None:
-                with open(filename, "wb") as f:
-                    pickle.dump(hypergraph, f)
-                print(f"Hypergraph saved as {filename}")
-            return hypergraph
+
+        # Execute with or without timing
+        if timing_collector is not None:
+            # Import here to avoid circular imports
+            try:
+                from scripts.compute_encodings.timing_utils import (
+                    extract_hypergraph_stats,
+                )
+
+                hypergraph_stats = extract_hypergraph_stats(
+                    hypergraph, dataset_name or "unknown"
+                )
+                with timing_collector.time_encoding(
+                    f"random_walk_{rw_type}", hypergraph_stats
+                ):
+                    _compute_random_walk_encodings()
+            except ImportError:
+                # Fallback if timing_utils not available
+                _compute_random_walk_encodings()
+        else:
+            _compute_random_walk_encodings()
+
+        # Save if dataset_name is provided and not in timing mode
+        if dataset_name is not None and timing_collector is None:
+            filename = f"computed_encodings/{dataset_name}_rw_encodings_{rw_type}_k_{k}_normalized_{normalized}.pkl"
+            with open(filename, "wb") as f:
+                pickle.dump(hypergraph, f)
+            print(f"Hypergraph saved as {filename}")
+
+        return hypergraph
